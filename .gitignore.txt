@@ -1,0 +1,13 @@
+# SQLite database (server is leidend)
+NWT-Bijbel.db
+
+# SQLite tijdelijke bestanden
+NWT-Bijbel.db-journal
+NWT-Bijbel.db-wal
+NWT-Bijbel.db-shm
+
+# macOS
+.DS_Store
+
+# VS Code (optioneel)
+.vscode/
