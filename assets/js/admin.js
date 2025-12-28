@@ -1,4 +1,4 @@
-/** 
+/**
  * ADMIN.JS - Admin mode functionaliteit
  */
 
@@ -6,9 +6,89 @@
 document.addEventListener('DOMContentLoaded', function() {
     if (mode === 'admin') {
         console.log('Admin mode - loading initial data...');
+        initQuillEditors();
         loadProfiles();
     }
 });
+
+// Initialize Quill editors for admin mode
+function initQuillEditors() {
+    console.log('🖊️ Initializing Quill editors...');
+    
+    // Check if Quill is loaded
+    if (typeof Quill === 'undefined') {
+        console.error('❌ Quill is not loaded! Check if Quill CDN is included.');
+        return;
+    }
+    
+    // Main text editor (if exists)
+    const editorContainer = document.getElementById('editor-container');
+    if (editorContainer) {
+        window.quill = new Quill('#editor-container', {
+            theme: 'snow',
+            modules: {
+                toolbar: [
+                    [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+                    [{ 'font': [] }],
+                    [{ 'size': ['small', false, 'large', 'huge'] }],
+                    ['bold', 'italic', 'underline', 'strike'],
+                    [{ 'color': [] }, { 'background': [] }],
+                    [{ 'script': 'sub'}, { 'script': 'super' }],
+                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                    [{ 'indent': '-1'}, { 'indent': '+1' }],
+                    [{ 'align': [] }],
+                    ['link', 'blockquote', 'code-block'],
+                    ['clean']
+                ]
+            },
+            placeholder: 'Bewerk de tekst hier...'
+        });
+        console.log('✅ Main Quill editor initialized');
+    } else {
+        console.log('ℹ️ No main editor container found (normal if not on editor page)');
+    }
+    
+    // Timeline description editor (if exists)
+    const timelineDescContainer = document.getElementById('timelineBeschrijvingEditor');
+    if (timelineDescContainer) {
+        window.timelineDescQuill = new Quill('#timelineBeschrijvingEditor', {
+            theme: 'snow',
+            modules: {
+                toolbar: [
+                    [{ 'header': [1, 2, 3, false] }],
+                    ['bold', 'italic', 'underline'],
+                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                    ['link'],
+                    ['clean']
+                ]
+            },
+            placeholder: 'Beschrijving van het event...'
+        });
+        console.log('✅ Timeline description editor initialized');
+    }
+    
+    // Notes editor (if exists)
+    const notesContainer = document.getElementById('notesEditorContainer');
+    if (notesContainer) {
+        window.notesQuill = new Quill('#notesEditorContainer', {
+            theme: 'snow',
+            modules: {
+                toolbar: [
+                    [{ 'header': [1, 2, 3, false] }],
+                    ['bold', 'italic', 'underline', 'strike'],
+                    [{ 'color': [] }, { 'background': [] }],
+                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                    ['link'],
+                    ['clean']
+                ]
+            },
+            placeholder: 'Begin hier met schrijven...'
+        });
+        console.log('✅ Notes editor initialized');
+    }
+    
+    console.log('✅ Quill editors initialization complete');
+}
 
 // Load profiles list
 async function loadProfiles() {

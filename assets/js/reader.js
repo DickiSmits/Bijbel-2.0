@@ -1,5 +1,5 @@
 /**
- * READER.JS -  Reader mode functionaliteit
+ * READER.JS - Reader mode functionaliteit
  */
 
 let currentBook = null;
@@ -93,7 +93,55 @@ async function initReader() {
     console.log('🔧 Setting up event listeners...');
     setupEventListeners();
     
-    // Load initial content (Genesis 1 as example)
+    // Restore saved values from localStorage
+    const savedProfile = localStorage.getItem('reader_profile');
+    const savedBook = localStorage.getItem('reader_book');
+    const savedChapter = localStorage.getItem('reader_chapter');
+    
+    console.log('💾 Restoring saved values:', { savedProfile, savedBook, savedChapter });
+    
+    // Restore profile
+    if (savedProfile) {
+        const profileSelect = document.getElementById('profileSelect');
+        if (profileSelect) {
+            profileSelect.value = savedProfile;
+            currentProfile = savedProfile;
+            console.log('✅ Restored profile:', savedProfile);
+        }
+    }
+    
+    // Restore book and load its chapters
+    if (savedBook) {
+        const bookSelect = document.getElementById('bookSelect');
+        if (bookSelect) {
+            bookSelect.value = savedBook;
+            currentBook = savedBook;
+            console.log('✅ Restored book:', savedBook);
+            
+            // Load chapters for this book
+            const chapters = await apiCall(`chapters&boek=${encodeURIComponent(savedBook)}`);
+            const chapterSelect = document.getElementById('chapterSelect');
+            chapterSelect.innerHTML = '<option value="">Alle hoofdstukken</option>';
+            
+            if (chapters) {
+                chapters.forEach(ch => {
+                    const option = document.createElement('option');
+                    option.value = ch.Hoofdstuknummer;
+                    option.textContent = `Hoofdstuk ${ch.Hoofdstuknummer}`;
+                    chapterSelect.appendChild(option);
+                });
+                
+                // Restore chapter
+                if (savedChapter) {
+                    chapterSelect.value = savedChapter;
+                    currentChapter = savedChapter;
+                    console.log('✅ Restored chapter:', savedChapter);
+                }
+            }
+        }
+    }
+    
+    // Load initial content
     console.log('📖 Loading initial verses...');
     await loadVerses();
     
@@ -111,6 +159,15 @@ function setupEventListeners() {
         bookSelect.addEventListener('change', async (e) => {
             currentBook = e.target.value;
             currentChapter = null;
+            
+            // Save to localStorage
+            if (currentBook) {
+                localStorage.setItem('reader_book', currentBook);
+                localStorage.removeItem('reader_chapter');
+            } else {
+                localStorage.removeItem('reader_book');
+                localStorage.removeItem('reader_chapter');
+            }
             
             // Load chapters
             const chapters = await apiCall(`chapters&boek=${encodeURIComponent(currentBook)}`);
@@ -132,6 +189,14 @@ function setupEventListeners() {
     if (chapterSelect) {
         chapterSelect.addEventListener('change', (e) => {
             currentChapter = e.target.value;
+            
+            // Save to localStorage
+            if (currentChapter) {
+                localStorage.setItem('reader_chapter', currentChapter);
+            } else {
+                localStorage.removeItem('reader_chapter');
+            }
+            
             loadVerses();
         });
     }
@@ -139,6 +204,14 @@ function setupEventListeners() {
     if (profileSelect) {
         profileSelect.addEventListener('change', (e) => {
             currentProfile = e.target.value || null;
+            
+            // Save to localStorage
+            if (currentProfile) {
+                localStorage.setItem('reader_profile', currentProfile);
+            } else {
+                localStorage.removeItem('reader_profile');
+            }
+            
             console.log('📋 Profile changed to:', currentProfile);
             loadVerses();
         });
