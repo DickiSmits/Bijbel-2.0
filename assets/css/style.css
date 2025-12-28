@@ -296,27 +296,111 @@
     opacity: 1;
 }
 /* ============================================================================
-   MULTI-PROFIEL INDICATOR - SIMPELE VERSIE
-   Voeg dit toe aan style.css
-   Gebruikt browser native tooltip (via title attribute)
+   MULTI-PROFIEL INDICATOR - ZERO DELAY INSTANT TOOLTIP ⚡
+   Helemaal geen transitie - verschijnt INSTANT bij hover!
+   
+   VERVANG DE CSS IN style.css MET DEZE VERSIE
    ============================================================================ */
 
 /* Versnummer met bewerkingen in andere profielen - lichtblauw */
 .verse-number.has-other-profiles {
-    color: #4A90E2 !important; /* Lichtblauw */
+    color: #4A90E2 !important;
     font-weight: 600;
-    cursor: help; /* Vraagtekenpointer bij hover */
-    transition: all 0.2s ease;
+    cursor: help;
+    position: relative;
+    /* Geen transition op kleur - instant blauw */
 }
 
-/* Hover effect - donkerder blauw */
+/* Hover effect - instant donkerder */
 .verse-number.has-other-profiles:hover {
     color: #2c5282 !important;
-    text-decoration: underline;
-    transform: scale(1.1);
 }
 
-/* Dark mode support */
+/* ============================================================================
+   INSTANT TOOLTIP - 0ms delay, GEEN transitie!
+   ============================================================================ */
+
+/* Tooltip balloon - VERBORGEN standaard */
+.verse-number.has-other-profiles[data-tooltip]::after {
+    content: "Bewerkt in: " attr(data-tooltip);
+    
+    /* Positioning */
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    
+    /* Styling */
+    background: rgba(44, 82, 130, 0.95);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    white-space: nowrap;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    
+    /* VERBORGEN - maar klaar om te tonen */
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    
+    /* ⚡ GEEN TRANSITIE - INSTANT! */
+    transition: none;
+    
+    z-index: 1000;
+}
+
+/* Tooltip arrow */
+.verse-number.has-other-profiles[data-tooltip]::before {
+    content: '';
+    position: absolute;
+    bottom: calc(100% + 2px);
+    left: 50%;
+    transform: translateX(-50%);
+    
+    border: 6px solid transparent;
+    border-top-color: rgba(44, 82, 130, 0.95);
+    
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    
+    /* ⚡ GEEN TRANSITIE - INSTANT! */
+    transition: none;
+    
+    z-index: 1000;
+}
+
+/* ⚡ INSTANT SHOW bij hover - 0ms delay! */
+.verse-number.has-other-profiles[data-tooltip]:hover::after,
+.verse-number.has-other-profiles[data-tooltip]:hover::before {
+    opacity: 1;
+    visibility: visible;
+    /* Geen transition-delay nodig - is al instant! */
+}
+
+/* ============================================================================
+   RESPONSIVE
+   ============================================================================ */
+
+@media (max-width: 768px) {
+    .verse-number.has-other-profiles[data-tooltip]::after {
+        font-size: 0.7rem;
+        padding: 5px 10px;
+        max-width: 200px;
+        white-space: normal;
+    }
+    
+    .verse-number.has-other-profiles[data-tooltip]::before {
+        border-width: 5px;
+    }
+}
+
+/* ============================================================================
+   DARK MODE
+   ============================================================================ */
+
 @media (prefers-color-scheme: dark) {
     .verse-number.has-other-profiles {
         color: #64B5F6 !important;
@@ -325,4 +409,25 @@
     .verse-number.has-other-profiles:hover {
         color: #90CAF9 !important;
     }
+    
+    .verse-number.has-other-profiles[data-tooltip]::after {
+        background: rgba(100, 181, 246, 0.95);
+        color: #000;
+    }
+    
+    .verse-number.has-other-profiles[data-tooltip]::before {
+        border-top-color: rgba(100, 181, 246, 0.95);
+    }
+}
+
+/* ============================================================================
+   PERFORMANCE TIP: GPU Acceleration
+   Voor ultra-smooth rendering op moderne browsers
+   ============================================================================ */
+
+.verse-number.has-other-profiles[data-tooltip]::after,
+.verse-number.has-other-profiles[data-tooltip]::before {
+    will-change: opacity, visibility;
+    backface-visibility: hidden;
+    -webkit-font-smoothing: antialiased;
 }

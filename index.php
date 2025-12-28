@@ -1,12 +1,7 @@
 <?php
 /**
  * BIJBELREADER APPLICATIE - MVC Versie
- * 
- * Gebruikt:
- * - Singleton Database pattern (Database::getInstance())
- * - Modulaire API endpoints in /api/
- * - Views in /views/ (reader.php, admin.php, login.php)
- * - JavaScript modules in /assets/js/
+ * Met INSTANT Multi-Profiel Indicator (0ms delay)
  */
 
 session_start();
@@ -32,7 +27,7 @@ if (isset($_GET['api'])) {
         echo json_encode(['error' => 'API endpoint niet gevonden: ' . $endpoint]);
     }
     
-    exit; // ← STOP! Geen HTML na API call
+    exit;
 }
 
 // ============================================================================
@@ -239,21 +234,15 @@ if (!is_dir('images')) {
         <?php endif; ?>
         
         <!-- ================================================================
-             MULTI-PROFIEL INDICATOR SYSTEEM
-             Lichtblauwe versnummers voor verzen bewerkt in andere profielen
+             MULTI-PROFIEL INDICATOR - INSTANT TOOLTIP (0ms delay!)
              ================================================================ -->
         <script>
         (function() {
             'use strict';
             
-            // Global variabele voor profiel mappings
             let chapterProfileMappings = {};
             
-            /**
-             * Laad welke profielen bewerkingen hebben voor huidige hoofdstuk
-             */
             async function loadChapterProfiles() {
-                // Check if currentBook and currentChapter are available
                 if (typeof currentBook === 'undefined' || typeof currentChapter === 'undefined') {
                     console.warn('⚠️ currentBook/currentChapter not defined yet');
                     return;
@@ -270,78 +259,63 @@ if (!is_dir('images')) {
                     
                     console.log(`📊 Loaded profile mappings for ${Object.keys(chapterProfileMappings).length} verses`);
                     
-                    // Update versnummers met indicator
                     updateVerseNumberIndicators();
                 } catch (error) {
                     console.error('Error loading chapter profiles:', error);
                 }
             }
             
-            /**
-             * Update versnummers met multi-profiel indicator
-             */
             function updateVerseNumberIndicators() {
-                // Check if currentProfile is available
                 const currentProfileId = (typeof currentProfile !== 'undefined' && currentProfile) 
                     ? parseInt(currentProfile) 
                     : null;
                 
-                // Loop door alle verzen in de DOM
                 document.querySelectorAll('.verse').forEach(verseElement => {
                     const versNumber = verseElement.querySelector('.verse-number');
                     if (!versNumber) return;
                     
                     const versnummer = versNumber.textContent.trim();
-                    
-                    // Check of dit vers bewerkingen heeft
                     const profiles = chapterProfileMappings[versnummer] || [];
                     
                     if (profiles.length === 0) {
-                        // Geen bewerkingen - verwijder classes
                         versNumber.classList.remove('has-other-profiles');
+                        versNumber.removeAttribute('data-tooltip');
                         versNumber.removeAttribute('title');
                         return;
                     }
                     
-                    // Filter andere profielen (niet het huidige)
                     const otherProfiles = currentProfileId 
                         ? profiles.filter(p => p.Profiel_ID !== currentProfileId)
                         : profiles;
                     
                     if (otherProfiles.length > 0) {
-                        // Heeft bewerkingen in andere profielen - maak lichtblauw
                         versNumber.classList.add('has-other-profiles');
                         
-                        // Maak tooltip tekst
                         const tooltipText = otherProfiles.map(p => p.Profiel_Naam).join(', ');
-                        versNumber.setAttribute('title', `Bewerkt in: ${tooltipText}`);
+                        
+                        // ⚡ Gebruik data-tooltip voor custom CSS tooltip (instant!)
+                        versNumber.setAttribute('data-tooltip', tooltipText);
+                        
+                        // ⚡ Verwijder title attribute (browser tooltip met delay)
+                        versNumber.removeAttribute('title');
                         
                         console.log(`✏️ Vers ${versnummer} heeft bewerkingen in: ${tooltipText}`);
                     } else {
-                        // Alleen huidige profiel - verwijder indicator
                         versNumber.classList.remove('has-other-profiles');
+                        versNumber.removeAttribute('data-tooltip');
                         versNumber.removeAttribute('title');
                     }
                 });
             }
             
-            // ================================================================
-            // HOOK INTO EXISTING EVENTS
-            // ================================================================
-            
-            /**
-             * Wait for DOM and other scripts to load
-             */
             window.addEventListener('DOMContentLoaded', function() {
                 console.log('🔵 Multi-profiel indicator systeem initializing...');
                 
-                // Wacht tot reader.js geladen is en variabelen beschikbaar zijn
                 const checkInterval = setInterval(function() {
                     if (typeof apiCall !== 'undefined' && typeof currentBook !== 'undefined') {
                         clearInterval(checkInterval);
-                        console.log('✅ Multi-profiel indicator systeem ready!');
+                        console.log('✅ Multi-profiel indicator systeem ready (INSTANT tooltips!)');
                         
-                        // Hook into profile select change
                         const profileSelect = document.getElementById('profileSelect');
                         if (profileSelect) {
                             profileSelect.addEventListener('change', function() {
@@ -349,21 +323,18 @@ if (!is_dir('images')) {
                             });
                         }
                         
-                        // Hook into chapter select change
                         const chapterSelect = document.getElementById('chapterSelect');
                         if (chapterSelect) {
                             chapterSelect.addEventListener('change', function() {
-                                chapterProfileMappings = {}; // Reset mappings
+                                chapterProfileMappings = {};
                             });
                         }
                     }
-                }, 100); // Check elke 100ms
+                }, 100);
                 
-                // Stop after 5 seconds to prevent infinite loop
                 setTimeout(() => clearInterval(checkInterval), 5000);
             });
             
-            // Export functions to window for external access
             window.loadChapterProfiles = loadChapterProfiles;
             window.updateVerseNumberIndicators = updateVerseNumberIndicators;
             
