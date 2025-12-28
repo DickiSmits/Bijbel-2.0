@@ -3,152 +3,157 @@
  * Core functionaliteit voor het lezen van bijbelteksten
  */
 
+console.log('📦 Loading reader.js...');
+
 // Global reader variabelen
-let currentBook = null;
-let currentChapter = null;
-let currentVerse = null;
-let currentProfile = null;
-let currentOffset = 0;
-let loading = false;
-let allLoaded = false;
-let searchQuery = '';
-let lastChapter = null;
-let firstLoadedVersId = null;
-let loadingBackward = false;
-let allLoadedBackward = false;
-let selectedChapter = null;
-let continuousScrolling = false;
-let lastLoadedVersId = null;
-let isAutoScrolling = false;
-let scrollSyncEnabled = true;
+window.currentBook = null;
+window.currentChapter = null;
+window.currentVerse = null;
+window.currentProfile = null;
+window.currentOffset = 0;
+window.loading = false;
+window.allLoaded = false;
+window.searchQuery = '';
+window.lastChapter = null;
+window.isAutoScrolling = false;
 
 /**
  * Initialiseer reader mode
  */
-async function initReader() {
-    console.log('Initializing reader...');
+window.initReader = async function() {
+    console.log('🚀 Initializing reader...');
     
-    // Load books
-    const books = await apiCall('books');
-    const bookSelect = document.getElementById('bookSelect');
-    if (books && bookSelect) {
-        books.forEach(book => {
-            const option = document.createElement('option');
-            option.value = book.Bijbelboeknaam;
-            option.textContent = book.Bijbelboeknaam;
-            bookSelect.appendChild(option);
-        });
-    }
-    
-    // Load profiles
-    const profiles = await apiCall('profiles');
-    const profileSelect = document.getElementById('profileSelect');
-    if (profiles && profileSelect) {
-        profiles.forEach(profile => {
-            const option = document.createElement('option');
-            option.value = profile.Profiel_ID;
-            option.textContent = profile.Profiel_Naam;
-            profileSelect.appendChild(option);
-        });
-        
-        // Restore profile from localStorage
-        const lastProfile = localStorage.getItem('lastProfile');
-        if (lastProfile && profiles.some(p => p.Profiel_ID == lastProfile)) {
-            currentProfile = lastProfile;
-            profileSelect.value = currentProfile;
-        } else if (profiles.length > 0) {
-            currentProfile = profiles[0].Profiel_ID;
-            profileSelect.value = currentProfile;
-        }
-    }
-    
-    // Restore last position from localStorage
-    const lastBook = localStorage.getItem('lastBook');
-    const lastChapter = localStorage.getItem('lastChapter');
-    const lastVerse = localStorage.getItem('lastVerse');
-    
-    if (lastBook && books && books.some(b => b.Bijbelboeknaam === lastBook)) {
-        bookSelect.value = lastBook;
-        currentBook = lastBook;
-        
-        // Load chapters for the book
-        const chapters = await apiCall(`chapters&boek=${encodeURIComponent(lastBook)}`);
-        const chapterSelect = document.getElementById('chapterSelect');
-        if (chapters && chapterSelect) {
-            chapterSelect.innerHTML = '<option value="">Alle hoofdstukken</option>';
-            
-            chapters.forEach(ch => {
+    try {
+        // Load books
+        const books = await window.apiCall('books');
+        const bookSelect = document.getElementById('bookSelect');
+        if (books && bookSelect) {
+            books.forEach(book => {
                 const option = document.createElement('option');
-                option.value = ch.Hoofdstuknummer;
-                option.textContent = `Hoofdstuk ${ch.Hoofdstuknummer}`;
-                chapterSelect.appendChild(option);
+                option.value = book.Bijbelboeknaam;
+                option.textContent = book.Bijbelboeknaam;
+                bookSelect.appendChild(option);
+            });
+            console.log('✓ Loaded', books.length, 'books');
+        } else {
+            console.error('❌ Failed to load books');
+        }
+        
+        // Load profiles
+        const profiles = await window.apiCall('profiles');
+        const profileSelect = document.getElementById('profileSelect');
+        if (profiles && profileSelect) {
+            profiles.forEach(profile => {
+                const option = document.createElement('option');
+                option.value = profile.Profiel_ID;
+                option.textContent = profile.Profiel_Naam;
+                profileSelect.appendChild(option);
             });
             
-            if (lastChapter) {
-                chapterSelect.value = lastChapter;
-                currentChapter = lastChapter;
+            // Restore profile from localStorage
+            const lastProfile = localStorage.getItem('lastProfile');
+            if (lastProfile && profiles.some(p => p.Profiel_ID == lastProfile)) {
+                window.currentProfile = lastProfile;
+                profileSelect.value = window.currentProfile;
+            } else if (profiles.length > 0) {
+                window.currentProfile = profiles[0].Profiel_ID;
+                profileSelect.value = window.currentProfile;
+            }
+            console.log('✓ Loaded', profiles.length, 'profiles');
+        }
+        
+        // Restore last position
+        const lastBook = localStorage.getItem('lastBook');
+        const lastChapter = localStorage.getItem('lastChapter');
+        
+        if (lastBook && books && books.some(b => b.Bijbelboeknaam === lastBook)) {
+            bookSelect.value = lastBook;
+            window.currentBook = lastBook;
+            
+            const chapters = await window.apiCall(`chapters&boek=${encodeURIComponent(lastBook)}`);
+            const chapterSelect = document.getElementById('chapterSelect');
+            if (chapters && chapterSelect) {
+                chapterSelect.innerHTML = '<option value="">Alle hoofdstukken</option>';
+                chapters.forEach(ch => {
+                    const option = document.createElement('option');
+                    option.value = ch.Hoofdstuknummer;
+                    option.textContent = `Hoofdstuk ${ch.Hoofdstuknummer}`;
+                    chapterSelect.appendChild(option);
+                });
+                
+                if (lastChapter) {
+                    chapterSelect.value = lastChapter;
+                    window.currentChapter = lastChapter;
+                }
             }
         }
+        
+        // Setup event listeners
+        window.setupEventListeners();
+        
+        // Initialize components
+        if (typeof window.initMap === 'function') {
+            console.log('Starting map...');
+            window.initMap();
+        }
+        
+        if (typeof window.initTimeline === 'function') {
+            console.log('Starting timeline...');
+            window.initTimeline();
+        }
+        
+        // Load data
+        console.log('Loading verses...');
+        await window.loadVerses();
+        
+        if (typeof window.loadAllLocationsOnMap === 'function') {
+            console.log('Loading locations...');
+            await window.loadAllLocationsOnMap();
+        }
+        
+        if (typeof window.loadTimelineEvents === 'function') {
+            console.log('Loading timeline events...');
+            await window.loadTimelineEvents();
+        }
+        
+        // Scroll to last verse if available
+        const lastVerse = localStorage.getItem('lastVerse');
+        if (lastVerse) {
+            setTimeout(() => {
+                const verseElement = document.querySelector(`[data-vers-id="${lastVerse}"]`);
+                if (verseElement) {
+                    verseElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    window.selectVerse(parseInt(lastVerse), false);
+                }
+            }, 500);
+        }
+        
+        console.log('✅ Reader initialized successfully!');
+        
+    } catch (error) {
+        console.error('❌ Error initializing reader:', error);
     }
-    
-    // Setup event listeners
-    setupEventListeners();
-    
-    // Initialize map and timeline
-    if (typeof initMap === 'function') {
-        initMap();
-    }
-    
-    if (typeof initTimeline === 'function') {
-        initTimeline();
-    }
-    
-    // Load data
-    await loadVerses();
-    
-    if (typeof loadAllLocationsOnMap === 'function') {
-        await loadAllLocationsOnMap();
-    }
-    
-    if (typeof loadTimelineEvents === 'function') {
-        await loadTimelineEvents();
-    }
-    
-    // Scroll to last verse if available
-    if (lastVerse) {
-        setTimeout(() => {
-            const verseElement = document.querySelector(`[data-vers-id="${lastVerse}"]`);
-            if (verseElement) {
-                verseElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                selectVerse(parseInt(lastVerse), false);
-            }
-        }, 300);
-    }
-    
-    console.log('Reader initialized');
-}
+};
 
 /**
  * Setup event listeners
  */
-function setupEventListeners() {
+window.setupEventListeners = function() {
     // Book select
     const bookSelect = document.getElementById('bookSelect');
     if (bookSelect) {
         bookSelect.addEventListener('change', async (e) => {
-            currentBook = e.target.value;
-            currentChapter = null;
+            window.currentBook = e.target.value;
+            window.currentChapter = null;
             
-            localStorage.setItem('lastBook', currentBook);
+            localStorage.setItem('lastBook', window.currentBook);
             localStorage.removeItem('lastChapter');
             localStorage.removeItem('lastVerse');
             
-            // Load chapters
-            const chapters = await apiCall(`chapters&boek=${encodeURIComponent(currentBook)}`);
+            const chapters = await window.apiCall(`chapters&boek=${encodeURIComponent(window.currentBook)}`);
             const chapterSelect = document.getElementById('chapterSelect');
             if (chapters && chapterSelect) {
                 chapterSelect.innerHTML = '<option value="">Alle hoofdstukken</option>';
-                
                 chapters.forEach(ch => {
                     const option = document.createElement('option');
                     option.value = ch.Hoofdstuknummer;
@@ -157,7 +162,7 @@ function setupEventListeners() {
                 });
             }
             
-            loadVerses();
+            window.loadVerses();
         });
     }
     
@@ -165,16 +170,16 @@ function setupEventListeners() {
     const chapterSelect = document.getElementById('chapterSelect');
     if (chapterSelect) {
         chapterSelect.addEventListener('change', (e) => {
-            currentChapter = e.target.value;
+            window.currentChapter = e.target.value;
             
-            if (currentChapter) {
-                localStorage.setItem('lastChapter', currentChapter);
+            if (window.currentChapter) {
+                localStorage.setItem('lastChapter', window.currentChapter);
             } else {
                 localStorage.removeItem('lastChapter');
             }
             localStorage.removeItem('lastVerse');
             
-            loadVerses();
+            window.loadVerses();
         });
     }
     
@@ -182,15 +187,15 @@ function setupEventListeners() {
     const profileSelect = document.getElementById('profileSelect');
     if (profileSelect) {
         profileSelect.addEventListener('change', (e) => {
-            currentProfile = e.target.value || null;
+            window.currentProfile = e.target.value || null;
             
-            if (currentProfile) {
-                localStorage.setItem('lastProfile', currentProfile);
+            if (window.currentProfile) {
+                localStorage.setItem('lastProfile', window.currentProfile);
             } else {
                 localStorage.removeItem('lastProfile');
             }
             
-            loadVerses();
+            window.loadVerses();
         });
     }
     
@@ -198,114 +203,62 @@ function setupEventListeners() {
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
         searchInput.addEventListener('input', (e) => {
-            searchQuery = e.target.value;
-            if (searchQuery.length > 2) {
-                loadVerses();
-            } else if (searchQuery.length === 0) {
-                loadVerses();
+            window.searchQuery = e.target.value;
+            if (window.searchQuery.length > 2 || window.searchQuery.length === 0) {
+                window.loadVerses();
             }
         });
     }
     
-    // Scroll events
+    // Infinite scroll
     const bibleText = document.getElementById('bibleText');
     if (bibleText) {
-        // Auto-select verse on scroll
-        let scrollTimeout;
-        bibleText.addEventListener('scroll', () => {
-            if (isAutoScrolling || !scrollSyncEnabled) return;
-            
-            clearTimeout(scrollTimeout);
-            scrollTimeout = setTimeout(() => {
-                const container = document.getElementById('bibleText');
-                const verses = container.querySelectorAll('.verse');
-                const containerRect = container.getBoundingClientRect();
-                const headerOffset = 140;
-                
-                for (let verse of verses) {
-                    const rect = verse.getBoundingClientRect();
-                    
-                    if (rect.top >= containerRect.top + headerOffset && 
-                        rect.top <= containerRect.top + (containerRect.height * 0.4)) {
-                        const versId = parseInt(verse.dataset.versId);
-                        if (versId && currentVerse !== versId) {
-                            selectVerse(versId);
-                        }
-                        break;
-                    }
-                }
-            }, 500);
-        });
-        
-        // Infinite scroll
         bibleText.addEventListener('scroll', (e) => {
             const element = e.target;
-            
-            // Scroll down - load more verses
             if (element.scrollHeight - element.scrollTop <= element.clientHeight + 100) {
-                loadVerses(true);
+                window.loadVerses(true);
             }
         });
     }
-}
+};
 
 /**
  * Laad verses
  */
-async function loadVerses(append = false) {
-    if (loading || (allLoaded && append)) return;
+window.loadVerses = async function(append = false) {
+    if (window.loading || (window.allLoaded && append)) return;
     
-    loading = true;
+    window.loading = true;
     const container = document.getElementById('bibleText');
     if (!container) {
-        loading = false;
+        window.loading = false;
         return;
     }
     
     if (!append) {
         container.innerHTML = '<div class="text-center py-5"><div class="spinner-border" role="status"></div><p class="mt-2">Laden...</p></div>';
-        currentOffset = 0;
-        allLoaded = false;
-        lastChapter = null;
-        selectedChapter = currentChapter;
-        continuousScrolling = false;
-        lastLoadedVersId = null;
-        firstLoadedVersId = null;
-        allLoadedBackward = false;
+        window.currentOffset = 0;
+        window.allLoaded = false;
+        window.lastChapter = null;
     }
     
     const params = new URLSearchParams({
-        limit: 50
+        limit: 50,
+        offset: window.currentOffset
     });
     
-    if (currentBook) params.append('boek', currentBook);
-    if (currentProfile) params.append('profiel_id', currentProfile);
+    if (window.currentBook) params.append('boek', window.currentBook);
+    if (window.currentChapter) params.append('hoofdstuk', window.currentChapter);
+    if (window.currentProfile) params.append('profiel_id', window.currentProfile);
     
-    if (continuousScrolling && lastLoadedVersId) {
-        params.append('after_vers_id', lastLoadedVersId);
-        params.append('offset', 0);
-    } else {
-        params.append('offset', currentOffset);
-        if (currentChapter) {
-            params.append('hoofdstuk', currentChapter);
-        }
-    }
-    
-    const verses = await apiCall('verses&' + params.toString());
+    const verses = await window.apiCall('verses&' + params.toString());
     
     if (!verses || verses.length === 0) {
         if (!append) {
             container.innerHTML = '<div class="text-center py-5 text-muted">Geen verzen gevonden</div>';
-            allLoaded = true;
-        } else if (currentChapter && !continuousScrolling && lastLoadedVersId) {
-            continuousScrolling = true;
-            loading = false;
-            loadVerses(true);
-            return;
-        } else {
-            allLoaded = true;
         }
-        loading = false;
+        window.allLoaded = true;
+        window.loading = false;
         return;
     }
     
@@ -313,25 +266,16 @@ async function loadVerses(append = false) {
         container.innerHTML = '';
     }
     
-    if (verses.length > 0) {
-        lastLoadedVersId = verses[verses.length - 1].Vers_ID;
-        if (!firstLoadedVersId) {
-            firstLoadedVersId = verses[0].Vers_ID;
-        }
-    }
-    
     for (const verse of verses) {
-        // Check if we need a chapter header
         const chapterKey = `${verse.Bijbelboeknaam}_${verse.Hoofdstuknummer}`;
-        if (lastChapter !== chapterKey) {
+        if (window.lastChapter !== chapterKey) {
             const chapterHeader = document.createElement('div');
             chapterHeader.className = 'chapter-header';
             chapterHeader.textContent = `${verse.Bijbelboeknaam} ${verse.Hoofdstuknummer}`;
             container.appendChild(chapterHeader);
-            lastChapter = chapterKey;
+            window.lastChapter = chapterKey;
         }
         
-        // Add verse
         const verseSpan = document.createElement('span');
         verseSpan.className = 'verse';
         verseSpan.dataset.versId = verse.Vers_ID;
@@ -342,90 +286,50 @@ async function loadVerses(append = false) {
         
         const text = document.createElement('span');
         text.className = 'verse-text';
-        
-        let displayText = verse.Opgemaakte_Tekst || verse.Tekst;
-        
-        // Highlight search terms
-        if (searchQuery) {
-            const regex = new RegExp(`(${searchQuery})`, 'gi');
-            displayText = displayText.replace(regex, '<mark>$1</mark>');
-        }
-        
-        text.innerHTML = displayText;
+        text.innerHTML = verse.Opgemaakte_Tekst || verse.Tekst;
         
         verseSpan.appendChild(reference);
         verseSpan.appendChild(text);
         verseSpan.appendChild(document.createTextNode(' '));
         
         verseSpan.addEventListener('click', () => {
-            isAutoScrolling = true;
-            selectVerse(verse.Vers_ID, true);
-            setTimeout(() => isAutoScrolling = false, 1000);
+            window.isAutoScrolling = true;
+            window.selectVerse(verse.Vers_ID, true);
+            setTimeout(() => window.isAutoScrolling = false, 1000);
         });
         
         container.appendChild(verseSpan);
     }
     
-    currentOffset += verses.length;
-    loading = false;
+    window.currentOffset += verses.length;
+    window.loading = false;
     
     if (verses.length < 50) {
-        if (continuousScrolling || !currentChapter) {
-            allLoaded = true;
-        }
+        window.allLoaded = true;
     }
-}
+};
 
 /**
  * Selecteer een vers
  */
-async function selectVerse(versId, fromClick = false) {
-    if (currentVerse === versId && !fromClick) return;
-    
-    // Update active state
+window.selectVerse = function(versId, fromClick = false) {
     document.querySelectorAll('.verse').forEach(v => v.classList.remove('active'));
     const verseElement = document.querySelector(`[data-vers-id="${versId}"]`);
     if (verseElement) {
         verseElement.classList.add('active');
     }
     
-    currentVerse = versId;
+    window.currentVerse = versId;
     localStorage.setItem('lastVerse', versId);
     
-    // Update timeline focus
-    if (typeof updateTimelineFocus === 'function') {
-        const fromTimeline = window.timelineClickInProgress || false;
-        if (!fromTimeline) {
-            updateTimelineFocus(versId);
-        }
+    if (typeof window.updateTimelineFocus === 'function') {
+        window.updateTimelineFocus(versId);
     }
     
-    // Update map
-    if (verseElement && typeof highlightLocationsForVerse === 'function') {
+    if (verseElement && typeof window.highlightLocationsForVerse === 'function') {
         const verseText = verseElement.querySelector('.verse-text')?.textContent || '';
-        highlightLocationsForVerse(versId, verseText, fromClick);
+        window.highlightLocationsForVerse(versId, verseText, fromClick);
     }
-}
+};
 
-// Export functies
-if (typeof window !== 'undefined') {
-    window.initReader = initReader;
-    window.loadVerses = loadVerses;
-    window.selectVerse = selectVerse;
-    window.isAutoScrolling = false;
-}
-
-// Start reader when DOM is ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-        if (typeof mode !== 'undefined' && mode === 'reader') {
-            initReader();
-        }
-    });
-} else {
-    if (typeof mode !== 'undefined' && mode === 'reader') {
-        initReader();
-    }
-}
-
-console.log('Reader module loaded');
+console.log('✓ Reader module loaded');
