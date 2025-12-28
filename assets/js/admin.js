@@ -553,6 +553,7 @@ verseItem.dataset.versId = verse.Vers_ID;
                     ['bold', 'italic', 'underline', 'strike'],
                     [{ 'color': [] }, { 'background': [] }],
                     [{ 'script': 'sub'}, { 'script': 'super' }],
+                    ['link', 'blockquote'],  
                     ['clean']
                 ]
             }
