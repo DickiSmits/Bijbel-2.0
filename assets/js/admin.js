@@ -233,20 +233,36 @@ async function restoreEditorSettings() {
     const editModeSingle = document.getElementById('editModeSingle');
     const editModeChapter = document.getElementById('editModeChapter');
     
-    if (!editModeSingle || !editModeChapter) {
-        console.warn('⚠️ Edit mode buttons not found - skipping mode restore');
-    } else if (savedEditMode) {
+    if (savedEditMode) {
         currentEditMode = savedEditMode;
         
+        // Always show/hide divs based on mode, even if buttons don't exist
         if (savedEditMode === 'chapter') {
-            editModeChapter.checked = true;
             document.getElementById('singleVerseEditor')?.classList.add('d-none');
             document.getElementById('chapterEditor')?.classList.remove('d-none');
             document.getElementById('verseSelectContainer')?.classList.add('d-none');
-            console.log('✅ Restored to chapter mode');
+            console.log('✅ Restored to chapter mode (divs)');
+            
+            // Update radio buttons if they exist
+            if (editModeChapter) {
+                editModeChapter.checked = true;
+                console.log('✅ Updated radio button');
+            } else {
+                console.warn('⚠️ Edit mode buttons not found, but divs updated');
+            }
         } else {
-            editModeSingle.checked = true;
-            console.log('✅ Restored to single mode');
+            document.getElementById('singleVerseEditor')?.classList.remove('d-none');
+            document.getElementById('chapterEditor')?.classList.add('d-none');
+            document.getElementById('verseSelectContainer')?.classList.remove('d-none');
+            console.log('✅ Restored to single mode (divs)');
+            
+            // Update radio buttons if they exist
+            if (editModeSingle) {
+                editModeSingle.checked = true;
+                console.log('✅ Updated radio button');
+            } else {
+                console.warn('⚠️ Edit mode buttons not found, but divs updated');
+            }
         }
     }
     
