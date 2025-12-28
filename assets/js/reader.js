@@ -10,6 +10,11 @@ let currentOffset = 0;
 let loading = false;
 let allLoaded = false;
 
+// Continuous scrolling support
+let continuousScrolling = false;  // Start in chapter mode
+let lastLoadedVersId = null;      // Track last verse for continuous loading
+let selectedChapter = null;        // Remember originally selected chapter
+
 // Initialize reader
 async function initReader() {
     console.log('🚀 Initializing reader...');
@@ -145,6 +150,26 @@ async function initReader() {
     console.log('📖 Loading initial verses...');
     await loadVerses();
     
+    // Setup infinite scroll
+    console.log('♾️ Setting up infinite scroll...');
+    const bibleTextContainer = document.getElementById('bibleText');
+    if (bibleTextContainer) {
+        bibleTextContainer.addEventListener('scroll', (e) => {
+            const element = e.target;
+            
+            // Check if scrolled near bottom (100px threshold)
+            const nearBottom = element.scrollHeight - element.scrollTop <= element.clientHeight + 100;
+            
+            if (nearBottom && !loading && !allLoaded) {
+                console.log('📜 Near bottom - loading more verses...');
+                loadVerses(true); // Append mode
+            }
+        });
+        console.log('✅ Infinite scroll activated!');
+    } else {
+        console.error('❌ bibleText container not found for scroll listener!');
+    }
+    
     console.log('✅ Reader initialized successfully!');
 }
 
@@ -242,28 +267,52 @@ async function loadVerses(append = false) {
         container.innerHTML = '<div class="text-center py-5"><div class="spinner-border"></div><p class="mt-2">Laden...</p></div>';
         currentOffset = 0;
         allLoaded = false;
+        continuousScrolling = false;
+        lastLoadedVersId = null;
+        selectedChapter = currentChapter; // Remember what user selected
     }
     
     const params = new URLSearchParams({
-        limit: 50,
-        offset: currentOffset
+        limit: 50
     });
     
     if (currentBook) params.append('boek', currentBook);
-    if (currentChapter) params.append('hoofdstuk', currentChapter);
     if (currentProfile) params.append('profiel_id', currentProfile);
+    
+    // CONTINUOUS SCROLLING MODE: Use after_vers_id to load next verses
+    if (continuousScrolling && lastLoadedVersId) {
+        params.append('after_vers_id', lastLoadedVersId);
+        params.append('offset', 0);
+        console.log('🔄 Continuous mode: Loading after vers_id', lastLoadedVersId);
+    } else {
+        params.append('offset', currentOffset);
+        // Only filter by chapter if NOT in continuous mode
+        if (currentChapter) {
+            params.append('hoofdstuk', currentChapter);
+        }
+    }
     
     const url = 'verses&' + params.toString();
     console.log('📖 Loading verses:', url);
     console.log('   Current profile:', currentProfile);
+    console.log('   Continuous mode:', continuousScrolling);
     
     const verses = await apiCall(url);
     
     if (!verses || verses.length === 0) {
         if (!append) {
             container.innerHTML = '<div class="text-center py-5 text-muted">Geen verzen gevonden</div>';
+            allLoaded = true;
+        } else if (selectedChapter && !continuousScrolling && lastLoadedVersId) {
+            // Selected chapter is complete → Switch to continuous scrolling!
+            console.log('✅ Chapter complete! Enabling continuous scrolling from vers_id:', lastLoadedVersId);
+            continuousScrolling = true;
+            loading = false;
+            loadVerses(true); // Load more (now without chapter filter)
+            return;
+        } else {
+            allLoaded = true;
         }
-        allLoaded = true;
         loading = false;
         return;
     }
@@ -280,6 +329,12 @@ async function loadVerses(append = false) {
     });
     
     console.log(`✅ Loaded ${verses.length} verses: ${withOpmaak} with opmaak, ${withoutOpmaak} without`);
+    
+    // Track last loaded verse for continuous scrolling
+    if (verses.length > 0) {
+        lastLoadedVersId = verses[verses.length - 1].Vers_ID;
+        console.log('   Last loaded Vers_ID:', lastLoadedVersId);
+    }
     
     if (!append) {
         container.innerHTML = '';
@@ -325,10 +380,17 @@ async function loadVerses(append = false) {
     currentOffset += verses.length;
     loading = false;
     
+    // Smart allLoaded detection
     if (verses.length < 50) {
-        allLoaded = true;
+        if (continuousScrolling || !currentChapter) {
+            // In continuous mode OR no chapter selected → truly done
+            allLoaded = true;
+            console.log('🏁 All verses loaded (end of content)');
+        }
+        // If we have a chapter filter and got < 50, we'll switch to continuous on next scroll
     }
-     // Laad profiel mappings voor nieuwe verzen
+    
+    // Laad profiel mappings voor nieuwe verzen
     if (!append && typeof window.loadChapterProfiles === 'function') {
         await window.loadChapterProfiles();
     } else if (append && typeof window.updateVerseNumberIndicators === 'function') {
