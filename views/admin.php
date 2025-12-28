@@ -41,49 +41,31 @@
                     </div>
                 </div>
                 <div class="card-body">
-                   <div class="row g-3 mb-3 align-items-end">
-                        <!-- Boek/Hoofdstuk/Vers op één rij -->
-                        <div class="col-md-3">
-                            <label class="form-label small fw-semibold text-muted">Boek</label>
-                            <select id="adminBookSelect" class="form-select form-select-sm"></select>
+                        <div class="row g-3 mb-3 align-items-end">
+                            <!-- Boek/Hoofdstuk/Vers op één rij -->
+                            <div class="col-md-3">
+                                <label class="form-label small fw-semibold text-muted">Boek</label>
+                                <select id="adminBookSelect" class="form-select form-select-sm"></select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-semibold text-muted">Hoofdstuk</label>
+                                <select id="adminChapterSelect" class="form-select form-select-sm"></select>
+                            </div>
+                            <div class="col-md-3" id="verseSelectContainer">
+                                <label class="form-label small fw-semibold text-muted">Vers</label>
+                                <select id="adminVerseSelect" class="form-select form-select-sm"></select>
+                            </div>
+                            
+                            <!-- Profiel DAARNA met accent kleur -->
+                            <div class="col-md-3">
+                                <label class="form-label small fw-semibold" style="color: #2c5282;">
+                                    <i class="bi bi-person-badge"></i> Profiel
+                                </label>
+                                <select id="editorProfileSelect" class="form-select form-select-sm" 
+                                        style="border: 2px solid #2c5282; background-color: #f0f5ff;">
+                                </select>
+                            </div>
                         </div>
-                        <div class="col-md-3">
-                            <label class="form-label small fw-semibold text-muted">Hoofdstuk</label>
-                            <select id="adminChapterSelect" class="form-select form-select-sm"></select>
-                        </div>
-                        <div class="col-md-3" id="verseSelectContainer">
-                            <label class="form-label small fw-semibold text-muted">Vers</label>
-                            <select id="adminVerseSelect" class="form-select form-select-sm"></select>
-                        </div>
-                        
-                        <!-- Profiel DAARNA met accent kleur -->
-                        <div class="col-md-3">
-                            <label class="form-label small fw-semibold" style="color: #2c5282;">
-                                <i class="bi bi-person-badge"></i> Profiel
-                            </label>
-                            <select id="editorProfileSelect" class="form-select form-select-sm" 
-                                    style="border: 2px solid #2c5282; background-color: #f0f5ff;">
-                            </select>
-                        </div>
-                    </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Boek</label>
-                            <select id="adminBookSelect" class="form-select form-select-sm"></select>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Hoofdstuk</label>
-                            <select id="adminChapterSelect" class="form-select form-select-sm"></select>
-                        </div>
-                        <div class="col-md-4" id="verseSelectContainer">
-                            <label class="form-label">Vers</label>
-                            <select id="adminVerseSelect" class="form-select form-select-sm"></select>
-                        </div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Profiel</label>
-                        <select id="editorProfileSelect" class="form-select form-select-sm"></select>
-                    </div>
                     
                     <!-- Single verse editor -->
                     <div id="singleVerseEditor">
