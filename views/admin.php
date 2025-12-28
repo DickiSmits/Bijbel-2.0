@@ -31,6 +31,15 @@
         <div id="section-editor" class="admin-section">
             <h4 class="mb-4"><i class="bi bi-pencil"></i> Tekst Bewerken</h4>
             <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>Tekst Bewerken</span>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <input type="radio" class="btn-check" name="editMode" id="editModeSingle" checked onchange="setEditMode('single')">
+                        <label class="btn btn-outline-primary" for="editModeSingle">Enkel vers</label>
+                        <input type="radio" class="btn-check" name="editMode" id="editModeChapter" onchange="setEditMode('chapter')">
+                        <label class="btn btn-outline-primary" for="editModeChapter">Heel hoofdstuk</label>
+                    </div>
+                </div>
                 <div class="card-body">
                     <div class="row g-3 mb-3">
                         <div class="col-md-4">
@@ -41,7 +50,7 @@
                             <label class="form-label">Hoofdstuk</label>
                             <select id="adminChapterSelect" class="form-select form-select-sm"></select>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-4" id="verseSelectContainer">
                             <label class="form-label">Vers</label>
                             <select id="adminVerseSelect" class="form-select form-select-sm"></select>
                         </div>
@@ -52,32 +61,56 @@
                         <select id="editorProfileSelect" class="form-select form-select-sm"></select>
                     </div>
                     
-                    <div class="mb-3">
-                        <label class="form-label">Originele tekst</label>
-                        <div id="originalText" class="p-2 bg-light border rounded" style="min-height: 80px;"></div>
+                    <!-- Single verse editor -->
+                    <div id="singleVerseEditor">
+                        <div class="mb-3">
+                            <label class="form-label">Originele tekst</label>
+                            <div id="originalText" class="p-2 bg-light border rounded" style="min-height: 80px; max-height: 150px; overflow-y: auto;"></div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Opgemaakte tekst</label>
+                            <div id="editor-container"></div>
+                        </div>
+                        
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-primary btn-sm" onclick="saveFormatting()">
+                                <i class="bi bi-save"></i> Opslaan
+                            </button>
+                            <button class="btn btn-outline-secondary btn-sm" onclick="resetFormatting()">
+                                <i class="bi bi-arrow-counterclockwise"></i> Reset
+                            </button>
+                            <button class="btn btn-outline-danger btn-sm" onclick="deleteFormatting()">
+                                <i class="bi bi-trash"></i> Verwijderen
+                            </button>
+                        </div>
                     </div>
                     
-                    <div class="mb-3">
-                        <label class="form-label">Opgemaakte tekst</label>
-                        <div id="editor-container"></div>
-                    </div>
-                    
-                    <div class="d-flex gap-2">
-                        <button class="btn btn-primary btn-sm" onclick="saveFormatting()">
-                            <i class="bi bi-save"></i> Opslaan
-                        </button>
-                        <button class="btn btn-outline-secondary btn-sm" onclick="resetFormatting()">
-                            <i class="bi bi-arrow-counterclockwise"></i> Reset
-                        </button>
+                    <!-- Chapter editor (multiple verses) -->
+                    <div id="chapterEditor" class="d-none">
+                        <div class="mb-3 d-flex justify-content-between align-items-center">
+                            <label class="form-label mb-0">Verzen bewerken</label>
+                            <button class="btn btn-primary btn-sm" onclick="saveAllChapterFormatting()">
+                                <i class="bi bi-save-fill"></i> Alles Opslaan
+                            </button>
+                        </div>
+                        <div id="chapterVersesContainer" style="max-height: 500px; overflow-y: auto;">
+                            <div class="text-muted text-center py-4">Selecteer een boek en hoofdstuk om te beginnen</div>
+                        </div>
+                        <div class="mt-3 d-flex justify-content-between">
+                            <small class="text-muted"><span id="chapterVerseCount">0</span> verzen</small>
+                            <button class="btn btn-primary btn-sm" onclick="saveAllChapterFormatting()">
+                                <i class="bi bi-save-fill"></i> Alles Opslaan
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
         
-        <!-- Profiles Section -->
+        <!-- Other sections remain the same -->
         <div id="section-profiles" class="admin-section d-none">
             <h4 class="mb-4"><i class="bi bi-person-badge"></i> Profielen Beheren</h4>
-            
             <div class="card mb-4">
                 <div class="card-header">Nieuw Profiel</div>
                 <div class="card-body">
@@ -98,7 +131,6 @@
                     </div>
                 </div>
             </div>
-            
             <div class="card">
                 <div class="card-header">Bestaande Profielen</div>
                 <div class="card-body">
@@ -107,10 +139,8 @@
             </div>
         </div>
         
-        <!-- Timeline Section -->
         <div id="section-timeline" class="admin-section d-none">
             <h4 class="mb-4"><i class="bi bi-calendar-event"></i> Timeline Beheren</h4>
-            
             <div class="card mb-4">
                 <div class="card-header">Timeline Event</div>
                 <div class="card-body">
@@ -146,7 +176,6 @@
                     </div>
                 </div>
             </div>
-            
             <div class="card">
                 <div class="card-header">Timeline Events</div>
                 <div class="card-body">
@@ -155,10 +184,8 @@
             </div>
         </div>
         
-        <!-- Locations Section -->
         <div id="section-locations" class="admin-section d-none">
             <h4 class="mb-4"><i class="bi bi-geo-alt"></i> Locaties Beheren</h4>
-            
             <div class="card mb-4">
                 <div class="card-header">Nieuwe Locatie</div>
                 <div class="card-body">
@@ -184,7 +211,6 @@
                     </div>
                 </div>
             </div>
-            
             <div class="card">
                 <div class="card-header">Bestaande Locaties</div>
                 <div class="card-body">
@@ -193,10 +219,8 @@
             </div>
         </div>
         
-        <!-- Images Section -->
         <div id="section-images" class="admin-section d-none">
             <h4 class="mb-4"><i class="bi bi-image"></i> Afbeeldingen</h4>
-            
             <div class="card mb-4">
                 <div class="card-header">Afbeelding Uploaden</div>
                 <div class="card-body">
@@ -217,7 +241,6 @@
                     </div>
                 </div>
             </div>
-            
             <div class="card">
                 <div class="card-header">Geüploade Afbeeldingen</div>
                 <div class="card-body">
@@ -226,10 +249,8 @@
             </div>
         </div>
         
-        <!-- Notes Section -->
         <div id="section-notes" class="admin-section d-none">
             <h4 class="mb-4"><i class="bi bi-journal-text"></i> Notities</h4>
-            
             <div class="row" style="height: calc(100vh - 200px);">
                 <div class="col-md-4 col-lg-3">
                     <div class="card h-100">
@@ -270,7 +291,6 @@
     </div>
 </div>
 
-<!-- Toast Container -->
 <div class="toast-container position-fixed top-0 end-0 p-3">
     <div id="notificationToast" class="toast" role="alert">
         <div class="toast-header">
