@@ -1,5 +1,5 @@
 /**
- * READER.JS - Reader mode functionaliteit
+ * READER.JS -  Reader mode functionaliteit
  */
 
 let currentBook = null;

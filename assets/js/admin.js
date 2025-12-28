@@ -1,4 +1,4 @@
-/**
+/** 
  * ADMIN.JS - Admin mode functionaliteit
  */
 
