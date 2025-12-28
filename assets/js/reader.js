@@ -12,39 +12,92 @@ let allLoaded = false;
 
 // Initialize reader
 async function initReader() {
-    console.log('Initializing reader...');
+    console.log('🚀 Initializing reader...');
     
     // Load books
-    const books = await apiCall('books');
-    if (books) {
+    console.log('📚 Loading books...');
+    try {
+        const books = await apiCall('books');
+        console.log('📚 Books received:', books);
+        
+        if (!books) {
+            console.error('❌ No books data received!');
+            return;
+        }
+        
+        if (!Array.isArray(books)) {
+            console.error('❌ Books is not an array:', typeof books);
+            return;
+        }
+        
         const bookSelect = document.getElementById('bookSelect');
-        books.forEach(book => {
+        if (!bookSelect) {
+            console.error('❌ bookSelect element not found!');
+            return;
+        }
+        
+        console.log(`📚 Populating dropdown with ${books.length} books...`);
+        
+        books.forEach((book, index) => {
             const option = document.createElement('option');
             option.value = book.Bijbelboeknaam;
             option.textContent = book.Bijbelboeknaam;
             bookSelect.appendChild(option);
+            
+            if (index < 3) {
+                console.log(`  ✅ Added: ${book.Bijbelboeknaam}`);
+            }
         });
+        
+        console.log(`✅ Books loaded: ${books.length} books in dropdown`);
+        
+    } catch (error) {
+        console.error('❌ Error loading books:', error);
     }
     
     // Load profiles
-    const profiles = await apiCall('profiles');
-    if (profiles) {
-        const profileSelect = document.getElementById('profileSelect');
-        profiles.forEach(profile => {
-            const option = document.createElement('option');
-            option.value = profile.Profiel_ID;
-            option.textContent = profile.Profiel_Naam;
-            profileSelect.appendChild(option);
-        });
+    console.log('📋 Loading profiles...');
+    try {
+        const profiles = await apiCall('profiles');
+        console.log('📋 Profiles received:', profiles);
+        
+        if (profiles && Array.isArray(profiles)) {
+            const profileSelect = document.getElementById('profileSelect');
+            if (profileSelect) {
+                console.log(`📋 Populating dropdown with ${profiles.length} profiles...`);
+                
+                profiles.forEach((profile, index) => {
+                    const option = document.createElement('option');
+                    option.value = profile.Profiel_ID;
+                    option.textContent = profile.Profiel_Naam;
+                    profileSelect.appendChild(option);
+                    
+                    if (index < 3) {
+                        console.log(`  ✅ Added: ${profile.Profiel_Naam} (ID: ${profile.Profiel_ID})`);
+                    }
+                });
+                
+                console.log(`✅ Profiles loaded: ${profiles.length} profiles in dropdown`);
+            } else {
+                console.error('❌ profileSelect element not found!');
+            }
+        } else {
+            console.error('❌ No profiles data or not an array');
+        }
+        
+    } catch (error) {
+        console.error('❌ Error loading profiles:', error);
     }
     
     // Setup event listeners
+    console.log('🔧 Setting up event listeners...');
     setupEventListeners();
     
     // Load initial content (Genesis 1 as example)
+    console.log('📖 Loading initial verses...');
     await loadVerses();
     
-    console.log('Reader initialized');
+    console.log('✅ Reader initialized successfully!');
 }
 
 // Setup event listeners
