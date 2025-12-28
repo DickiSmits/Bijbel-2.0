@@ -1,178 +1,206 @@
-<?php
-/**
- * Reader View - Hoofdweergave voor bijbellezen
- */
-?>
-<!DOCTYPE html>
-<html lang="nl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bijbelreader</title>
-    
-    <!-- Bootstrap CSS -->
-    <link href="<?= BOOTSTRAP_CSS ?>" rel="stylesheet">
-    <link href="<?= BOOTSTRAP_ICONS ?>" rel="stylesheet">
-    
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="<?= LEAFLET_CSS ?>">
-    
-    <!-- Vis Timeline CSS -->
-    <link rel="stylesheet" href="<?= VIS_CSS ?>">
-    
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="assets/css/style.css">
-</head>
-<body>
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="?">
-                <i class="bi bi-book"></i> Bijbelreader
-            </a>
-            
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            
-            <div class="collapse navbar-collapse" id="navbarContent">
-                <div class="d-flex flex-wrap align-items-center gap-2 me-auto ms-3">
-                    <select id="bookSelect" class="form-select form-select-sm" style="width: 180px;">
-                        <option value="">Kies een boek...</option>
-                    </select>
-                    
-                    <select id="chapterSelect" class="form-select form-select-sm" style="width: 140px;">
-                        <option value="">Hoofdstuk</option>
-                    </select>
-                    
-                    <input type="search" id="searchInput" class="form-control form-control-sm" placeholder="Zoeken..." style="width: 160px;">
-                    
-                    <select id="profileSelect" class="form-select form-select-sm" style="width: 160px;">
-                        <option value="">Geen opmaak</option>
-                    </select>
-                </div>
-            </div>
-            
-            <div class="d-flex align-items-center gap-2">
-                <?php if ($is_admin): ?>
-                <a href="?logout" class="btn btn-outline-light btn-sm">
-                    <i class="bi bi-box-arrow-right"></i> Uitloggen
-                </a>
-                <?php endif; ?>
-                
-                <a href="?mode=admin" class="btn btn-outline-light btn-sm">
-                    <i class="bi bi-gear"></i> Admin
-                </a>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Reader Layout -->
-    <div class="reader-layout" id="readerContainer">
-        <div class="bible-panel" id="bibleText">
-            <div class="text-center py-5 text-muted">
-                <div class="spinner-border" role="status"></div>
-                <p class="mt-2">Bijbeltekst wordt geladen...</p>
-            </div>
-        </div>
-        
-        <div class="resize-handle-v" id="verticalHandle"></div>
-        
-        <div class="map-panel">
-            <div id="map"></div>
-        </div>
-        
-        <div class="resize-handle-h" id="horizontalHandle"></div>
-        
-        <div class="timeline-panel">
-            <div id="timeline"></div>
+<!-- Reader View - Complete Interface -->
+<div class="reader-layout" id="readerContainer">
+    <!-- Bible Text Panel -->
+    <div class="bible-panel" id="bibleText">
+        <div class="text-center py-5 text-muted">
+            <div class="spinner-border" role="status"></div>
+            <p class="mt-2">Bijbeltekst wordt geladen...</p>
         </div>
     </div>
-
-    <!-- Timeline Event Popup -->
-    <div class="timeline-popup" id="timelinePopup">
-        <div class="timeline-popup-content">
-            <button class="timeline-popup-close" onclick="closeTimelinePopup()">
-                <i class="bi bi-x-lg"></i>
-            </button>
-            <div class="timeline-popup-header">
-                <h5 id="timelinePopupTitle">Event Titel</h5>
-                <div class="timeline-popup-meta">
-                    <span id="timelinePopupDate" class="badge bg-secondary"></span>
-                    <span id="timelinePopupGroup" class="badge"></span>
-                </div>
-            </div>
-            <div class="timeline-popup-body">
-                <div id="timelinePopupDescription"></div>
-            </div>
-            <div class="timeline-popup-footer">
-                <button class="btn btn-sm btn-primary" id="timelinePopupGoToVerse" onclick="goToTimelineVerse()">
-                    <i class="bi bi-book"></i> Ga naar vers
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Lightbox -->
-    <div class="lightbox" id="lightbox" onclick="closeLightbox()">
-        <img id="lightboxImage" src="" alt="">
-    </div>
-
-    <!-- Toast Container -->
-    <div class="toast-container position-fixed top-0 end-0 p-3">
-        <div id="notificationToast" class="toast" role="alert">
-            <div class="toast-header">
-                <i class="bi bi-info-circle me-2"></i>
-                <strong class="me-auto">Melding</strong>
-                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
-            </div>
-            <div class="toast-body"></div>
-        </div>
-    </div>
-
-    <!-- External Libraries -->
-    <script src="<?= BOOTSTRAP_JS ?>"></script>
-    <script src="<?= LEAFLET_JS ?>"></script>
-    <script src="<?= VIS_JS ?>"></script>
     
-    <!-- CRITICAL: Set mode BEFORE loading custom scripts -->
-    <script>
-        const mode = 'reader';
-        console.log('✅ Mode set to:', mode);
-    </script>
+    <!-- Vertical Resize Handle -->
+    <div class="resize-handle-v" id="verticalHandle"></div>
     
-    <!-- Custom Scripts - EXACT ORDER -->
-    <script src="assets/js/app.js"></script>
-    <script src="assets/js/map.js"></script>
-    <script src="assets/js/timeline.js"></script>
-    <script src="assets/js/reader.js"></script>
+    <!-- Map Panel -->
+    <div class="map-panel">
+        <div id="map"></div>
+    </div>
     
-    <!-- Auto-start after all scripts loaded -->
-    <script>
-        console.log('🔄 Starting Bijbelreader...');
-        
-        // Wait for DOM to be ready
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', startApp);
-        } else {
-            startApp();
-        }
-        
-        function startApp() {
-            console.log('🚀 DOM ready, checking functions...');
-            console.log('- apiCall:', typeof window.apiCall);
-            console.log('- initReader:', typeof window.initReader);
-            console.log('- initMap:', typeof window.initMap);
-            console.log('- initTimeline:', typeof window.initTimeline);
-            
-            if (typeof window.initReader === 'function') {
-                console.log('✅ Starting reader...');
-                window.initReader();
-            } else {
-                console.error('❌ initReader not found!');
-                alert('Fout: JavaScript modules niet correct geladen. Herlaad de pagina.');
-            }
-        }
-    </script>
-</body>
-</html>
+    <!-- Horizontal Resize Handle -->
+    <div class="resize-handle-h" id="horizontalHandle"></div>
+    
+    <!-- Timeline Panel -->
+    <div class="timeline-panel">
+        <button class="timeline-nav-btn timeline-nav-prev" onclick="navigateTimelinePrev()" title="Vorig event">
+            <i class="bi bi-chevron-left"></i>
+        </button>
+        <div id="timeline"></div>
+        <button class="timeline-nav-btn timeline-nav-next" onclick="navigateTimelineNext()" title="Volgend event">
+            <i class="bi bi-chevron-right"></i>
+        </button>
+    </div>
+</div>
+
+<style>
+/* Reader Layout */
+.reader-layout {
+    display: grid;
+    grid-template-columns: 2fr 4px 1fr;
+    grid-template-rows: 1fr 4px 250px;
+    height: calc(100vh - 120px);
+    gap: 0;
+}
+
+.bible-panel {
+    grid-column: 1;
+    grid-row: 1;
+    overflow-y: auto;
+    padding: 1rem;
+    background: #fff;
+}
+
+.resize-handle-v {
+    grid-column: 2;
+    grid-row: 1;
+    background: #dee2e6;
+    cursor: col-resize;
+}
+
+.resize-handle-v:hover {
+    background: #2c5282;
+}
+
+.map-panel {
+    grid-column: 3;
+    grid-row: 1;
+}
+
+.resize-handle-h {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    background: #dee2e6;
+    cursor: row-resize;
+}
+
+.resize-handle-h:hover {
+    background: #2c5282;
+}
+
+.timeline-panel {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    position: relative;
+    background: #fff;
+}
+
+#map {
+    height: 100%;
+    width: 100%;
+}
+
+#timeline {
+    height: 100%;
+    width: 100%;
+}
+
+/* Verse styling */
+.verse {
+    padding: 0.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.verse:hover {
+    background-color: #f8f9fa;
+}
+
+.verse.active {
+    background-color: #e3f2fd;
+    border-left: 3px solid #2c5282;
+}
+
+.verse-number {
+    font-weight: bold;
+    color: #2c5282;
+    margin-right: 0.5rem;
+    font-size: 0.85em;
+    vertical-align: super;
+}
+
+.chapter-header {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #2c5282;
+    padding: 1rem;
+    margin: 0 -1rem 1rem -1rem;
+    border-bottom: 2px solid #dee2e6;
+    position: sticky;
+    top: 0;
+    background: #fff;
+    z-index: 100;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Timeline navigation */
+.timeline-nav-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 100;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: #2c5282;
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.timeline-nav-btn:hover {
+    background: #1a365d;
+}
+
+.timeline-nav-prev { left: 10px; }
+.timeline-nav-next { right: 10px; }
+
+/* Responsive */
+@media (max-width: 992px) {
+    .reader-layout {
+        grid-template-columns: 1fr;
+        grid-template-rows: 400px 300px 250px;
+    }
+    
+    .bible-panel {
+        grid-column: 1;
+        grid-row: 1;
+    }
+    
+    .resize-handle-v {
+        display: none;
+    }
+    
+    .map-panel {
+        grid-column: 1;
+        grid-row: 2;
+    }
+    
+    .resize-handle-h {
+        display: none;
+    }
+    
+    .timeline-panel {
+        grid-column: 1;
+        grid-row: 3;
+    }
+}
+</style>
+
+<script>
+// Initialize reader when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Reader view loaded');
+    
+    // Check if reader.js exists and is loaded
+    if (typeof initReader === 'function') {
+        initReader();
+    } else {
+        console.warn('reader.js not loaded - reader functionality may be limited');
+    }
+});
+</script>

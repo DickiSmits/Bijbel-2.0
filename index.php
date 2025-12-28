@@ -118,22 +118,24 @@ if (!is_dir('images')) {
     <title>Bijbelreader<?php echo $mode === 'admin' ? ' - Admin' : ''; ?></title>
     
     <!-- Bootstrap CSS -->
-    <link href="<?php echo BOOTSTRAP_CSS; ?>" rel="stylesheet">
-    <link href="<?php echo BOOTSTRAP_ICONS; ?>" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     
     <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="<?php echo LEAFLET_CSS; ?>" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
     <!-- Vis Timeline CSS -->
-    <link rel="stylesheet" href="<?php echo VIS_TIMELINE_CSS; ?>" />
+    <link rel="stylesheet" href="https://unpkg.com/vis-timeline@7.7.3/styles/vis-timeline-graph2d.min.css" />
     
     <!-- Quill Editor (alleen admin) -->
     <?php if ($mode === 'admin'): ?>
-    <link href="<?php echo QUILL_CSS; ?>" rel="stylesheet">
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
     <?php endif; ?>
     
-    <!-- Custom CSS -->
+    <!-- Custom CSS (optioneel) -->
+    <?php if (file_exists(__DIR__ . '/assets/css/style.css')): ?>
     <link rel="stylesheet" href="/assets/css/style.css">
+    <?php endif; ?>
 </head>
 <body>
     <!-- Navigation -->
@@ -204,14 +206,14 @@ if (!is_dir('images')) {
     ?>
 
     <!-- Bootstrap JS -->
-    <script src="<?php echo BOOTSTRAP_JS; ?>"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     
     <!-- Libraries -->
-    <script src="<?php echo LEAFLET_JS; ?>"></script>
-    <script src="<?php echo VIS_TIMELINE_JS; ?>"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/vis-timeline@7.7.3/standalone/umd/vis-timeline-graph2d.min.js"></script>
     
     <?php if ($mode === 'admin'): ?>
-    <script src="<?php echo QUILL_JS; ?>"></script>
+    <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
     <?php endif; ?>
     
     <!-- App Scripts -->
@@ -220,14 +222,24 @@ if (!is_dir('images')) {
         const isAdmin = <?php echo $is_admin ? 'true' : 'false'; ?>;
     </script>
     
+    <?php if (file_exists(__DIR__ . '/assets/js/app.js')): ?>
     <script src="/assets/js/app.js"></script>
+    <?php endif; ?>
     
     <?php if ($mode === 'reader'): ?>
-    <script src="/assets/js/reader.js"></script>
-    <script src="/assets/js/map.js"></script>
-    <script src="/assets/js/timeline.js"></script>
+        <?php if (file_exists(__DIR__ . '/assets/js/reader.js')): ?>
+        <script src="/assets/js/reader.js"></script>
+        <?php endif; ?>
+        <?php if (file_exists(__DIR__ . '/assets/js/map.js')): ?>
+        <script src="/assets/js/map.js"></script>
+        <?php endif; ?>
+        <?php if (file_exists(__DIR__ . '/assets/js/timeline.js')): ?>
+        <script src="/assets/js/timeline.js"></script>
+        <?php endif; ?>
     <?php elseif ($mode === 'admin'): ?>
-    <script src="/assets/js/admin.js"></script>
+        <?php if (file_exists(__DIR__ . '/assets/js/admin.js')): ?>
+        <script src="/assets/js/admin.js"></script>
+        <?php endif; ?>
     <?php endif; ?>
 </body>
 </html>
