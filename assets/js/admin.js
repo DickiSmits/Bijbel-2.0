@@ -522,9 +522,9 @@ async function loadChapterForEditing() {
     for (const verse of verses) {
         const hasFormatting = verse.Opgemaakte_Tekst && verse.Opgemaakte_Tekst.trim() !== '';
         
-        const verseItem = document.createElement('div');
-        verseItem.className = 'chapter-verse-item';
-        verseItem.dataset.versId = verse.Vers_ID;
+const verseItem = document.createElement('div');
+verseItem.className = 'chapter-verse-item' + (hasFormatting ? ' has-formatting' : '');
+verseItem.dataset.versId = verse.Vers_ID;
         
         // ✅ HTML met reset knop per vers
         verseItem.innerHTML = `
@@ -753,7 +753,11 @@ window.deleteProfile = deleteProfile;
 /**
  * Reset een enkel vers in chapter editor naar origineel
  */
-function resetChapterVerse(versId) {
+/**
+ * Reset een enkel vers in chapter editor naar origineel
+ * INCLUSIEF verwijderen uit database!
+ */
+async function resetChapterVerse(versId) {
     const editor = chapterEditors[versId];
     if (!editor) {
         console.log('Editor not found for vers', versId);
@@ -767,81 +771,260 @@ function resetChapterVerse(versId) {
         return;
     }
     
+    // Check of er opmaak in database staat
+    const hadFormatting = verseData.Opgemaakte_Tekst && verseData.Opgemaakte_Tekst.trim() !== '';
+    
+    if (hadFormatting) {
+        // ✅ NIEUW: Verwijder opmaak uit database
+        const profielId = document.getElementById('editorProfileSelect').value;
+        if (profielId) {
+            const result = await apiCall(`delete_formatting&vers_id=${versId}&profiel_id=${profielId}`);
+            if (result && result.success) {
+                console.log(`✅ Opmaak verwijderd uit database voor vers ${versId}`);
+                
+                // Update lokale data
+                verseData.Opgemaakte_Tekst = null;
+            } else {
+                console.error('❌ Fout bij verwijderen opmaak:', result);
+                showNotification('Fout bij verwijderen opmaak', true);
+                return;
+            }
+        }
+    }
+    
     // Reset naar originele tekst (ZONDER opmaak)
     editor.setText(verseData.Tekst);
     
     // Update originalHtml zodat change detection weer werkt
     editor.originalHtml = editor.root.innerHTML;
     
-    // Verwijder modified class
+    // Update UI
     const verseItem = document.querySelector(`.chapter-verse-item[data-vers-id="${versId}"]`);
     if (verseItem) {
+        // Verwijder modified class
         verseItem.classList.remove('modified');
         
-        // Update badge naar "Origineel" als er geen opmaak was
-        const hadFormatting = verseData.Opgemaakte_Tekst && verseData.Opgemaakte_Tekst.trim() !== '';
-        if (!hadFormatting) {
-            const badge = verseItem.querySelector('.chapter-verse-status');
-            if (badge) {
-                badge.className = 'chapter-verse-status badge bg-secondary';
-                badge.textContent = 'Origineel';
-            }
+        // Verwijder has-formatting class
+        verseItem.classList.remove('has-formatting');
+        
+        // Update badge naar "Origineel" (grijs)
+        const badge = verseItem.querySelector('.chapter-verse-status');
+        if (badge) {
+            badge.className = 'chapter-verse-status badge bg-secondary';
+            badge.textContent = 'Origineel';
         }
     }
     
-    showNotification('Vers gereset naar origineel');
+    showNotification('Vers gereset naar origineel en opmaak verwijderd');
 }
 
 /**
  * Reset ALLE verzen in chapter editor naar origineel
+ * INCLUSIEF verwijderen uit database!
  */
-function resetAllChapterVerses() {
-    if (!confirm('Weet je zeker dat je alle wijzigingen wilt resetten?')) {
+async function resetAllChapterVerses() {
+    if (!confirm('Weet je zeker dat je alle wijzigingen wilt resetten?\n\nDit verwijdert ook alle opmaak uit de database!')) {
         return;
     }
     
     let resetCount = 0;
+    const profielId = document.getElementById('editorProfileSelect').value;
+    
+    if (!profielId) {
+        showNotification('Selecteer eerst een profiel', true);
+        return;
+    }
     
     // Loop door alle editors
     for (const [versId, editor] of Object.entries(chapterEditors)) {
+        const verseData = chapterVersesData.find(v => v.Vers_ID == versId);
+        if (!verseData) continue;
+        
         const currentHtml = editor.root.innerHTML;
         const isModified = currentHtml !== editor.originalHtml;
+        const hadFormatting = verseData.Opgemaakte_Tekst && verseData.Opgemaakte_Tekst.trim() !== '';
         
-        if (isModified) {
-            // Vind originele tekst
-            const verseData = chapterVersesData.find(v => v.Vers_ID == versId);
-            if (verseData) {
-                // Reset naar origineel
-                editor.setText(verseData.Tekst);
-                editor.originalHtml = editor.root.innerHTML;
-                
-                // Verwijder modified class
-                const verseItem = document.querySelector(`.chapter-verse-item[data-vers-id="${versId}"]`);
-                if (verseItem) {
-                    verseItem.classList.remove('modified');
-                    
-                    // Update badge als er geen opmaak was
-                    const hadFormatting = verseData.Opgemaakte_Tekst && verseData.Opgemaakte_Tekst.trim() !== '';
-                    if (!hadFormatting) {
-                        const badge = verseItem.querySelector('.chapter-verse-status');
-                        if (badge) {
-                            badge.className = 'chapter-verse-status badge bg-secondary';
-                            badge.textContent = 'Origineel';
-                        }
-                    }
+        // Reset als modified OF als er opmaak in database staat
+        if (isModified || hadFormatting) {
+            // Verwijder uit database als er opmaak was
+            if (hadFormatting) {
+                const result = await apiCall(`delete_formatting&vers_id=${versId}&profiel_id=${profielId}`);
+                if (result && result.success) {
+                    verseData.Opgemaakte_Tekst = null;
+                    console.log(`✅ Opmaak verwijderd voor vers ${versId}`);
                 }
-                
-                resetCount++;
             }
+            
+            // Reset editor
+            editor.setText(verseData.Tekst);
+            editor.originalHtml = editor.root.innerHTML;
+            
+            // Update UI
+            const verseItem = document.querySelector(`.chapter-verse-item[data-vers-id="${versId}"]`);
+            if (verseItem) {
+                verseItem.classList.remove('modified');
+                verseItem.classList.remove('has-formatting');
+                
+                const badge = verseItem.querySelector('.chapter-verse-status');
+                if (badge) {
+                    badge.className = 'chapter-verse-status badge bg-secondary';
+                    badge.textContent = 'Origineel';
+                }
+            }
+            
+            resetCount++;
         }
     }
     
     if (resetCount > 0) {
-        showNotification(`${resetCount} vers(en) gereset`);
+        showNotification(`${resetCount} vers(en) gereset en opmaak verwijderd`);
     } else {
         showNotification('Geen wijzigingen om te resetten');
     }
 }
+
+// Maak functies globally beschikbaar
+window.resetChapterVerse = resetChapterVerse;
+window.resetAllChapterVerses = resetAllChapterVerses;
+
+
+/**
+ * Reset ALLE verzen in chapter editor naar origineel
+ */
+/**
+ * Reset een enkel vers in chapter editor naar origineel
+ * INCLUSIEF verwijderen uit database!
+ */
+async function resetChapterVerse(versId) {
+    const editor = chapterEditors[versId];
+    if (!editor) {
+        console.log('Editor not found for vers', versId);
+        return;
+    }
+    
+    // Vind de originele tekst in chapterVersesData
+    const verseData = chapterVersesData.find(v => v.Vers_ID == versId);
+    if (!verseData) {
+        console.log('Verse data not found for', versId);
+        return;
+    }
+    
+    // Check of er opmaak in database staat
+    const hadFormatting = verseData.Opgemaakte_Tekst && verseData.Opgemaakte_Tekst.trim() !== '';
+    
+    if (hadFormatting) {
+        // ✅ NIEUW: Verwijder opmaak uit database
+        const profielId = document.getElementById('editorProfileSelect').value;
+        if (profielId) {
+            const result = await apiCall(`delete_formatting&vers_id=${versId}&profiel_id=${profielId}`);
+            if (result && result.success) {
+                console.log(`✅ Opmaak verwijderd uit database voor vers ${versId}`);
+                
+                // Update lokale data
+                verseData.Opgemaakte_Tekst = null;
+            } else {
+                console.error('❌ Fout bij verwijderen opmaak:', result);
+                showNotification('Fout bij verwijderen opmaak', true);
+                return;
+            }
+        }
+    }
+    
+    // Reset naar originele tekst (ZONDER opmaak)
+    editor.setText(verseData.Tekst);
+    
+    // Update originalHtml zodat change detection weer werkt
+    editor.originalHtml = editor.root.innerHTML;
+    
+    // Update UI
+    const verseItem = document.querySelector(`.chapter-verse-item[data-vers-id="${versId}"]`);
+    if (verseItem) {
+        // Verwijder modified class
+        verseItem.classList.remove('modified');
+        
+        // Verwijder has-formatting class
+        verseItem.classList.remove('has-formatting');
+        
+        // Update badge naar "Origineel" (grijs)
+        const badge = verseItem.querySelector('.chapter-verse-status');
+        if (badge) {
+            badge.className = 'chapter-verse-status badge bg-secondary';
+            badge.textContent = 'Origineel';
+        }
+    }
+    
+    showNotification('Vers gereset naar origineel en opmaak verwijderd');
+}
+
+/**
+ * Reset ALLE verzen in chapter editor naar origineel
+ * INCLUSIEF verwijderen uit database!
+ */
+async function resetAllChapterVerses() {
+    if (!confirm('Weet je zeker dat je alle wijzigingen wilt resetten?\n\nDit verwijdert ook alle opmaak uit de database!')) {
+        return;
+    }
+    
+    let resetCount = 0;
+    const profielId = document.getElementById('editorProfileSelect').value;
+    
+    if (!profielId) {
+        showNotification('Selecteer eerst een profiel', true);
+        return;
+    }
+    
+    // Loop door alle editors
+    for (const [versId, editor] of Object.entries(chapterEditors)) {
+        const verseData = chapterVersesData.find(v => v.Vers_ID == versId);
+        if (!verseData) continue;
+        
+        const currentHtml = editor.root.innerHTML;
+        const isModified = currentHtml !== editor.originalHtml;
+        const hadFormatting = verseData.Opgemaakte_Tekst && verseData.Opgemaakte_Tekst.trim() !== '';
+        
+        // Reset als modified OF als er opmaak in database staat
+        if (isModified || hadFormatting) {
+            // Verwijder uit database als er opmaak was
+            if (hadFormatting) {
+                const result = await apiCall(`delete_formatting&vers_id=${versId}&profiel_id=${profielId}`);
+                if (result && result.success) {
+                    verseData.Opgemaakte_Tekst = null;
+                    console.log(`✅ Opmaak verwijderd voor vers ${versId}`);
+                }
+            }
+            
+            // Reset editor
+            editor.setText(verseData.Tekst);
+            editor.originalHtml = editor.root.innerHTML;
+            
+            // Update UI
+            const verseItem = document.querySelector(`.chapter-verse-item[data-vers-id="${versId}"]`);
+            if (verseItem) {
+                verseItem.classList.remove('modified');
+                verseItem.classList.remove('has-formatting');
+                
+                const badge = verseItem.querySelector('.chapter-verse-status');
+                if (badge) {
+                    badge.className = 'chapter-verse-status badge bg-secondary';
+                    badge.textContent = 'Origineel';
+                }
+            }
+            
+            resetCount++;
+        }
+    }
+    
+    if (resetCount > 0) {
+        showNotification(`${resetCount} vers(en) gereset en opmaak verwijderd`);
+    } else {
+        showNotification('Geen wijzigingen om te resetten');
+    }
+}
+
+// Maak functies globally beschikbaar
+window.resetChapterVerse = resetChapterVerse;
+window.resetAllChapterVerses = resetAllChapterVerses;
+
 
 // Maak functies globally beschikbaar
 window.resetChapterVerse = resetChapterVerse;
