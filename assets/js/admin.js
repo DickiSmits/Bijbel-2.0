@@ -1,6 +1,6 @@
 /**
  * ADMIN.JS - Complete Admin Functionality
- * Handles text editing, profiles, timeline, locations, images, notes
+ *  Handles text editing, profiles, timeline, locations, images, notes
  */
 
 console.log('Admin.js loaded - initializing admin features');
