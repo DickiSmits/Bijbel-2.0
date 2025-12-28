@@ -66,7 +66,7 @@
                                 </select>
                             </div>
                         </div>
-                    
+                    <hr>
                     <!-- Single verse editor -->
                     <div id="singleVerseEditor">
                         <div class="mb-3">
