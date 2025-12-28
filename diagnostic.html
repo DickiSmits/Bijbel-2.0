@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bijbelreader Diagnostic</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+        }
+        
+        .test-section h2 {
+            margin-top: 0;
+            color: #2c5282;
+        }
+        
+        .success {
+            background: #e8f5e9;
+            border-color: #4caf50;
+        }
+        
+        .error {
+            background: #ffebee;
+            border-color: #f44336;
+        }
+        
+        .warning {
+            background: #fff3e0;
+            border-color: #ff9800;
+        }
+        
+        .test-item {
+            padding: 8px;
+            margin: 5px 0;
+            border-left: 3px solid #ccc;
+            padding-left: 10px;
+        }
+        
+        .test-item.pass {
+            border-left-color: #4caf50;
+        }
+        
+        .test-item.fail {
+            border-left-color: #f44336;
+        }
+        
+        code {
+            background: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        
+        button {
+            background: #2c5282;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        
+        button:hover {
+            background: #1a365d;
+        }
+        
+        #map-test {
+            height: 300px;
+            width: 100%;
+            border: 2px solid #ccc;
+            margin-top: 10px;
+        }
+        
+        #timeline-test {
+            height: 200px;
+            width: 100%;
+            border: 2px solid #ccc;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Bijbelreader Diagnostic Tool</h1>
+    <p>Deze pagina test alle onderdelen van de Bijbelreader applicatie.</p>
+    
+    <div id="results"></div>
+    
+    <script>
+        const resultsDiv = document.getElementById('results');
+        const tests = [];
+        
+        function addTest(section, name, status, message) {
+            tests.push({ section, name, status, message });
+        }
+        
+        function renderResults() {
+            const sections = {};
+            
+            tests.forEach(test => {
+                if (!sections[test.section]) {
+                    sections[test.section] = [];
+                }
+                sections[test.section].push(test);
+            });
+            
+            let html = '';
+            
+            for (const [sectionName, sectionTests] of Object.entries(sections)) {
+                const allPass = sectionTests.every(t => t.status === 'pass');
+                const anyFail = sectionTests.some(t => t.status === 'fail');
+                
+                const sectionClass = allPass ? 'success' : (anyFail ? 'error' : 'warning');
+                
+                html += `<div class="test-section ${sectionClass}">`;
+                html += `<h2>${sectionName}</h2>`;
+                
+                sectionTests.forEach(test => {
+                    const icon = test.status === 'pass' ? '✅' : (test.status === 'fail' ? '❌' : '⚠️');
+                    html += `<div class="test-item ${test.status}">`;
+                    html += `${icon} <strong>${test.name}</strong>: ${test.message}`;
+                    html += `</div>`;
+                });
+                
+                html += `</div>`;
+            }
+            
+            resultsDiv.innerHTML = html;
+        }
+        
+        // Start tests
+        async function runTests() {
+            console.log('🚀 Starting diagnostic tests...');
+            
+            // Test 1: CDN Resources
+            await testCDNResources();
+            
+            // Test 2: Local Files
+            await testLocalFiles();
+            
+            // Test 3: API Endpoints
+            await testAPIEndpoints();
+            
+            // Test 4: JavaScript Modules
+            testJavaScriptModules();
+            
+            // Test 5: Leaflet Map
+            await testLeafletMap();
+            
+            // Test 6: Vis Timeline
+            await testVisTimeline();
+            
+            renderResults();
+        }
+        
+        async function testCDNResources() {
+            const cdnTests = [
+                { name: 'Bootstrap CSS', url: 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css' },
+                { name: 'Bootstrap JS', url: 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js' },
+                { name: 'Bootstrap Icons', url: 'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css' },
+                { name: 'Leaflet CSS', url: 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css' },
+                { name: 'Leaflet JS', url: 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js' },
+                { name: 'Vis Timeline CSS', url: 'https://unpkg.com/vis-timeline@7.7.3/styles/vis-timeline-graph2d.min.css' },
+                { name: 'Vis Timeline JS', url: 'https://unpkg.com/vis-timeline@7.7.3/standalone/umd/vis-timeline-graph2d.min.js' }
+            ];
+            
+            for (const test of cdnTests) {
+                try {
+                    const response = await fetch(test.url, { method: 'HEAD' });
+                    if (response.ok) {
+                        addTest('CDN Resources', test.name, 'pass', `Loaded (${response.status})`);
+                    } else {
+                        addTest('CDN Resources', test.name, 'fail', `HTTP ${response.status}`);
+                    }
+                } catch (error) {
+                    addTest('CDN Resources', test.name, 'fail', error.message);
+                }
+            }
+        }
+        
+        async function testLocalFiles() {
+            const localTests = [
+                { name: 'style.css', url: 'assets/css/style.css' },
+                { name: 'app.js', url: 'assets/js/app.js' },
+                { name: 'reader.js', url: 'assets/js/reader.js' },
+                { name: 'map.js', url: 'assets/js/map.js' },
+                { name: 'timeline.js', url: 'assets/js/timeline.js' }
+            ];
+            
+            for (const test of localTests) {
+                try {
+                    const response = await fetch(test.url, { method: 'HEAD' });
+                    if (response.ok) {
+                        addTest('Local Files', test.name, 'pass', 'File exists');
+                    } else {
+                        addTest('Local Files', test.name, 'fail', `HTTP ${response.status} - File not found`);
+                    }
+                } catch (error) {
+                    addTest('Local Files', test.name, 'fail', error.message);
+                }
+            }
+        }
+        
+        async function testAPIEndpoints() {
+            const apiTests = [
+                { name: 'Books API', endpoint: '?api=books' },
+                { name: 'Profiles API', endpoint: '?api=profiles' },
+                { name: 'Timeline API', endpoint: '?api=timeline' },
+                { name: 'Locations API', endpoint: '?api=locations' }
+            ];
+            
+            for (const test of apiTests) {
+                try {
+                    const response = await fetch(test.endpoint);
+                    const data = await response.json();
+                    
+                    if (data && !data.error) {
+                        const count = Array.isArray(data) ? data.length : 'N/A';
+                        addTest('API Endpoints', test.name, 'pass', `Works (${count} items)`);
+                    } else {
+                        addTest('API Endpoints', test.name, 'fail', data.error || 'Unknown error');
+                    }
+                } catch (error) {
+                    addTest('API Endpoints', test.name, 'fail', error.message);
+                }
+            }
+        }
+        
+        function testJavaScriptModules() {
+            // Load scripts dynamically
+            const scripts = [
+                'assets/js/app.js',
+                'assets/js/map.js',
+                'assets/js/timeline.js',
+                'assets/js/reader.js'
+            ];
+            
+            let loaded = 0;
+            
+            scripts.forEach(src => {
+                const script = document.createElement('script');
+                script.src = src;
+                script.onload = () => {
+                    loaded++;
+                    addTest('JavaScript Modules', src, 'pass', 'Loaded');
+                    
+                    if (loaded === scripts.length) {
+                        // All loaded, check functions
+                        setTimeout(() => {
+                            checkFunctions();
+                        }, 500);
+                    }
+                };
+                script.onerror = () => {
+                    addTest('JavaScript Modules', src, 'fail', 'Failed to load');
+                };
+                document.head.appendChild(script);
+            });
+        }
+        
+        function checkFunctions() {
+            const functions = [
+                'apiCall',
+                'showNotification',
+                'initMap',
+                'initTimeline',
+                'initReader',
+                'loadVerses',
+                'selectVerse'
+            ];
+            
+            functions.forEach(funcName => {
+                if (typeof window[funcName] === 'function') {
+                    addTest('JavaScript Functions', funcName, 'pass', 'Defined');
+                } else {
+                    addTest('JavaScript Functions', funcName, 'fail', 'Not defined');
+                }
+            });
+            
+            renderResults();
+        }
+        
+        async function testLeafletMap() {
+            // Load Leaflet
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+            document.head.appendChild(link);
+            
+            const script = document.createElement('script');
+            script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+            
+            script.onload = () => {
+                if (typeof L !== 'undefined') {
+                    addTest('Leaflet Map', 'Library Load', 'pass', `Version ${L.version}`);
+                    
+                    // Try to create map
+                    try {
+                        const testDiv = document.createElement('div');
+                        testDiv.id = 'map-test';
+                        resultsDiv.appendChild(testDiv);
+                        
+                        const map = L.map('map-test').setView([31.7683, 35.2137], 7);
+                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+                        
+                        addTest('Leaflet Map', 'Map Creation', 'pass', 'Map rendered successfully');
+                        
+                        setTimeout(() => map.invalidateSize(), 500);
+                    } catch (error) {
+                        addTest('Leaflet Map', 'Map Creation', 'fail', error.message);
+                    }
+                } else {
+                    addTest('Leaflet Map', 'Library Load', 'fail', 'L is undefined');
+                }
+                renderResults();
+            };
+            
+            script.onerror = () => {
+                addTest('Leaflet Map', 'Library Load', 'fail', 'Failed to load script');
+                renderResults();
+            };
+            
+            document.head.appendChild(script);
+        }
+        
+        async function testVisTimeline() {
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = 'https://unpkg.com/vis-timeline@7.7.3/styles/vis-timeline-graph2d.min.css';
+            document.head.appendChild(link);
+            
+            const script = document.createElement('script');
+            script.src = 'https://unpkg.com/vis-timeline@7.7.3/standalone/umd/vis-timeline-graph2d.min.js';
+            
+            script.onload = () => {
+                if (typeof vis !== 'undefined') {
+                    addTest('Vis Timeline', 'Library Load', 'pass', 'Loaded successfully');
+                    
+                    try {
+                        const testDiv = document.createElement('div');
+                        testDiv.id = 'timeline-test';
+                        resultsDiv.appendChild(testDiv);
+                        
+                        const items = new vis.DataSet([
+                            { id: 1, content: 'Test Event', start: new Date() }
+                        ]);
+                        
+                        const timeline = new vis.Timeline(testDiv, items);
+                        
+                        addTest('Vis Timeline', 'Timeline Creation', 'pass', 'Timeline rendered');
+                    } catch (error) {
+                        addTest('Vis Timeline', 'Timeline Creation', 'fail', error.message);
+                    }
+                } else {
+                    addTest('Vis Timeline', 'Library Load', 'fail', 'vis is undefined');
+                }
+                renderResults();
+            };
+            
+            script.onerror = () => {
+                addTest('Vis Timeline', 'Library Load', 'fail', 'Failed to load script');
+                renderResults();
+            };
+            
+            document.head.appendChild(script);
+        }
+        
+        // Run all tests on page load
+        window.addEventListener('load', runTests);
+    </script>
+</body>
+</html>
