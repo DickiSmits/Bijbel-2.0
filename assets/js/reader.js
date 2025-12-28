@@ -328,6 +328,12 @@ async function loadVerses(append = false) {
     if (verses.length < 50) {
         allLoaded = true;
     }
+     // Laad profiel mappings voor nieuwe verzen
+    if (!append && typeof window.loadChapterProfiles === 'function') {
+        await window.loadChapterProfiles();
+    } else if (append && typeof window.updateVerseNumberIndicators === 'function') {
+        window.updateVerseNumberIndicators();
+    }
 }
 
 // Select verse

@@ -237,6 +237,139 @@ if (!is_dir('images')) {
         <?php if (file_exists(__DIR__ . '/assets/js/timeline.js')): ?>
         <script src="assets/js/timeline.js"></script>
         <?php endif; ?>
+        
+        <!-- ================================================================
+             MULTI-PROFIEL INDICATOR SYSTEEM
+             Lichtblauwe versnummers voor verzen bewerkt in andere profielen
+             ================================================================ -->
+        <script>
+        (function() {
+            'use strict';
+            
+            // Global variabele voor profiel mappings
+            let chapterProfileMappings = {};
+            
+            /**
+             * Laad welke profielen bewerkingen hebben voor huidige hoofdstuk
+             */
+            async function loadChapterProfiles() {
+                // Check if currentBook and currentChapter are available
+                if (typeof currentBook === 'undefined' || typeof currentChapter === 'undefined') {
+                    console.warn('⚠️ currentBook/currentChapter not defined yet');
+                    return;
+                }
+                
+                if (!currentBook || !currentChapter) {
+                    chapterProfileMappings = {};
+                    return;
+                }
+                
+                try {
+                    const data = await apiCall(`chapter_profiles&boek=${encodeURIComponent(currentBook)}&hoofdstuk=${currentChapter}`);
+                    chapterProfileMappings = data || {};
+                    
+                    console.log(`📊 Loaded profile mappings for ${Object.keys(chapterProfileMappings).length} verses`);
+                    
+                    // Update versnummers met indicator
+                    updateVerseNumberIndicators();
+                } catch (error) {
+                    console.error('Error loading chapter profiles:', error);
+                }
+            }
+            
+            /**
+             * Update versnummers met multi-profiel indicator
+             */
+            function updateVerseNumberIndicators() {
+                // Check if currentProfile is available
+                const currentProfileId = (typeof currentProfile !== 'undefined' && currentProfile) 
+                    ? parseInt(currentProfile) 
+                    : null;
+                
+                // Loop door alle verzen in de DOM
+                document.querySelectorAll('.verse').forEach(verseElement => {
+                    const versNumber = verseElement.querySelector('.verse-number');
+                    if (!versNumber) return;
+                    
+                    const versnummer = versNumber.textContent.trim();
+                    
+                    // Check of dit vers bewerkingen heeft
+                    const profiles = chapterProfileMappings[versnummer] || [];
+                    
+                    if (profiles.length === 0) {
+                        // Geen bewerkingen - verwijder classes
+                        versNumber.classList.remove('has-other-profiles');
+                        versNumber.removeAttribute('title');
+                        return;
+                    }
+                    
+                    // Filter andere profielen (niet het huidige)
+                    const otherProfiles = currentProfileId 
+                        ? profiles.filter(p => p.Profiel_ID !== currentProfileId)
+                        : profiles;
+                    
+                    if (otherProfiles.length > 0) {
+                        // Heeft bewerkingen in andere profielen - maak lichtblauw
+                        versNumber.classList.add('has-other-profiles');
+                        
+                        // Maak tooltip tekst
+                        const tooltipText = otherProfiles.map(p => p.Profiel_Naam).join(', ');
+                        versNumber.setAttribute('title', `Bewerkt in: ${tooltipText}`);
+                        
+                        console.log(`✏️ Vers ${versnummer} heeft bewerkingen in: ${tooltipText}`);
+                    } else {
+                        // Alleen huidige profiel - verwijder indicator
+                        versNumber.classList.remove('has-other-profiles');
+                        versNumber.removeAttribute('title');
+                    }
+                });
+            }
+            
+            // ================================================================
+            // HOOK INTO EXISTING EVENTS
+            // ================================================================
+            
+            /**
+             * Wait for DOM and other scripts to load
+             */
+            window.addEventListener('DOMContentLoaded', function() {
+                console.log('🔵 Multi-profiel indicator systeem initializing...');
+                
+                // Wacht tot reader.js geladen is en variabelen beschikbaar zijn
+                const checkInterval = setInterval(function() {
+                    if (typeof apiCall !== 'undefined' && typeof currentBook !== 'undefined') {
+                        clearInterval(checkInterval);
+                        console.log('✅ Multi-profiel indicator systeem ready!');
+                        
+                        // Hook into profile select change
+                        const profileSelect = document.getElementById('profileSelect');
+                        if (profileSelect) {
+                            profileSelect.addEventListener('change', function() {
+                                setTimeout(() => updateVerseNumberIndicators(), 500);
+                            });
+                        }
+                        
+                        // Hook into chapter select change
+                        const chapterSelect = document.getElementById('chapterSelect');
+                        if (chapterSelect) {
+                            chapterSelect.addEventListener('change', function() {
+                                chapterProfileMappings = {}; // Reset mappings
+                            });
+                        }
+                    }
+                }, 100); // Check elke 100ms
+                
+                // Stop after 5 seconds to prevent infinite loop
+                setTimeout(() => clearInterval(checkInterval), 5000);
+            });
+            
+            // Export functions to window for external access
+            window.loadChapterProfiles = loadChapterProfiles;
+            window.updateVerseNumberIndicators = updateVerseNumberIndicators;
+            
+        })();
+        </script>
+        
     <?php elseif ($mode === 'admin'): ?>
         <?php if (file_exists(__DIR__ . '/assets/js/admin.js')): ?>
         <script src="assets/js/admin.js"></script>

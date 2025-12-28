@@ -295,3 +295,34 @@
 .chapter-verse-item.modified .chapter-verse-header .btn {
     opacity: 1;
 }
+/* ============================================================================
+   MULTI-PROFIEL INDICATOR - SIMPELE VERSIE
+   Voeg dit toe aan style.css
+   Gebruikt browser native tooltip (via title attribute)
+   ============================================================================ */
+
+/* Versnummer met bewerkingen in andere profielen - lichtblauw */
+.verse-number.has-other-profiles {
+    color: #4A90E2 !important; /* Lichtblauw */
+    font-weight: 600;
+    cursor: help; /* Vraagtekenpointer bij hover */
+    transition: all 0.2s ease;
+}
+
+/* Hover effect - donkerder blauw */
+.verse-number.has-other-profiles:hover {
+    color: #2c5282 !important;
+    text-decoration: underline;
+    transform: scale(1.1);
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .verse-number.has-other-profiles {
+        color: #64B5F6 !important;
+    }
+    
+    .verse-number.has-other-profiles:hover {
+        color: #90CAF9 !important;
+    }
+}
