@@ -1,19 +1,16 @@
 <?php
 /**
- * BIJBELREADER APPLICATIE - MVC Versie
- * Met INSTANT Multi-Profiel Indicator (0ms delay)
+ * BIJBELREADER - MVC Versie
+ * Met V3 Multi-Profiel Indicator: Auto-detect + Onbeperkt scrollen
  */
 
 session_start();
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// Load configuration
 require_once __DIR__ . '/config.php';
 
-// ============================================================================
-// CRITICAL: API ROUTING EERST! Voor HTML rendering!
-// ============================================================================
+// API ROUTING
 if (isset($_GET['api'])) {
     header('Content-Type: application/json');
     
@@ -30,9 +27,7 @@ if (isset($_GET['api'])) {
     exit;
 }
 
-// ============================================================================
-// LOGIN/LOGOUT HANDLING
-// ============================================================================
+// LOGIN/LOGOUT
 if (isset($_POST['login'])) {
     if ($_POST['password'] === ADMIN_PASSWORD) {
         $_SESSION['admin_logged_in'] = true;
@@ -49,28 +44,21 @@ if (isset($_GET['logout'])) {
     exit;
 }
 
-// Check admin access
 $is_admin = isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true;
 
-// ============================================================================
-// MODE DETECTION
-// ============================================================================
+// MODE
 $requested_mode = isset($_GET['mode']) ? $_GET['mode'] : 'reader';
 
-// Protect admin mode
 if ($requested_mode === 'admin' && !$is_admin) {
     $mode = 'login';
 } else {
     $mode = $requested_mode;
 }
 
-// ============================================================================
-// DATABASE INITIALIZATION
-// ============================================================================
+// DATABASE
 try {
     $db = Database::getInstance()->getConnection();
     
-    // Create Notities table if not exists
     $db->exec("CREATE TABLE IF NOT EXISTS Notities (
         Notitie_ID INTEGER PRIMARY KEY AUTOINCREMENT,
         Titel TEXT,
@@ -79,7 +67,6 @@ try {
         Gewijzigd DATETIME DEFAULT CURRENT_TIMESTAMP
     )");
     
-    // Migration: Add Tekst_Kleur column
     try {
         $columns = $db->query("PRAGMA table_info(Timeline_Events)")->fetchAll(PDO::FETCH_ASSOC);
         $hasTextColor = false;
@@ -93,14 +80,13 @@ try {
             $db->exec("ALTER TABLE Timeline_Events ADD COLUMN Tekst_Kleur TEXT");
         }
     } catch (Exception $e) {
-        // Table might not exist yet
+        // OK
     }
     
 } catch (Exception $e) {
-    die('Database initialisatie mislukt: ' . $e->getMessage());
+    die('Database error: ' . $e->getMessage());
 }
 
-// Ensure images directory exists
 if (!is_dir('images')) {
     mkdir('images', 0755, true);
 }
@@ -112,29 +98,20 @@ if (!is_dir('images')) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bijbelreader<?php echo $mode === 'admin' ? ' - Admin' : ''; ?></title>
     
-    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
-    
-    <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    
-    <!-- Vis Timeline CSS -->
     <link rel="stylesheet" href="https://unpkg.com/vis-timeline@7.7.3/styles/vis-timeline-graph2d.min.css" />
     
-    <!-- Quill Editor (alleen admin) -->
     <?php if ($mode === 'admin'): ?>
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
-    <link rel="stylesheet" href="assets/css/style.css">
     <?php endif; ?>
     
-    <!-- Custom CSS (optioneel) -->
     <?php if (file_exists(__DIR__ . '/assets/css/style.css')): ?>
     <link rel="stylesheet" href="assets/css/style.css">
     <?php endif; ?>
 </head>
 <body>
-    <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
         <div class="container-fluid">
             <a class="navbar-brand" href="?mode=reader">
@@ -188,7 +165,6 @@ if (!is_dir('images')) {
     </nav>
 
     <?php
-    // Load view
     $viewFile = __DIR__ . '/views/' . $mode . '.php';
     
     if (file_exists($viewFile)) {
@@ -196,15 +172,11 @@ if (!is_dir('images')) {
     } else {
         echo '<div class="container mt-5">';
         echo '<div class="alert alert-danger">View niet gevonden: ' . htmlspecialchars($mode) . '.php</div>';
-        echo '<p>Zorg dat /views/' . htmlspecialchars($mode) . '.php bestaat!</p>';
         echo '</div>';
     }
     ?>
 
-    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <!-- Libraries -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/vis-timeline@7.7.3/standalone/umd/vis-timeline-graph2d.min.js"></script>
     
@@ -212,7 +184,6 @@ if (!is_dir('images')) {
     <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
     <?php endif; ?>
     
-    <!-- App Scripts -->
     <script>
         const mode = '<?php echo $mode; ?>';
         const isAdmin = <?php echo $is_admin ? 'true' : 'false'; ?>;
@@ -233,100 +204,188 @@ if (!is_dir('images')) {
         <script src="assets/js/timeline.js"></script>
         <?php endif; ?>
         
-        <!-- ================================================================
-             MULTI-PROFIEL INDICATOR - INSTANT TOOLTIP (0ms delay!)
-             ================================================================ -->
+        <!-- ==============================================================
+             MULTI-PROFIEL INDICATOR V3
+             - Auto-detect nieuwe hoofdstukken bij scrollen
+             - Werkt ZONDER reader.js aanpassingen
+             - Onbeperkt scrollen door alle boeken
+             ============================================================== -->
         <script>
         (function() {
             'use strict';
             
-            let chapterProfileMappings = {};
+            const profileCache = new Map();
+            const processedChapters = new Set();
             
-            async function loadChapterProfiles() {
-                if (typeof currentBook === 'undefined' || typeof currentChapter === 'undefined') {
-                    console.warn('⚠️ currentBook/currentChapter not defined yet');
-                    return;
-                }
+            async function loadProfilesForChapter(boek, hoofdstuk) {
+                const cacheKey = `${boek}_${hoofdstuk}`;
                 
-                if (!currentBook || !currentChapter) {
-                    chapterProfileMappings = {};
-                    return;
+                if (profileCache.has(cacheKey)) {
+                    return profileCache.get(cacheKey);
                 }
                 
                 try {
-                    const data = await apiCall(`chapter_profiles&boek=${encodeURIComponent(currentBook)}&hoofdstuk=${currentChapter}`);
-                    chapterProfileMappings = data || {};
-                    
-                    console.log(`📊 Loaded profile mappings for ${Object.keys(chapterProfileMappings).length} verses`);
-                    
-                    updateVerseNumberIndicators();
+                    const data = await apiCall(`chapter_profiles&boek=${encodeURIComponent(boek)}&hoofdstuk=${hoofdstuk}`);
+                    profileCache.set(cacheKey, data || {});
+                    console.log(`📊 Loaded profiles for ${boek} ${hoofdstuk}: ${Object.keys(data || {}).length} verses`);
+                    return data || {};
                 } catch (error) {
-                    console.error('Error loading chapter profiles:', error);
+                    console.error(`Error loading profiles for ${boek} ${hoofdstuk}:`, error);
+                    return {};
                 }
             }
             
-            function updateVerseNumberIndicators() {
+            function updateVersesInChapter(chapterElement, profileMappings) {
                 const currentProfileId = (typeof currentProfile !== 'undefined' && currentProfile) 
                     ? parseInt(currentProfile) 
                     : null;
                 
-                document.querySelectorAll('.verse').forEach(verseElement => {
-                    const versNumber = verseElement.querySelector('.verse-number');
-                    if (!versNumber) return;
-                    
-                    const versnummer = versNumber.textContent.trim();
-                    const profiles = chapterProfileMappings[versnummer] || [];
-                    
-                    if (profiles.length === 0) {
-                        versNumber.classList.remove('has-other-profiles');
-                        versNumber.removeAttribute('data-tooltip');
-                        versNumber.removeAttribute('title');
-                        return;
+                let nextElement = chapterElement.nextElementSibling;
+                let versesUpdated = 0;
+                
+                while (nextElement && !nextElement.classList.contains('chapter-header')) {
+                    if (nextElement.classList.contains('verse')) {
+                        const versNumber = nextElement.querySelector('.verse-number');
+                        
+                        if (versNumber) {
+                            const versnummer = versNumber.textContent.trim();
+                            const profiles = profileMappings[versnummer] || [];
+                            
+                            if (profiles.length === 0) {
+                                versNumber.classList.remove('has-other-profiles');
+                                versNumber.removeAttribute('data-tooltip');
+                                versNumber.removeAttribute('title');
+                            } else {
+                                const otherProfiles = currentProfileId 
+                                    ? profiles.filter(p => p.Profiel_ID !== currentProfileId)
+                                    : profiles;
+                                
+                                if (otherProfiles.length > 0) {
+                                    versNumber.classList.add('has-other-profiles');
+                                    const tooltipText = otherProfiles.map(p => p.Profiel_Naam).join(', ');
+                                    versNumber.setAttribute('data-tooltip', tooltipText);
+                                    versNumber.removeAttribute('title');
+                                    versesUpdated++;
+                                } else {
+                                    versNumber.classList.remove('has-other-profiles');
+                                    versNumber.removeAttribute('data-tooltip');
+                                    versNumber.removeAttribute('title');
+                                }
+                            }
+                        }
                     }
                     
-                    const otherProfiles = currentProfileId 
-                        ? profiles.filter(p => p.Profiel_ID !== currentProfileId)
-                        : profiles;
+                    nextElement = nextElement.nextElementSibling;
+                }
+                
+                return versesUpdated;
+            }
+            
+            async function processChapterHeader(chapterElement) {
+                const headerText = chapterElement.textContent.trim();
+                const parts = headerText.split(' ');
+                
+                if (parts.length < 2) {
+                    console.warn('⚠️ Invalid chapter header format:', headerText);
+                    return;
+                }
+                
+                const hoofdstuk = parts[parts.length - 1];
+                const boek = parts.slice(0, -1).join(' ');
+                const chapterKey = `${boek}_${hoofdstuk}`;
+                
+                if (processedChapters.has(chapterKey)) {
+                    return;
+                }
+                
+                console.log(`🔍 Processing chapter: ${boek} ${hoofdstuk}`);
+                processedChapters.add(chapterKey);
+                
+                const profileMappings = await loadProfilesForChapter(boek, hoofdstuk);
+                const versesUpdated = updateVersesInChapter(chapterElement, profileMappings);
+                
+                console.log(`✅ Updated ${versesUpdated} verses in ${boek} ${hoofdstuk}`);
+            }
+            
+            async function scanAndProcessAllChapters() {
+                const headers = document.querySelectorAll('.chapter-header');
+                console.log(`🔎 Scanning ${headers.length} chapter headers...`);
+                
+                for (const header of headers) {
+                    await processChapterHeader(header);
+                }
+            }
+            
+            function setupMutationObserver() {
+                const bibleText = document.getElementById('bibleText');
+                
+                if (!bibleText) {
+                    console.warn('⚠️ bibleText element not found');
+                    return;
+                }
+                
+                const observer = new MutationObserver((mutations) => {
+                    mutations.forEach(mutation => {
+                        mutation.addedNodes.forEach(node => {
+                            if (node.classList && node.classList.contains('chapter-header')) {
+                                console.log('🆕 New chapter detected via MutationObserver!');
+                                processChapterHeader(node);
+                            }
+                        });
+                    });
+                });
+                
+                observer.observe(bibleText, {
+                    childList: true,
+                    subtree: false
+                });
+                
+                console.log('👀 MutationObserver active - watching for new chapters');
+            }
+            
+            function reprocessAllVerses() {
+                console.log('🔄 Reprocessing all verses...');
+                
+                const headers = document.querySelectorAll('.chapter-header');
+                
+                headers.forEach(header => {
+                    const headerText = header.textContent.trim();
+                    const parts = headerText.split(' ');
                     
-                    if (otherProfiles.length > 0) {
-                        versNumber.classList.add('has-other-profiles');
+                    if (parts.length >= 2) {
+                        const hoofdstuk = parts[parts.length - 1];
+                        const boek = parts.slice(0, -1).join(' ');
+                        const cacheKey = `${boek}_${hoofdstuk}`;
                         
-                        const tooltipText = otherProfiles.map(p => p.Profiel_Naam).join(', ');
-                        
-                        // ⚡ Gebruik data-tooltip voor custom CSS tooltip (instant!)
-                        versNumber.setAttribute('data-tooltip', tooltipText);
-                        
-                        // ⚡ Verwijder title attribute (browser tooltip met delay)
-                        versNumber.removeAttribute('title');
-                        
-                        console.log(`✏️ Vers ${versnummer} heeft bewerkingen in: ${tooltipText}`);
-                    } else {
-                        versNumber.classList.remove('has-other-profiles');
-                        versNumber.removeAttribute('data-tooltip');
-                        versNumber.removeAttribute('title');
+                        const profileMappings = profileCache.get(cacheKey) || {};
+                        updateVersesInChapter(header, profileMappings);
                     }
                 });
             }
             
             window.addEventListener('DOMContentLoaded', function() {
-                console.log('🔵 Multi-profiel indicator systeem initializing...');
+                console.log('🔵 Multi-profiel indicator V3 initializing...');
+                console.log('   ✓ Auto-detect nieuwe hoofdstukken');
+                console.log('   ✓ Onbeperkt scrollen support');
+                console.log('   ✓ Werkt bij eerste load');
                 
                 const checkInterval = setInterval(function() {
-                    if (typeof apiCall !== 'undefined' && typeof currentBook !== 'undefined') {
+                    if (typeof apiCall !== 'undefined') {
                         clearInterval(checkInterval);
-                        console.log('✅ Multi-profiel indicator systeem ready (INSTANT tooltips!)');
+                        
+                        console.log('✅ Multi-profiel indicator V3 ready!');
+                        
+                        setupMutationObserver();
+                        
+                        setTimeout(() => {
+                            scanAndProcessAllChapters();
+                        }, 500);
                         
                         const profileSelect = document.getElementById('profileSelect');
                         if (profileSelect) {
                             profileSelect.addEventListener('change', function() {
-                                setTimeout(() => updateVerseNumberIndicators(), 500);
-                            });
-                        }
-                        
-                        const chapterSelect = document.getElementById('chapterSelect');
-                        if (chapterSelect) {
-                            chapterSelect.addEventListener('change', function() {
-                                chapterProfileMappings = {};
+                                console.log('👤 Profile changed - reprocessing...');
+                                setTimeout(() => reprocessAllVerses(), 300);
                             });
                         }
                     }
@@ -335,8 +394,12 @@ if (!is_dir('images')) {
                 setTimeout(() => clearInterval(checkInterval), 5000);
             });
             
-            window.loadChapterProfiles = loadChapterProfiles;
-            window.updateVerseNumberIndicators = updateVerseNumberIndicators;
+            window.multiProfielDebug = {
+                cache: profileCache,
+                processed: processedChapters,
+                scan: scanAndProcessAllChapters,
+                reprocess: reprocessAllVerses
+            };
             
         })();
         </script>
