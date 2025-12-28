@@ -457,8 +457,10 @@ window.loadVerse = loadVerse;
 
 // ============= LOAD CHAPTER =============
 
+
 // ============================================================================
-// VERVANG DE HELE loadChapterForEditing() FUNCTIE IN JE admin.js
+// COMPLETE loadChapterForEditing() FUNCTIE MET RESET KNOPPEN
+// Vervang de hele functie in admin.js
 // ============================================================================
 
 async function loadChapterForEditing() {
@@ -523,11 +525,16 @@ async function loadChapterForEditing() {
         const verseItem = document.createElement('div');
         verseItem.className = 'chapter-verse-item';
         verseItem.dataset.versId = verse.Vers_ID;
+        
+        // ✅ HTML met reset knop per vers
         verseItem.innerHTML = `
             <div class="chapter-verse-header">
                 <span class="chapter-verse-number">${verse.Versnummer}</span>
                 <span class="chapter-verse-original" title="${verse.Tekst}">${verse.Tekst.substring(0, 80)}${verse.Tekst.length > 80 ? '...' : ''}</span>
                 <span class="chapter-verse-status badge ${hasFormatting ? 'bg-success' : 'bg-secondary'}">${hasFormatting ? 'Bewerkt' : 'Origineel'}</span>
+                <button class="btn btn-sm btn-outline-secondary" onclick="resetChapterVerse(${verse.Vers_ID})" title="Reset naar origineel">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                </button>
             </div>
             <div class="chapter-verse-editor">
                 <div id="chapter-editor-${verse.Vers_ID}"></div>
@@ -573,6 +580,7 @@ async function loadChapterForEditing() {
     
     console.log(`✅ Created ${Object.keys(chapterEditors).length} Quill editors`);
 }
+
 window.loadChapterForEditing = loadChapterForEditing;
 
 // ============= SAVE FUNCTIONS =============
@@ -737,5 +745,107 @@ async function deleteProfile(id) {
     }
 }
 window.deleteProfile = deleteProfile;
+
+// ============================================================================
+// VOEG DEZE FUNCTIE TOE AAN ADMIN.JS (na saveAllChapterFormatting)
+// ============================================================================
+
+/**
+ * Reset een enkel vers in chapter editor naar origineel
+ */
+function resetChapterVerse(versId) {
+    const editor = chapterEditors[versId];
+    if (!editor) {
+        console.log('Editor not found for vers', versId);
+        return;
+    }
+    
+    // Vind de originele tekst in chapterVersesData
+    const verseData = chapterVersesData.find(v => v.Vers_ID == versId);
+    if (!verseData) {
+        console.log('Verse data not found for', versId);
+        return;
+    }
+    
+    // Reset naar originele tekst (ZONDER opmaak)
+    editor.setText(verseData.Tekst);
+    
+    // Update originalHtml zodat change detection weer werkt
+    editor.originalHtml = editor.root.innerHTML;
+    
+    // Verwijder modified class
+    const verseItem = document.querySelector(`.chapter-verse-item[data-vers-id="${versId}"]`);
+    if (verseItem) {
+        verseItem.classList.remove('modified');
+        
+        // Update badge naar "Origineel" als er geen opmaak was
+        const hadFormatting = verseData.Opgemaakte_Tekst && verseData.Opgemaakte_Tekst.trim() !== '';
+        if (!hadFormatting) {
+            const badge = verseItem.querySelector('.chapter-verse-status');
+            if (badge) {
+                badge.className = 'chapter-verse-status badge bg-secondary';
+                badge.textContent = 'Origineel';
+            }
+        }
+    }
+    
+    showNotification('Vers gereset naar origineel');
+}
+
+/**
+ * Reset ALLE verzen in chapter editor naar origineel
+ */
+function resetAllChapterVerses() {
+    if (!confirm('Weet je zeker dat je alle wijzigingen wilt resetten?')) {
+        return;
+    }
+    
+    let resetCount = 0;
+    
+    // Loop door alle editors
+    for (const [versId, editor] of Object.entries(chapterEditors)) {
+        const currentHtml = editor.root.innerHTML;
+        const isModified = currentHtml !== editor.originalHtml;
+        
+        if (isModified) {
+            // Vind originele tekst
+            const verseData = chapterVersesData.find(v => v.Vers_ID == versId);
+            if (verseData) {
+                // Reset naar origineel
+                editor.setText(verseData.Tekst);
+                editor.originalHtml = editor.root.innerHTML;
+                
+                // Verwijder modified class
+                const verseItem = document.querySelector(`.chapter-verse-item[data-vers-id="${versId}"]`);
+                if (verseItem) {
+                    verseItem.classList.remove('modified');
+                    
+                    // Update badge als er geen opmaak was
+                    const hadFormatting = verseData.Opgemaakte_Tekst && verseData.Opgemaakte_Tekst.trim() !== '';
+                    if (!hadFormatting) {
+                        const badge = verseItem.querySelector('.chapter-verse-status');
+                        if (badge) {
+                            badge.className = 'chapter-verse-status badge bg-secondary';
+                            badge.textContent = 'Origineel';
+                        }
+                    }
+                }
+                
+                resetCount++;
+            }
+        }
+    }
+    
+    if (resetCount > 0) {
+        showNotification(`${resetCount} vers(en) gereset`);
+    } else {
+        showNotification('Geen wijzigingen om te resetten');
+    }
+}
+
+// Maak functies globally beschikbaar
+window.resetChapterVerse = resetChapterVerse;
+window.resetAllChapterVerses = resetAllChapterVerses;
+
 
 console.log('✅ Admin.js ready');

@@ -264,3 +264,34 @@
     content: "Trebuchet MS"; 
     font-family: 'Trebuchet MS', sans-serif; 
 }
+/* ============================================================================
+   VOEG DIT TOE AAN style.css - CSS voor reset knoppen
+   ============================================================================ */
+
+/* Reset knop per vers in chapter editor */
+.chapter-verse-header .btn {
+    padding: 0.15rem 0.4rem;
+    font-size: 0.75rem;
+    line-height: 1;
+    border-radius: 0.25rem;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.chapter-verse-item:hover .chapter-verse-header .btn {
+    opacity: 1;
+}
+
+.chapter-verse-header .btn:hover {
+    background-color: #f8f9fa;
+    border-color: #6c757d;
+}
+
+.chapter-verse-header .btn i {
+    font-size: 0.85rem;
+}
+
+/* Modified items tonen reset knop altijd */
+.chapter-verse-item.modified .chapter-verse-header .btn {
+    opacity: 1;
+}

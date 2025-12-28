@@ -87,21 +87,32 @@
                     </div>
                     
                     <!-- Chapter editor (multiple verses) -->
+ <!-- Chapter editor (multiple verses) -->
                     <div id="chapterEditor" class="d-none">
                         <div class="mb-3 d-flex justify-content-between align-items-center">
                             <label class="form-label mb-0">Verzen bewerken</label>
-                            <button class="btn btn-primary btn-sm" onclick="saveAllChapterFormatting()">
-                                <i class="bi bi-save-fill"></i> Alles Opslaan
-                            </button>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-secondary" onclick="resetAllChapterVerses()" title="Reset alle wijzigingen">
+                                    <i class="bi bi-arrow-counterclockwise"></i> Reset Alles
+                                </button>
+                                <button class="btn btn-primary" onclick="saveAllChapterFormatting()">
+                                    <i class="bi bi-save-fill"></i> Alles Opslaan
+                                </button>
+                            </div>
                         </div>
                         <div id="chapterVersesContainer" style="max-height: 500px; overflow-y: auto;">
                             <div class="text-muted text-center py-4">Selecteer een boek en hoofdstuk om te beginnen</div>
                         </div>
-                        <div class="mt-3 d-flex justify-content-between">
+                        <div class="mt-3 d-flex justify-content-between align-items-center">
                             <small class="text-muted"><span id="chapterVerseCount">0</span> verzen</small>
-                            <button class="btn btn-primary btn-sm" onclick="saveAllChapterFormatting()">
-                                <i class="bi bi-save-fill"></i> Alles Opslaan
-                            </button>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-secondary" onclick="resetAllChapterVerses()" title="Reset alle wijzigingen">
+                                    <i class="bi bi-arrow-counterclockwise"></i> Reset Alles
+                                </button>
+                                <button class="btn btn-primary" onclick="saveAllChapterFormatting()">
+                                    <i class="bi bi-save-fill"></i> Alles Opslaan
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
