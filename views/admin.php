@@ -66,7 +66,7 @@
                                 </select>
                             </div>
                         </div>
-                    <span>Tekst Bewerken</span>
+                    <hr>
                     <!-- Single verse editor -->
                     <div id="singleVerseEditor">
                         <div class="mb-3">
