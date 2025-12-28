@@ -1,4 +1,4 @@
-/** 
+/**
  * APP.JS - Basis functionaliteit voor hele app
  */
 

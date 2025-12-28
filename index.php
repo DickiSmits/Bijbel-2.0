@@ -130,6 +130,7 @@ if (!is_dir('images')) {
     <!-- Quill Editor (alleen admin) -->
     <?php if ($mode === 'admin'): ?>
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/style.css">
     <?php endif; ?>
     
     <!-- Custom CSS (optioneel) -->
