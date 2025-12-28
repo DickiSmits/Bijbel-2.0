@@ -1,156 +1,139 @@
 <?php
 /**
- * MINIMAL INDEX.PHP - Test Singleton Pattern API Routing
+ * Bijbelreader - Main Entry Point
+ * 
+ * Dit bestand handelt alle requests af en routeert naar de juiste
+ * API endpoints of views.
  */
 
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-
-// Load config
+// Load configuratie
 require_once __DIR__ . '/config.php';
+require_once INCLUDES_PATH . '/helpers.php';
 
-// ============= API ROUTING - KOMT EERST! =============
+// Zorg dat images directory bestaat
+if (!file_exists(IMAGES_DIR)) {
+    mkdir(IMAGES_DIR, 0755, true);
+}
+
+// Start sessie
+Auth::startSession();
+
+// ============= API ROUTING =============
 if (isset($_GET['api'])) {
-    header('Content-Type: application/json');
-    
     $endpoint = $_GET['api'];
-    $apiFile = __DIR__ . '/api/' . $endpoint . '.php';
+    $apiFile = API_PATH . '/' . getApiFile($endpoint);
     
     if (file_exists($apiFile)) {
         require_once $apiFile;
     } else {
-        http_response_code(404);
-        echo json_encode(['error' => 'API endpoint niet gevonden: ' . $endpoint]);
+        jsonError('Onbekende API endpoint', 404);
     }
-    
-    exit; // ← KRITIEK! Stop hier voor API calls
+    exit;
 }
 
-// ============= NORMALE PAGINA REQUEST =============
-?>
-<!DOCTYPE html>
-<html lang="nl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bijbelreader - API Test (Singleton Pattern)</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 1000px;
-            margin: 50px auto;
-            padding: 20px;
-        }
-        .success { color: #4CAF50; font-weight: bold; }
-        .error { color: #f44336; font-weight: bold; }
-        .test-link {
-            display: inline-block;
-            margin: 5px;
-            padding: 8px 15px;
-            background: #2196F3;
-            color: white;
-            text-decoration: none;
-            border-radius: 4px;
-        }
-        .test-link:hover {
-            background: #1976D2;
-        }
-        pre {
-            background: #f5f5f5;
-            padding: 15px;
-            border-radius: 4px;
-            overflow-x: auto;
-        }
-    </style>
-</head>
-<body>
-    <h1>✅ Index.php Werkt! (Singleton Pattern Fix)</h1>
-    
-    <h2>🔧 Database Singleton Pattern Test</h2>
-    <?php
-    try {
-        // Test Singleton pattern
-        $db = Database::getInstance()->getConnection();
-        echo '<p class="success">✅ Database::getInstance() werkt!</p>';
-        
-        // Test query
-        $stmt = $db->query("SELECT COUNT(*) as count FROM De_Bijbel");
-        $result = $stmt->fetch();
-        echo '<p class="success">✅ Database query werkt! Aantal verzen: ' . number_format($result['count']) . '</p>';
-        
-    } catch (Exception $e) {
-        echo '<p class="error">❌ Database error: ' . $e->getMessage() . '</p>';
+// ============= AUTHENTICATION HANDLING =============
+if (isset($_POST['login'])) {
+    if (Auth::login($_POST['password'] ?? '')) {
+        header('Location: ?mode=admin');
+        exit;
+    } else {
+        $loginError = 'Onjuist wachtwoord';
     }
-    ?>
-    
-    <h2>📡 Test API Endpoints (Moet JSON tonen, NIET HTML)</h2>
-    <p>Klik op een link. Als je <strong>JSON</strong> ziet, werkt de API! Als je HTML ziet, werkt het NIET.</p>
-    
-    <div>
-        <a href="?api=books" class="test-link" target="_blank">📚 Books API</a>
-        <a href="?api=profiles" class="test-link" target="_blank">👤 Profiles API</a>
-        <a href="?api=timeline" class="test-link" target="_blank">📅 Timeline API</a>
-        <a href="?api=locations" class="test-link" target="_blank">📍 Locations API</a>
-        <a href="?api=chapters&boek=Genesis" class="test-link" target="_blank">📖 Chapters API</a>
-        <a href="?api=verses&boek=Genesis&hoofdstuk=1&limit=5" class="test-link" target="_blank">📝 Verses API</a>
-        <a href="?api=timeline_groups" class="test-link" target="_blank">🏷️ Timeline Groups</a>
-    </div>
-    
-    <h2>🧪 JavaScript API Test</h2>
-    <button onclick="testAllAPIs()" style="padding: 10px 20px; font-size: 16px; cursor: pointer;">
-        Test Alle APIs
-    </button>
-    <pre id="testResults">Klik op de knop om te testen...</pre>
-    
-    <script>
-    async function testAllAPIs() {
-        const results = document.getElementById('testResults');
-        results.textContent = 'Bezig met testen...\n\n';
+}
+
+if (isset($_GET['logout'])) {
+    Auth::logout();
+    header('Location: ?mode=reader');
+    exit;
+}
+
+// ============= PAGE ROUTING =============
+$mode = $_GET['mode'] ?? 'reader';
+$isAdmin = Auth::isAdmin();
+
+// Admin mode vereist login
+if ($mode === 'admin' && !$isAdmin) {
+    $mode = 'login';
+}
+
+// Load de juiste view
+switch ($mode) {
+    case 'reader':
+        view('reader', ['isAdmin' => $isAdmin]);
+        break;
         
-        const apis = ['books', 'profiles', 'timeline', 'locations', 'timeline_groups'];
+    case 'admin':
+        view('admin', ['isAdmin' => $isAdmin]);
+        break;
         
-        for (const api of apis) {
-            try {
-                const response = await fetch('?api=' + api);
-                const contentType = response.headers.get('content-type');
-                
-                results.textContent += `📡 ${api}:\n`;
-                results.textContent += `   Status: ${response.status}\n`;
-                results.textContent += `   Content-Type: ${contentType}\n`;
-                
-                if (contentType && contentType.includes('application/json')) {
-                    const data = await response.json();
-                    if (Array.isArray(data)) {
-                        results.textContent += `   ✅ JSON OK! (${data.length} items)\n`;
-                    } else if (data.error) {
-                        results.textContent += `   ⚠️  JSON Error: ${data.error}\n`;
-                    } else {
-                        results.textContent += `   ✅ JSON OK!\n`;
-                    }
-                } else {
-                    results.textContent += `   ❌ FOUT: Content-Type is niet JSON!\n`;
-                }
-                
-            } catch (error) {
-                results.textContent += `   ❌ CRASH: ${error.message}\n`;
-            }
-            
-            results.textContent += '\n';
-        }
+    case 'login':
+        view('login', ['loginError' => $loginError ?? null]);
+        break;
         
-        results.textContent += '=== TEST COMPLEET ===';
-    }
-    </script>
+    default:
+        header('Location: ?mode=reader');
+        exit;
+}
+
+/**
+ * Helper: Bepaal welk API bestand geladen moet worden
+ */
+function getApiFile($endpoint) {
+    // Map API endpoints naar bestanden
+    $mapping = [
+        // Verses
+        'verses' => 'verses.php',
+        'books' => 'verses.php',
+        'chapters' => 'verses.php',
+        'search' => 'verses.php',
+        'verse_detail' => 'verses.php',
+        'verse_images' => 'verses.php',
+        'get_vers_id' => 'verses.php',
+        'get_vers_info' => 'verses.php',
+        
+        // Profiles & Formatting
+        'profiles' => 'profiles.php',
+        'create_profile' => 'profiles.php',
+        'delete_profile' => 'profiles.php',
+        'save_formatting' => 'profiles.php',
+        'all_formatting' => 'profiles.php',
+        'delete_formatting' => 'profiles.php',
+        
+        // Timeline
+        'timeline' => 'timeline.php',
+        'save_timeline' => 'timeline.php',
+        'delete_timeline' => 'timeline.php',
+        'get_timeline' => 'timeline.php',
+        'timeline_groups' => 'timeline.php',
+        'create_timeline_group' => 'timeline.php',
+        'update_timeline_group' => 'timeline.php',
+        'delete_timeline_group' => 'timeline.php',
+        'toggle_timeline_group' => 'timeline.php',
+        
+        // Locations
+        'locations' => 'locations.php',
+        'get_location' => 'locations.php',
+        'save_location' => 'locations.php',
+        'delete_location' => 'locations.php',
+        'link_verse_location' => 'locations.php',
+        
+        // Images
+        'upload_image' => 'images.php',
+        'all_images' => 'images.php',
+        'get_image' => 'images.php',
+        'update_image' => 'images.php',
+        'delete_image' => 'images.php',
+        
+        // Notes
+        'notes' => 'notes.php',
+        'get_note' => 'notes.php',
+        'save_note' => 'notes.php',
+        'delete_note' => 'notes.php',
+        
+        // Import/Export
+        'export' => 'import-export.php',
+        'import' => 'import-export.php',
+    ];
     
-    <h2>ℹ️ Informatie</h2>
-    <p>Deze minimale index.php test of:</p>
-    <ul>
-        <li>✅ Database Singleton pattern werkt</li>
-        <li>✅ API routing correct is (API calls VOOR normale pagina)</li>
-        <li>✅ API endpoints JSON teruggeven (NIET HTML)</li>
-        <li>✅ exit; na API call voorkomt HTML output</li>
-    </ul>
-    
-    <p><strong>Als alle tests slagen, vervang dan je huidige index.php met de volledige versie!</strong></p>
-</body>
-</html>
+    return $mapping[$endpoint] ?? 'unknown.php';
+}
