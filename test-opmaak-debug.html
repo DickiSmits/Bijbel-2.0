@@ -45,14 +45,13 @@
     
     <script>
         async function testProfiles() {
-            const result = await fetch('?api=profiles').then(r => r.json());
+            const result = await fetch('./?api=profiles').then(r => r.json());
             document.getElementById('profilesResult').innerHTML = 
                 `<pre>${JSON.stringify(result, null, 2)}</pre>`;
         }
         
         async function testOpmaak() {
-            // Custom API call to check Opmaak table
-            const result = await fetch('test-opmaak.php').then(r => r.json());
+            const result = await fetch('./test-opmaak.php').then(r => r.json());
             document.getElementById('opmaakResult').innerHTML = 
                 `<pre>${JSON.stringify(result, null, 2)}</pre>`;
         }
@@ -64,7 +63,7 @@
                 return;
             }
             
-            const result = await fetch(`?api=verses&profiel_id=${profileId}&limit=5`)
+            const result = await fetch(`./?api=verses&profiel_id=${profileId}&limit=5`)
                 .then(r => r.json());
             
             document.getElementById('versesResult').innerHTML = 
@@ -73,7 +72,7 @@
         }
         
         async function testDirectQuery() {
-            const result = await fetch('test-direct-opmaak.php').then(r => r.json());
+            const result = await fetch('./test-direct-opmaak.php').then(r => r.json());
             document.getElementById('directResult').innerHTML = 
                 `<pre>${JSON.stringify(result, null, 2)}</pre>`;
         }

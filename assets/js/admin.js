@@ -2,6 +2,48 @@
  * ADMIN.JS - Admin mode functionaliteit
  */
 
+// Initialize admin when loaded
+document.addEventListener('DOMContentLoaded', function() {
+    if (mode === 'admin') {
+        console.log('Admin mode - loading initial data...');
+        loadProfiles();
+    }
+});
+
+// Load profiles list
+async function loadProfiles() {
+    const profiles = await apiCall('profiles');
+    const profileList = document.getElementById('profilesList');
+    
+    if (!profileList) {
+        console.warn('profilesList element not found');
+        return;
+    }
+    
+    if (!profiles || profiles.length === 0) {
+        profileList.innerHTML = '<p class="text-muted fst-italic">Nog geen profielen aangemaakt</p>';
+        return;
+    }
+    
+    profileList.innerHTML = '';
+    profiles.forEach(profile => {
+        const item = document.createElement('div');
+        item.className = 'profile-item d-flex justify-content-between align-items-center p-3 mb-2 bg-light rounded';
+        item.innerHTML = `
+            <div>
+                <div class="fw-semibold">${profile.Profiel_Naam}</div>
+                <small class="text-muted">${profile.Beschrijving || 'Geen beschrijving'}</small>
+            </div>
+            <button class="btn btn-outline-danger btn-sm" onclick="deleteProfile(${profile.Profiel_ID})">
+                <i class="bi bi-trash"></i> Verwijder
+            </button>
+        `;
+        profileList.appendChild(item);
+    });
+    
+    console.log(`Loaded ${profiles.length} profiles in admin`);
+}
+
 // Show admin section
 function showAdminSection(section) {
     // Hide all sections
@@ -32,13 +74,45 @@ function resetFormatting() {
 }
 
 function createProfile() {
-    showNotification('Deze functie wordt binnenkort toegevoegd!');
+    const naam = document.getElementById('newProfileName');
+    const beschrijving = document.getElementById('newProfileDesc');
+    
+    if (!naam || !naam.value.trim()) {
+        showNotification('Vul een naam in', true);
+        return;
+    }
+    
+    apiCall('create_profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            naam: naam.value.trim(),
+            beschrijving: beschrijving ? beschrijving.value.trim() : ''
+        })
+    }).then(result => {
+        if (result && result.success) {
+            showNotification('Profiel aangemaakt!');
+            naam.value = '';
+            if (beschrijving) beschrijving.value = '';
+            loadProfiles(); // Reload list
+        } else {
+            showNotification('Fout bij aanmaken profiel', true);
+        }
+    });
 }
 
 function deleteProfile(id) {
-    if (confirm('Weet je zeker dat je dit profiel wilt verwijderen?')) {
-        showNotification('Deze functie wordt binnenkort toegevoegd!');
-    }
+    if (!confirm('Weet je zeker dat je dit profiel wilt verwijderen?')) return;
+    
+    apiCall(`delete_profile&id=${id}`, { method: 'GET' })
+        .then(result => {
+            if (result && result.success) {
+                showNotification('Profiel verwijderd');
+                loadProfiles(); // Reload list
+            } else {
+                showNotification('Fout bij verwijderen profiel', true);
+            }
+        });
 }
 
 function saveTimeline() {

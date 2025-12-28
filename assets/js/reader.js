@@ -86,6 +86,7 @@ function setupEventListeners() {
     if (profileSelect) {
         profileSelect.addEventListener('change', (e) => {
             currentProfile = e.target.value || null;
+            console.log('📋 Profile changed to:', currentProfile);
             loadVerses();
         });
     }
@@ -126,7 +127,11 @@ async function loadVerses(append = false) {
     if (currentChapter) params.append('hoofdstuk', currentChapter);
     if (currentProfile) params.append('profiel_id', currentProfile);
     
-    const verses = await apiCall('verses&' + params.toString());
+    const url = 'verses&' + params.toString();
+    console.log('📖 Loading verses:', url);
+    console.log('   Current profile:', currentProfile);
+    
+    const verses = await apiCall(url);
     
     if (!verses || verses.length === 0) {
         if (!append) {
@@ -136,6 +141,19 @@ async function loadVerses(append = false) {
         loading = false;
         return;
     }
+    
+    // Count opmaak for debugging
+    let withOpmaak = 0;
+    let withoutOpmaak = 0;
+    verses.forEach(v => {
+        if (v.Opgemaakte_Tekst && v.Opgemaakte_Tekst.trim() !== '') {
+            withOpmaak++;
+        } else {
+            withoutOpmaak++;
+        }
+    });
+    
+    console.log(`✅ Loaded ${verses.length} verses: ${withOpmaak} with opmaak, ${withoutOpmaak} without`);
     
     if (!append) {
         container.innerHTML = '';
