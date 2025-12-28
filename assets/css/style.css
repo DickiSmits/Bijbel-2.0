@@ -131,3 +131,136 @@
         font-size: 0.95rem;
     }
 }
+/* ============================================================================
+   VOEG DIT TOE AAN HET EINDE VAN JE STYLE.CSS
+   ============================================================================ */
+
+/* Chapter Editor Verse Items */
+.chapter-verse-item {
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    margin-bottom: 0.75rem;
+    background: #fff;
+    transition: all 0.2s ease;
+}
+
+.chapter-verse-item:hover {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
+}
+
+.chapter-verse-item.modified {
+    border-color: #ffc107;
+    background: #fffbeb;
+}
+
+.chapter-verse-header {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 0.75rem;
+    background: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    border-radius: 0.375rem 0.375rem 0 0;
+    gap: 0.75rem;
+}
+
+.chapter-verse-number {
+    font-weight: bold;
+    color: #495057;
+    min-width: 30px;
+    font-size: 0.9rem;
+}
+
+.chapter-verse-original {
+    flex: 1;
+    font-size: 0.85rem;
+    color: #6c757d;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-style: italic;
+}
+
+.chapter-verse-status {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-weight: 600;
+}
+
+.chapter-verse-editor {
+    padding: 0.5rem;
+}
+
+.chapter-verse-editor .ql-toolbar {
+    padding: 4px;
+    border: none;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.chapter-verse-editor .ql-container {
+    border: none;
+    font-size: 0.95rem;
+}
+
+.chapter-verse-editor .ql-editor {
+    min-height: 60px;
+    max-height: 150px;
+    padding: 8px;
+    line-height: 1.6;
+}
+
+/* Quill Font Picker Labels - BELANGRIJK voor font namen! */
+.ql-snow .ql-picker.ql-font .ql-picker-label[data-value="serif"]::before,
+.ql-snow .ql-picker.ql-font .ql-picker-item[data-value="serif"]::before { 
+    content: "Serif"; 
+    font-family: Georgia, serif; 
+}
+
+.ql-snow .ql-picker.ql-font .ql-picker-label[data-value="monospace"]::before,
+.ql-snow .ql-picker.ql-font .ql-picker-item[data-value="monospace"]::before { 
+    content: "Monospace"; 
+    font-family: Monaco, monospace; 
+}
+
+.ql-snow .ql-picker.ql-font .ql-picker-label[data-value="arial"]::before,
+.ql-snow .ql-picker.ql-font .ql-picker-item[data-value="arial"]::before { 
+    content: "Arial"; 
+    font-family: Arial, sans-serif; 
+}
+
+.ql-snow .ql-picker.ql-font .ql-picker-label[data-value="times"]::before,
+.ql-snow .ql-picker.ql-font .ql-picker-item[data-value="times"]::before { 
+    content: "Times New Roman"; 
+    font-family: 'Times New Roman', serif; 
+}
+
+.ql-snow .ql-picker.ql-font .ql-picker-label[data-value="courier"]::before,
+.ql-snow .ql-picker.ql-font .ql-picker-item[data-value="courier"]::before { 
+    content: "Courier"; 
+    font-family: Courier, monospace; 
+}
+
+.ql-snow .ql-picker.ql-font .ql-picker-label[data-value="georgia"]::before,
+.ql-snow .ql-picker.ql-font .ql-picker-item[data-value="georgia"]::before { 
+    content: "Georgia"; 
+    font-family: Georgia, serif; 
+}
+
+.ql-snow .ql-picker.ql-font .ql-picker-label[data-value="verdana"]::before,
+.ql-snow .ql-picker.ql-font .ql-picker-item[data-value="verdana"]::before { 
+    content: "Verdana"; 
+    font-family: Verdana, sans-serif; 
+}
+
+.ql-snow .ql-picker.ql-font .ql-picker-label[data-value="tahoma"]::before,
+.ql-snow .ql-picker.ql-font .ql-picker-item[data-value="tahoma"]::before { 
+    content: "Tahoma"; 
+    font-family: Tahoma, sans-serif; 
+}
+
+.ql-snow .ql-picker.ql-font .ql-picker-label[data-value="trebuchet"]::before,
+.ql-snow .ql-picker.ql-font .ql-picker-item[data-value="trebuchet"]::before { 
+    content: "Trebuchet MS"; 
+    font-family: 'Trebuchet MS', sans-serif; 
+}

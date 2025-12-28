@@ -457,65 +457,77 @@ window.loadVerse = loadVerse;
 
 // ============= LOAD CHAPTER =============
 
+// ============================================================================
+// VERVANG DE HELE loadChapterForEditing() FUNCTIE IN JE admin.js
+// ============================================================================
+
 async function loadChapterForEditing() {
-    const boek = document.getElementById('adminBookSelect')?.value;
-    const hoofdstuk = document.getElementById('adminChapterSelect')?.value;
-    const profielId = document.getElementById('editorProfileSelect')?.value;
-    const container = document.getElementById('chapterVersesContainer');
+    const boek = document.getElementById('adminBookSelect').value;
+    const hoofdstuk = document.getElementById('adminChapterSelect').value;
+    const profielId = document.getElementById('editorProfileSelect').value;
     
+    const container = document.getElementById('chapterVersesContainer');
     if (!container) {
-        console.error('❌ chapterVersesContainer not found');
+        console.log('❌ chapterVersesContainer not found');
         return;
     }
     
     if (!boek || !hoofdstuk) {
-        container.innerHTML = '<div class="text-muted text-center py-4">Selecteer een boek en hoofdstuk</div>';
+        container.innerHTML = '<div class="text-muted text-center py-4">Selecteer een boek en hoofdstuk om te beginnen</div>';
         return;
     }
     
-    console.log(`📚 Loading chapter: ${boek} ${hoofdstuk} (profile: ${profielId || 'none'})`);
+    console.log(`📖 Loading chapter: ${boek} ${hoofdstuk}`);
     
-    container.innerHTML = '<div class="text-center py-4"><div class="spinner-border spinner-border-sm"></div> Laden...</div>';
+    // Show loading
+    container.innerHTML = '<div class="text-center py-4"><div class="spinner-border spinner-border-sm" role="status"></div> Laden...</div>';
     
-    // Destroy old editors
+    // Destroy existing Quill instances
     Object.values(chapterEditors).forEach(editor => {
-        if (editor?.container) editor.container.innerHTML = '';
+        if (editor && editor.container) {
+            editor.container.innerHTML = '';
+        }
     });
     chapterEditors = {};
     
+    // Fetch verses
     const params = profielId ? 
         `verses&boek=${encodeURIComponent(boek)}&hoofdstuk=${hoofdstuk}&profiel_id=${profielId}&limit=999` :
         `verses&boek=${encodeURIComponent(boek)}&hoofdstuk=${hoofdstuk}&limit=999`;
         
-    const verses = await window.apiCall(params);
+    const verses = await apiCall(params);
+    chapterVersesData = verses || [];
     
     if (!verses || verses.length === 0) {
         container.innerHTML = '<div class="text-muted text-center py-4">Geen verzen gevonden</div>';
         return;
     }
     
-    console.log(`✅ Got ${verses.length} verses`);
+    console.log(`✅ Loaded ${verses.length} verses`);
     
-    const countEl = document.getElementById('chapterVerseCount');
-    if (countEl) countEl.textContent = verses.length;
+    // Update verse count
+    document.getElementById('chapterVerseCount').textContent = verses.length;
     
+    // Build HTML
     container.innerHTML = '';
     
+    // ✅ FIX: Font registratie EENMALIG, VOOR DE LOOP!
     const Font = Quill.import('formats/font');
+    Font.whitelist = ['serif', 'monospace', 'arial', 'times', 'courier', 'georgia', 'verdana', 'tahoma', 'trebuchet'];
+    Quill.register(Font, true);
     
+    // ✅ Nu door alle verzen loopen
     for (const verse of verses) {
-        const hasFormatting = verse.Opgemaakte_Tekst && verse.Opgemaakte_Tekst.trim();
+        const hasFormatting = verse.Opgemaakte_Tekst && verse.Opgemaakte_Tekst.trim() !== '';
         
         const verseItem = document.createElement('div');
-        verseItem.className = 'chapter-verse-item' + (hasFormatting ? ' has-formatting' : '');
+        verseItem.className = 'chapter-verse-item';
         verseItem.dataset.versId = verse.Vers_ID;
         verseItem.innerHTML = `
             <div class="chapter-verse-header">
                 <span class="chapter-verse-number">${verse.Versnummer}</span>
-                <span class="chapter-verse-original" title="${verse.Tekst}">${verse.Tekst}</span>
-                <span class="chapter-verse-status badge ${hasFormatting ? 'bg-success' : 'bg-secondary'}">
-                    ${hasFormatting ? 'Bewerkt' : 'Origineel'}
-                </span>
+                <span class="chapter-verse-original" title="${verse.Tekst}">${verse.Tekst.substring(0, 80)}${verse.Tekst.length > 80 ? '...' : ''}</span>
+                <span class="chapter-verse-status badge ${hasFormatting ? 'bg-success' : 'bg-secondary'}">${hasFormatting ? 'Bewerkt' : 'Origineel'}</span>
             </div>
             <div class="chapter-verse-editor">
                 <div id="chapter-editor-${verse.Vers_ID}"></div>
@@ -523,7 +535,9 @@ async function loadChapterForEditing() {
         `;
         container.appendChild(verseItem);
         
-        const editor = new Quill(`#chapter-editor-${verse.Vers_ID}`, {
+        // Initialize Quill - ZONDER opnieuw Font te registreren!
+        const editorId = `chapter-editor-${verse.Vers_ID}`;
+        const quillInstance = new Quill(`#${editorId}`, {
             theme: 'snow',
             modules: {
                 toolbar: [
@@ -537,23 +551,27 @@ async function loadChapterForEditing() {
             }
         });
         
+        // Set content
         if (hasFormatting) {
-            editor.clipboard.dangerouslyPasteHTML(verse.Opgemaakte_Tekst);
+            quillInstance.clipboard.dangerouslyPasteHTML(verse.Opgemaakte_Tekst);
         } else {
-            editor.setText(verse.Tekst);
+            quillInstance.setText(verse.Tekst);
         }
         
-        editor.originalHtml = editor.root.innerHTML;
+        // Store original for change detection
+        quillInstance.originalHtml = quillInstance.root.innerHTML;
         
-        editor.on('text-change', () => {
-            const modified = editor.root.innerHTML !== editor.originalHtml;
-            verseItem.classList.toggle('modified', modified);
+        // Track changes
+        quillInstance.on('text-change', () => {
+            const currentHtml = quillInstance.root.innerHTML;
+            const isModified = currentHtml !== quillInstance.originalHtml;
+            verseItem.classList.toggle('modified', isModified);
         });
         
-        chapterEditors[verse.Vers_ID] = editor;
+        chapterEditors[verse.Vers_ID] = quillInstance;
     }
     
-    console.log(`✅ Created ${Object.keys(chapterEditors).length} editors`);
+    console.log(`✅ Created ${Object.keys(chapterEditors).length} Quill editors`);
 }
 window.loadChapterForEditing = loadChapterForEditing;
 
