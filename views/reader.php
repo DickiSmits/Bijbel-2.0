@@ -196,11 +196,25 @@
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Reader view loaded');
     
-    // Check if reader.js exists and is loaded
+    // Initialize reader
     if (typeof initReader === 'function') {
         initReader();
     } else {
         console.warn('reader.js not loaded - reader functionality may be limited');
+    }
+    
+    // Initialize map
+    if (typeof initMap === 'function') {
+        initMap();
+    } else {
+        console.warn('map.js not loaded - map functionality disabled');
+    }
+    
+    // Initialize timeline
+    if (typeof initTimeline === 'function') {
+        initTimeline();
+    } else {
+        console.warn('timeline.js not loaded - timeline functionality disabled');
     }
 });
 </script>

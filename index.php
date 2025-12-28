@@ -134,7 +134,7 @@ if (!is_dir('images')) {
     
     <!-- Custom CSS (optioneel) -->
     <?php if (file_exists(__DIR__ . '/assets/css/style.css')): ?>
-    <link rel="stylesheet" href="/assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/style.css">
     <?php endif; ?>
 </head>
 <body>
@@ -223,22 +223,22 @@ if (!is_dir('images')) {
     </script>
     
     <?php if (file_exists(__DIR__ . '/assets/js/app.js')): ?>
-    <script src="/assets/js/app.js"></script>
+    <script src="assets/js/app.js"></script>
     <?php endif; ?>
     
     <?php if ($mode === 'reader'): ?>
         <?php if (file_exists(__DIR__ . '/assets/js/reader.js')): ?>
-        <script src="/assets/js/reader.js"></script>
+        <script src="assets/js/reader.js"></script>
         <?php endif; ?>
         <?php if (file_exists(__DIR__ . '/assets/js/map.js')): ?>
-        <script src="/assets/js/map.js"></script>
+        <script src="assets/js/map.js"></script>
         <?php endif; ?>
         <?php if (file_exists(__DIR__ . '/assets/js/timeline.js')): ?>
-        <script src="/assets/js/timeline.js"></script>
+        <script src="assets/js/timeline.js"></script>
         <?php endif; ?>
     <?php elseif ($mode === 'admin'): ?>
         <?php if (file_exists(__DIR__ . '/assets/js/admin.js')): ?>
-        <script src="/assets/js/admin.js"></script>
+        <script src="assets/js/admin.js"></script>
         <?php endif; ?>
     <?php endif; ?>
 </body>
