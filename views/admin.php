@@ -66,7 +66,7 @@
                                 </select>
                             </div>
                         </div>
-                    <hr>
+                <h4 class="mb-4"><i class="bi bi-pencil"></i> Tekst Bewerken</h4>
                     <!-- Single verse editor -->
                     <div id="singleVerseEditor">
                         <div class="mb-3">
