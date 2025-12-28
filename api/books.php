@@ -1,7 +1,7 @@
 <?php
 /**
- * API: Profiles
- * Geef alle profielen terug
+ * API: Books
+ * Geef alle bijbelboeken terug
  */
 
 require_once __DIR__ . '/../config.php';
@@ -10,13 +10,15 @@ try {
     $db = Database::getInstance()->getConnection();
     
     $stmt = $db->query("
-        SELECT * FROM Profielen 
-        ORDER BY Profiel_Naam
+        SELECT DISTINCT Bijbelboeknaam, MIN(Vers_ID) as First_ID 
+        FROM De_Bijbel 
+        GROUP BY Bijbelboeknaam 
+        ORDER BY First_ID
     ");
     
-    $profiles = $stmt->fetchAll();
+    $books = $stmt->fetchAll();
     
-    echo json_encode($profiles);
+    echo json_encode($books);
     
 } catch (Exception $e) {
     http_response_code(500);

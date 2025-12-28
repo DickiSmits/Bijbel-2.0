@@ -1,7 +1,7 @@
 <?php
 /**
- * API: Profiles
- * Geef alle profielen terug
+ * API: Timeline Groups
+ * Geef timeline groepen terug
  */
 
 require_once __DIR__ . '/../config.php';
@@ -10,13 +10,13 @@ try {
     $db = Database::getInstance()->getConnection();
     
     $stmt = $db->query("
-        SELECT * FROM Profielen 
-        ORDER BY Profiel_Naam
+        SELECT * FROM Timeline_Groups 
+        ORDER BY Volgorde, Groep_Naam
     ");
     
-    $profiles = $stmt->fetchAll();
+    $groups = $stmt->fetchAll();
     
-    echo json_encode($profiles);
+    echo json_encode($groups);
     
 } catch (Exception $e) {
     http_response_code(500);
