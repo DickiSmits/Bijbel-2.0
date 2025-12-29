@@ -497,7 +497,7 @@ async function loadChapterForEditing() {
         `verses&boek=${encodeURIComponent(boek)}&hoofdstuk=${hoofdstuk}&profiel_id=${profielId}&limit=999` :
         `verses&boek=${encodeURIComponent(boek)}&hoofdstuk=${hoofdstuk}&limit=999`;
         
-    const verses = await apiCall(params);
+    const verses = await window.apiCall(params);
     chapterVersesData = verses || [];
     
     if (!verses || verses.length === 0) {
@@ -697,10 +697,17 @@ window.deleteFormatting = deleteFormatting;
 // ============= PROFILES =============
 
 async function loadProfiles() {
+    console.log('📋 Loading profiles...');
     const profiles = await window.apiCall('profiles');
     
+    if (!profiles) {
+        console.error('❌ No profiles received from API');
+        return;
+    }
+    
+    // 1. Fill dropdown (for editor)
     const select = document.getElementById('editorProfileSelect');
-    if (select && profiles) {
+    if (select) {
         select.innerHTML = '<option value="">Kies profiel...</option>';
         profiles.forEach(p => {
             const option = document.createElement('option');
@@ -708,7 +715,58 @@ async function loadProfiles() {
             option.textContent = p.Profiel_Naam;
             select.appendChild(option);
         });
-        console.log(`✅ Loaded ${profiles.length} profiles`);
+        console.log(`✅ Filled dropdown with ${profiles.length} profiles`);
+    }
+    
+    // 2. Fill profiles list (for profiles section)
+    const list = document.getElementById('profilesList');
+    if (list) {
+        if (profiles.length === 0) {
+            list.innerHTML = '<p class="text-muted fst-italic">Nog geen profielen aangemaakt</p>';
+            return;
+        }
+        
+        const table = document.createElement('table');
+        table.className = 'table table-hover';
+        table.innerHTML = `
+            <thead>
+                <tr>
+                    <th>Naam</th>
+                    <th>Beschrijving</th>
+                    <th>Aangemaakt</th>
+                    <th style="width: 100px;">Acties</th>
+                </tr>
+            </thead>
+            <tbody id="profilesTableBody"></tbody>
+        `;
+        
+        list.innerHTML = '';
+        list.appendChild(table);
+        
+        const tbody = document.getElementById('profilesTableBody');
+        
+        profiles.forEach(profile => {
+            const tr = document.createElement('tr');
+            
+            const createdDate = profile.Aangemaakt ? 
+                new Date(profile.Aangemaakt).toLocaleDateString('nl-NL') : 
+                '-';
+            
+            tr.innerHTML = `
+                <td><strong>${profile.Profiel_Naam}</strong></td>
+                <td>${profile.Beschrijving || '<span class="text-muted">-</span>'}</td>
+                <td><small class="text-muted">${createdDate}</small></td>
+                <td>
+                    <button class="btn btn-outline-danger btn-sm" onclick="deleteProfile(${profile.Profiel_ID})" title="Verwijder">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </td>
+            `;
+            
+            tbody.appendChild(tr);
+        });
+        
+        console.log(`✅ Filled list with ${profiles.length} profiles`);
     }
 }
 
@@ -779,7 +837,7 @@ async function resetChapterVerse(versId) {
         // ✅ NIEUW: Verwijder opmaak uit database
         const profielId = document.getElementById('editorProfileSelect').value;
         if (profielId) {
-            const result = await apiCall(`delete_formatting&vers_id=${versId}&profiel_id=${profielId}`);
+            const result = await window.apiCall(`delete_formatting&vers_id=${versId}&profiel_id=${profielId}`);
             if (result && result.success) {
                 console.log(`✅ Opmaak verwijderd uit database voor vers ${versId}`);
                 
@@ -849,7 +907,7 @@ async function resetAllChapterVerses() {
         if (isModified || hadFormatting) {
             // Verwijder uit database als er opmaak was
             if (hadFormatting) {
-                const result = await apiCall(`delete_formatting&vers_id=${versId}&profiel_id=${profielId}`);
+                const result = await window.apiCall(`delete_formatting&vers_id=${versId}&profiel_id=${profielId}`);
                 if (result && result.success) {
                     verseData.Opgemaakte_Tekst = null;
                     console.log(`✅ Opmaak verwijderd voor vers ${versId}`);
@@ -917,7 +975,7 @@ async function resetChapterVerse(versId) {
         // ✅ NIEUW: Verwijder opmaak uit database
         const profielId = document.getElementById('editorProfileSelect').value;
         if (profielId) {
-            const result = await apiCall(`delete_formatting&vers_id=${versId}&profiel_id=${profielId}`);
+            const result = await window.apiCall(`delete_formatting&vers_id=${versId}&profiel_id=${profielId}`);
             if (result && result.success) {
                 console.log(`✅ Opmaak verwijderd uit database voor vers ${versId}`);
                 
@@ -987,7 +1045,7 @@ async function resetAllChapterVerses() {
         if (isModified || hadFormatting) {
             // Verwijder uit database als er opmaak was
             if (hadFormatting) {
-                const result = await apiCall(`delete_formatting&vers_id=${versId}&profiel_id=${profielId}`);
+                const result = await window.apiCall(`delete_formatting&vers_id=${versId}&profiel_id=${profielId}`);
                 if (result && result.success) {
                     verseData.Opgemaakte_Tekst = null;
                     console.log(`✅ Opmaak verwijderd voor vers ${versId}`);
@@ -1074,23 +1132,30 @@ function showAdminSection(section) {
             break;
             
         case 'timeline':
-            // Timeline functies worden later toegevoegd
-            console.log('Timeline section - data loading TODO');
+            if (typeof loadTimelineList === 'function') {
+                loadTimelineList();
+            }
+            if (typeof loadTimelineGroups === 'function') {
+                loadTimelineGroups();
+            }
             break;
             
         case 'locations':
-            // Location functies worden later toegevoegd
-            console.log('Locations section - data loading TODO');
+            if (typeof loadLocationList === 'function') {
+                loadLocationList();
+            }
             break;
             
         case 'images':
-            // Image functies worden later toegevoegd
-            console.log('Images section - data loading TODO');
+            if (typeof loadImageList === 'function') {
+                loadImageList();
+            }
             break;
             
         case 'notes':
-            // Notes functies worden later toegevoegd
-            console.log('Notes section - data loading TODO');
+            if (typeof initNotesEditor === 'function') {
+                initNotesEditor();
+            }
             break;
     }
 }
@@ -1099,3 +1164,579 @@ function showAdminSection(section) {
 window.showAdminSection = showAdminSection;
 
 console.log('✅ Admin.js ready');
+/**
+ * DATA LOADING FUNCTIES - Toevoegen aan admin.js
+ * Plaats dit NA de showAdminSection functie (rond regel 1100)
+ */
+
+// ============= TIMELINE DATA LOADING =============
+
+async function loadTimelineList() {
+    console.log('📅 Loading timeline events...');
+    
+    const events = await window.apiCall('timeline');
+    const list = document.getElementById('timelineList');
+    
+    if (!list) {
+        console.warn('⚠️ timelineList element not found');
+        return;
+    }
+    
+    if (!events || events.length === 0) {
+        list.innerHTML = '<p class="text-muted fst-italic">Nog geen timeline events</p>';
+        return;
+    }
+    
+    const table = document.createElement('table');
+    table.className = 'table table-hover table-sm';
+    table.innerHTML = `
+        <thead>
+            <tr>
+                <th>Titel</th>
+                <th>Groep</th>
+                <th>Datum</th>
+                <th>Vers</th>
+                <th style="width: 120px;">Acties</th>
+            </tr>
+        </thead>
+        <tbody id="timelineTableBody"></tbody>
+    `;
+    
+    list.innerHTML = '';
+    list.appendChild(table);
+    
+    const tbody = document.getElementById('timelineTableBody');
+    
+    events.forEach(event => {
+        const tr = document.createElement('tr');
+        tr.className = 'timeline-item';
+        
+        const groupBadge = event.Groep_Naam ? 
+            `<span class="badge" style="background: ${event.Groep_Kleur};">${event.Groep_Naam}</span>` : 
+            '<span class="text-muted">-</span>';
+        
+        let verseRef = '-';
+        if (event.Start_Boek) {
+            verseRef = `${event.Start_Boek} ${event.Start_Hoofdstuk}:${event.Start_Vers}`;
+            if (event.End_Boek) {
+                verseRef += ` - ${event.End_Boek} ${event.End_Hoofdstuk}:${event.End_Vers}`;
+            }
+        }
+        
+        let dateDisplay = '-';
+        if (event.Start_Datum) {
+            dateDisplay = event.Start_Datum;
+            if (event.End_Datum && event.End_Datum !== event.Start_Datum) {
+                dateDisplay += ' tot ' + event.End_Datum;
+            }
+        }
+        
+        tr.innerHTML = `
+            <td><strong>${event.Titel}</strong><br><small class="text-muted">${event.Beschrijving || ''}</small></td>
+            <td>${groupBadge}</td>
+            <td><small>${dateDisplay}</small></td>
+            <td><small>${verseRef}</small></td>
+            <td>
+                <button class="btn btn-outline-primary btn-sm" onclick="editTimeline(${event.Event_ID})" title="Bewerk">
+                    <i class="bi bi-pencil"></i>
+                </button>
+                <button class="btn btn-outline-danger btn-sm" onclick="deleteTimeline(${event.Event_ID})" title="Verwijder">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+    
+    console.log(`✅ Loaded ${events.length} timeline events`);
+}
+
+async function loadTimelineGroups() {
+    console.log('🏷️ Loading timeline groups...');
+    
+    const groups = await window.apiCall('timeline_groups');
+    
+    if (!groups) {
+        console.warn('⚠️ No timeline groups received');
+        return;
+    }
+    
+    // 1. Fill the groups list display
+    const list = document.getElementById('groupsList');
+    if (list) {
+        if (groups.length === 0) {
+            list.innerHTML = '<p class="text-muted fst-italic">Nog geen groepen</p>';
+        } else {
+            list.innerHTML = '';
+            
+            groups.forEach(group => {
+                const chip = document.createElement('div');
+                chip.style.cssText = `
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                    padding: 0.5rem 0.8rem;
+                    margin: 0.25rem;
+                    border-radius: 20px;
+                    background: ${group.Kleur}20;
+                    border: 2px solid ${group.Kleur};
+                `;
+                
+                chip.innerHTML = `
+                    <span style="font-weight: 500;">${group.Groep_Naam}</span>
+                    <button onclick="editTimelineGroup(${group.Group_ID}, '${group.Groep_Naam.replace(/'/g, "\\'")}', '${group.Kleur}')" 
+                            class="btn btn-sm btn-link p-0" title="Bewerk">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    <button onclick="deleteTimelineGroup(${group.Group_ID})" 
+                            class="btn btn-sm btn-link text-danger p-0" title="Verwijder">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                `;
+                
+                list.appendChild(chip);
+            });
+            
+            console.log(`✅ Filled groups list with ${groups.length} groups`);
+        }
+    }
+    
+    // 2. Fill the dropdown for new event form
+    const dropdown = document.getElementById('timelineGroup');
+    if (dropdown) {
+        dropdown.innerHTML = '<option value="">Geen groep</option>';
+        groups.forEach(group => {
+            const option = document.createElement('option');
+            option.value = group.Group_ID;
+            option.textContent = group.Groep_Naam;
+            dropdown.appendChild(option);
+        });
+        console.log(`✅ Filled dropdown with ${groups.length} groups`);
+    }
+}
+
+// ============= LOCATIONS DATA LOADING =============
+
+async function loadLocationList() {
+    console.log('📍 Loading locations...');
+    
+    const locations = await window.apiCall('locations');
+    const list = document.getElementById('locationList');
+    
+    if (!list) {
+        console.warn('⚠️ locationList element not found');
+        return;
+    }
+    
+    if (!locations || locations.length === 0) {
+        list.innerHTML = '<p class="text-muted fst-italic">Nog geen locaties</p>';
+        return;
+    }
+    
+    const table = document.createElement('table');
+    table.className = 'table table-hover table-sm';
+    table.innerHTML = `
+        <thead>
+            <tr>
+                <th>Naam</th>
+                <th>Type</th>
+                <th>Coördinaten</th>
+                <th>Beschrijving</th>
+                <th style="width: 120px;">Acties</th>
+            </tr>
+        </thead>
+        <tbody id="locationTableBody"></tbody>
+    `;
+    
+    list.innerHTML = '';
+    list.appendChild(table);
+    
+    const tbody = document.getElementById('locationTableBody');
+    
+    const typeIcons = {
+        'stad': 'bi-building',
+        'berg': 'bi-triangle',
+        'rivier': 'bi-water',
+        'zee': 'bi-tsunami',
+        'regio': 'bi-map',
+        'overig': 'bi-geo-alt'
+    };
+    
+    locations.forEach(loc => {
+        const tr = document.createElement('tr');
+        const icon = typeIcons[loc.Type] || 'bi-geo-alt';
+        
+        tr.innerHTML = `
+            <td><strong>${loc.Naam}</strong></td>
+            <td><i class="bi ${icon}"></i> ${loc.Type}</td>
+            <td><small>${loc.Latitude}, ${loc.Longitude}</small></td>
+            <td><small class="text-muted">${loc.Beschrijving || '-'}</small></td>
+            <td>
+                <button class="btn btn-outline-primary btn-sm" onclick="editLocation(${loc.Locatie_ID})" title="Bewerk">
+                    <i class="bi bi-pencil"></i>
+                </button>
+                <button class="btn btn-outline-danger btn-sm" onclick="deleteLocation(${loc.Locatie_ID})" title="Verwijder">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+    
+    console.log(`✅ Loaded ${locations.length} locations`);
+}
+
+// ============= IMAGES DATA LOADING =============
+
+async function loadImageList() {
+    console.log('🖼️ Loading images...');
+    
+    const images = await window.apiCall('all_images');
+    const list = document.getElementById('imageList');
+    
+    if (!list) {
+        console.warn('⚠️ imageList element not found');
+        return;
+    }
+    
+    if (!images || images.length === 0) {
+        list.innerHTML = '<div class="col-12"><p class="text-muted fst-italic">Nog geen afbeeldingen geüpload</p></div>';
+        return;
+    }
+    
+    list.innerHTML = '';
+    
+    images.forEach(img => {
+        const versInfo = img.Bijbelboeknaam ? 
+            `<span class="text-primary fw-semibold"><i class="bi bi-book"></i> ${img.Bijbelboeknaam} ${img.Hoofdstuknummer}:${img.Versnummer}</span>` : 
+            '<span class="text-muted"><i class="bi bi-exclamation-triangle"></i> Geen vers gekoppeld</span>';
+        
+        const col = document.createElement('div');
+        col.className = 'col-md-6 col-lg-4';
+        col.innerHTML = `
+            <div class="card h-100">
+                <img src="${img.Bestandspad}" class="card-img-top" style="height: 150px; object-fit: cover;">
+                <div class="card-body">
+                    <h6 class="card-title text-truncate">${img.Originele_Naam}</h6>
+                    <p class="card-text small text-muted mb-2">
+                        ${versInfo}<br>
+                        <i class="bi bi-arrows-angle-expand"></i> ${img.Breedte}px ${img.Hoogte ? '× ' + img.Hoogte + 'px' : '(auto)'}
+                        ${img.Caption ? '<br><i class="bi bi-chat-quote"></i> ' + img.Caption : ''}
+                    </p>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <button class="btn btn-sm btn-outline-primary" onclick="editImage(${img.Afbeelding_ID})">
+                        <i class="bi bi-pencil"></i> Bewerk
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="deleteImage(${img.Afbeelding_ID})">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        list.appendChild(col);
+    });
+    
+    console.log(`✅ Loaded ${images.length} images`);
+}
+
+// ============= NOTES DATA LOADING =============
+
+let notesQuill = null;
+let currentNoteId = null;
+let notes = [];
+
+async function initNotesEditor() {
+    console.log('📝 Initializing notes editor...');
+    
+    // Check if Quill is available
+    if (typeof Quill === 'undefined') {
+        console.error('❌ Quill not loaded - cannot initialize notes editor');
+        return;
+    }
+    
+    // Initialize Quill editor if not already done
+    const container = document.getElementById('notesEditorContainer');
+    if (container && !notesQuill) {
+        notesQuill = new Quill('#notesEditorContainer', {
+            theme: 'snow',
+            placeholder: 'Begin hier met schrijven...',
+            modules: {
+                toolbar: [
+                    [{ 'header': [1, 2, 3, false] }],
+                    ['bold', 'italic', 'underline', 'strike'],
+                    [{ 'color': [] }, { 'background': [] }],
+                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                    ['link'],
+                    ['clean']
+                ]
+            }
+        });
+        console.log('✅ Notes Quill editor initialized');
+        
+        // Setup auto-save
+        setupNotesAutoSave();
+    }
+    
+    // Load notes from database
+    await loadNotes();
+}
+
+async function loadNotes() {
+    console.log('📋 Loading notes from database...');
+    
+    const result = await window.apiCall('notes');
+    
+    if (result) {
+        notes = result.map(n => ({
+            id: n.Notitie_ID,
+            title: n.Titel || '',
+            content: n.Inhoud || '',
+            created: n.Aangemaakt,
+            updated: n.Gewijzigd
+        }));
+        console.log(`✅ Loaded ${notes.length} notes`);
+    } else {
+        notes = [];
+        console.log('No notes found');
+    }
+    
+    renderNotesList();
+}
+
+function renderNotesList() {
+    const listContainer = document.getElementById('notesList');
+    if (!listContainer) {
+        console.warn('⚠️ notesList element not found');
+        return;
+    }
+    
+    if (notes.length === 0) {
+        listContainer.innerHTML = `
+            <div class="text-center p-4 text-muted">
+                <p>Nog geen notities</p>
+            </div>
+        `;
+        return;
+    }
+    
+    // Sort by updated date
+    const sortedNotes = [...notes].sort((a, b) => new Date(b.updated) - new Date(a.updated));
+    
+    listContainer.innerHTML = sortedNotes.map(note => {
+        const date = new Date(note.updated);
+        const dateStr = date.toLocaleDateString('nl-NL', { 
+            day: 'numeric', 
+            month: 'short',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+        
+        // Strip HTML for preview
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = note.content || '';
+        const plainText = tempDiv.textContent || '';
+        const preview = plainText.substring(0, 50) + (plainText.length > 50 ? '...' : '');
+        
+        const isActive = note.id === currentNoteId;
+        
+        return `
+            <div class="p-3 mb-2 rounded cursor-pointer ${isActive ? 'bg-primary text-white' : 'bg-light'}" 
+                 onclick="selectNote(${note.id})" style="cursor: pointer;">
+                <div class="fw-bold text-truncate">${note.title || 'Naamloos'}</div>
+                <div class="small opacity-75">${dateStr}</div>
+                ${preview ? `<div class="small opacity-75 text-truncate mt-1">${preview}</div>` : ''}
+            </div>
+        `;
+    }).join('');
+}
+
+function selectNote(noteId) {
+    currentNoteId = noteId;
+    const note = notes.find(n => n.id === noteId);
+    
+    if (!note) {
+        console.error('Note not found:', noteId);
+        return;
+    }
+    
+    // Show editor, hide empty state
+    const emptyState = document.getElementById('emptyNotesState');
+    const editorContent = document.getElementById('noteEditorContent');
+    
+    if (emptyState) emptyState.classList.add('d-none');
+    if (editorContent) {
+        editorContent.classList.remove('d-none');
+        editorContent.classList.add('d-flex');
+    }
+    
+    // Load note content
+    const titleInput = document.getElementById('noteTitleInput');
+    if (titleInput) {
+        titleInput.value = note.title || '';
+    }
+    
+    if (notesQuill) {
+        if (note.content) {
+            notesQuill.root.innerHTML = note.content;
+        } else {
+            notesQuill.setText('');
+        }
+    }
+    
+    // Update list selection
+    renderNotesList();
+    
+    console.log('✅ Note selected:', noteId);
+}
+
+function setupNotesAutoSave() {
+    if (!notesQuill) return;
+    
+    let autoSaveTimeout = null;
+    
+    notesQuill.on('text-change', () => {
+        if (!currentNoteId) return;
+        
+        clearTimeout(autoSaveTimeout);
+        
+        const statusEl = document.getElementById('noteSaveStatus');
+        if (statusEl) statusEl.textContent = 'Opslaan...';
+        
+        autoSaveTimeout = setTimeout(() => {
+            saveCurrentNote();
+        }, 2000);
+    });
+    
+    // Also auto-save on title change
+    const titleInput = document.getElementById('noteTitleInput');
+    if (titleInput) {
+        titleInput.addEventListener('input', () => {
+            if (!currentNoteId) return;
+            
+            clearTimeout(autoSaveTimeout);
+            
+            const statusEl = document.getElementById('noteSaveStatus');
+            if (statusEl) statusEl.textContent = 'Opslaan...';
+            
+            autoSaveTimeout = setTimeout(() => {
+                saveCurrentNote();
+            }, 2000);
+        });
+    }
+}
+
+async function createNewNote() {
+    if (!notesQuill) {
+        await initNotesEditor();
+    }
+    
+    const result = await window.apiCall('save_note', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            titel: 'Nieuwe notitie',
+            inhoud: ''
+        })
+    });
+    
+    if (result && result.success) {
+        await loadNotes();
+        selectNote(result.notitie_id);
+        
+        // Focus on title input
+        setTimeout(() => {
+            const titleInput = document.getElementById('noteTitleInput');
+            if (titleInput) {
+                titleInput.value = '';
+                titleInput.focus();
+            }
+        }, 100);
+        
+        console.log('✅ New note created');
+    }
+}
+
+async function saveCurrentNote() {
+    if (!currentNoteId || !notesQuill) return;
+    
+    const titleInput = document.getElementById('noteTitleInput');
+    const titel = titleInput ? titleInput.value || 'Naamloos' : 'Naamloos';
+    const inhoud = notesQuill.root.innerHTML;
+    
+    const result = await window.apiCall('save_note', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            notitie_id: currentNoteId,
+            titel: titel,
+            inhoud: inhoud
+        })
+    });
+    
+    if (result && result.success) {
+        // Update local cache
+        const noteIndex = notes.findIndex(n => n.id === currentNoteId);
+        if (noteIndex !== -1) {
+            notes[noteIndex].title = titel;
+            notes[noteIndex].content = inhoud;
+            notes[noteIndex].updated = new Date().toISOString();
+        }
+        
+        renderNotesList();
+        
+        const statusEl = document.getElementById('noteSaveStatus');
+        if (statusEl) {
+            statusEl.textContent = 'Opgeslagen';
+            setTimeout(() => {
+                statusEl.textContent = '';
+            }, 2000);
+        }
+        
+        console.log('✅ Note saved');
+    }
+}
+
+async function deleteCurrentNote() {
+    if (!currentNoteId) return;
+    
+    if (!confirm('Weet je zeker dat je deze notitie wilt verwijderen?')) return;
+    
+    const result = await window.apiCall(`delete_note&id=${currentNoteId}`);
+    
+    if (result && result.success) {
+        notes = notes.filter(n => n.id !== currentNoteId);
+        currentNoteId = null;
+        
+        // Show empty state
+        const emptyState = document.getElementById('emptyNotesState');
+        const editorContent = document.getElementById('noteEditorContent');
+        
+        if (emptyState) emptyState.classList.remove('d-none');
+        if (editorContent) {
+            editorContent.classList.add('d-none');
+            editorContent.classList.remove('d-flex');
+        }
+        
+        renderNotesList();
+        showNotification('Notitie verwijderd');
+        console.log('✅ Note deleted');
+    }
+}
+
+// ============= EXPORT FUNCTIES =============
+
+// Maak alle functies globally beschikbaar
+window.loadTimelineList = loadTimelineList;
+window.loadTimelineGroups = loadTimelineGroups;
+window.loadLocationList = loadLocationList;
+window.loadImageList = loadImageList;
+window.initNotesEditor = initNotesEditor;
+window.loadNotes = loadNotes;
+window.selectNote = selectNote;
+window.createNewNote = createNewNote;
+window.saveCurrentNote = saveCurrentNote;
+window.deleteCurrentNote = deleteCurrentNote;
+
+console.log('✅ Data loading functions registered');

@@ -42,7 +42,7 @@
                 </div>
                 <div class="card-body">
                         <div class="row g-3 mb-3 align-items-end">
-                            <!-- Boek/Hoofdstuk/Vers op één rij -->
+                            <!-- Boek/Hoofdstuk/Vers op Ã©Ã©n rij -->
                             <div class="col-md-3">
                                 <label class="form-label small fw-semibold text-muted">Boek</label>
                                 <select id="adminBookSelect" class="form-select form-select-sm"></select>
@@ -199,6 +199,12 @@
                     <div id="timelineList"></div>
                 </div>
             </div>
+            <div class="card mt-3">
+                <div class="card-header">Timeline Groepen</div>
+                <div class="card-body">
+                    <div id="groupsList"></div>
+                </div>
+            </div>
         </div>
         
         <div id="section-locations" class="admin-section d-none">
@@ -259,7 +265,7 @@
                 </div>
             </div>
             <div class="card">
-                <div class="card-header">Geüploade Afbeeldingen</div>
+                <div class="card-header">GeÃ¼ploade Afbeeldingen</div>
                 <div class="card-body">
                     <div id="imageList" class="row g-3"></div>
                 </div>
