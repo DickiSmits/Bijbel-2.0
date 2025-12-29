@@ -1754,7 +1754,6 @@ async function saveTimeline() {
         return;
     }
     
-    const endpoint = eventId ? 'update_timeline' : 'create_timeline';
     const data = {
         titel,
         group_id: groupId,
@@ -1767,7 +1766,7 @@ async function saveTimeline() {
         data.event_id = eventId;
     }
     
-    const result = await window.apiCall(endpoint, {
+    const result = await window.apiCall('save_timeline', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
@@ -1850,7 +1849,6 @@ async function saveLocation() {
         return;
     }
     
-    const endpoint = locationId ? 'update_location' : 'create_location';
     const data = {
         naam,
         latitude: parseFloat(lat),
@@ -1863,7 +1861,7 @@ async function saveLocation() {
         data.locatie_id = locationId;
     }
     
-    const result = await window.apiCall(endpoint, {
+    const result = await window.apiCall('save_location', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
