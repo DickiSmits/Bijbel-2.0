@@ -416,6 +416,7 @@ if (!is_dir('images')) {
     <?php if ($mode === 'admin'): ?>
     <script src="assets/js/admin-extensions.js"></script>
     <script src="assets/js/admin-datatable-loaders.js"></script>
+    <script src="assets/js/admin-timeline-groups.js"></script>
 <?php endif; ?>
 </body>
 </html>
