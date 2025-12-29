@@ -228,8 +228,7 @@ function createFilterUI(groups) {
             <label class="group-filter-btn" title="${group.content}">
                 <input type="checkbox" 
                        class="group-filter-checkbox" 
-                       value="${group.id}" 
-                       checked
+                       value="${group.id}"
                        onchange="toggleGroupFilter(${group.id})">
                 <span class="group-badge" style="background-color: ${group.kleur};">
                     ${group.content}
@@ -252,12 +251,15 @@ function createFilterUI(groups) {
             </div>
             
             <div class="timeline-info">
-                <span id="timelineEventCount">${allTimelineEvents.length}</span> events
+                <span id="timelineEventCount">0</span> events
             </div>
         </div>
     `;
     
     panel.innerHTML = html;
+    
+    // Initially hide all events (filters start unchecked)
+    updateVisibleEvents();
     
     // Attach search handler
     const searchInput = document.getElementById('timelineSearchInput');
@@ -275,6 +277,20 @@ function createFilterUI(groups) {
     }
     
     console.log(`✅ Created ${groups.length} group filter buttons`);
+}
+
+// Update visible events (called after filter UI is created)
+function updateVisibleEvents() {
+    // Initialize: all checkboxes unchecked = all groups filtered
+    const checkboxes = document.querySelectorAll('.group-filter-checkbox');
+    checkboxes.forEach(cb => {
+        activeGroupFilters.add(parseInt(cb.value));
+    });
+    
+    // Apply filters
+    filterTimeline();
+    
+    console.log('✅ Initial filter state: all groups hidden');
 }
 
 // Toggle group filter

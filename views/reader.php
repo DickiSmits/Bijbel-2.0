@@ -190,21 +190,37 @@
     white-space: nowrap;
 }
 
-/* Timeline events - FORCE single line */
+/* Timeline events - FORCE single line - AGGRESSIVE */
 .vis-item .vis-item-content {
     white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
     max-width: 100% !important;
     line-height: 1.2 !important;
+    display: block !important;
+}
+
+.vis-item .vis-item-content * {
+    display: inline !important;
+    white-space: nowrap !important;
 }
 
 .vis-item.vis-range .vis-item-content {
     white-space: nowrap !important;
+    display: block !important;
 }
 
 .vis-item-overflow {
     overflow: hidden !important;
+}
+
+/* Hide any internal divs/spans that create newlines */
+.vis-item .vis-item-content br {
+    display: none !important;
+}
+
+.vis-item .vis-item-content div {
+    display: inline !important;
 }
 
 /* Verse styling */
