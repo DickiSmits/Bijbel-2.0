@@ -24,8 +24,9 @@ function initTimeline() {
     timelineItems = new vis.DataSet();
     timelineGroups = new vis.DataSet();
     
-    // Timeline options - simple, no height forcing
+    // Timeline options
     const options = {
+        height: '100%',
         orientation: 'top',
         zoomMin: 1000 * 60 * 60 * 24 * 365, // 1 year
         zoomMax: 1000 * 60 * 60 * 24 * 365 * 100, // 100 years
@@ -71,8 +72,31 @@ function initTimeline() {
         }
     };
     
-    // Create timeline - CSS handles height
+    // Create timeline
     timeline = new vis.Timeline(container, timelineItems, timelineGroups, options);
+    
+    // Force timeline to fill container height
+    setTimeout(() => {
+        if (timeline) {
+            const container = document.getElementById('timeline');
+            if (container) {
+                const height = container.clientHeight;
+                timeline.setOptions({ height: height + 'px' });
+                console.log('Timeline height set to:', height);
+            }
+        }
+    }, 100);
+    
+    // Handle window resize
+    window.addEventListener('resize', () => {
+        if (timeline) {
+            const container = document.getElementById('timeline');
+            if (container) {
+                const height = container.clientHeight;
+                timeline.setOptions({ height: height + 'px' });
+            }
+        }
+    });
     
     // Add click handler for events
     timeline.on('select', function (properties) {
@@ -88,7 +112,20 @@ function initTimeline() {
     });
     
     // Load data
-    loadTimelineData();
+    loadTimelineData().then(() => {
+        // Fix timeline height after data loads
+        setTimeout(() => {
+            if (timeline) {
+                const container = document.getElementById('timeline');
+                if (container) {
+                    const height = container.clientHeight;
+                    timeline.setOptions({ height: height + 'px' });
+                    timeline.redraw();
+                    console.log('📏 Timeline height adjusted after data load:', height);
+                }
+            }
+        }, 500);
+    });
     
     console.log('✅ Timeline initialized');
 }
@@ -447,6 +484,21 @@ function fitTimelineWindow() {
     }
 }
 
+// Open timeline in fullscreen (new tab)
+function openTimelineFullscreen() {
+    // Open the fullscreen timeline page
+    const baseUrl = window.location.origin + window.location.pathname.replace(/\/[^/]*$/, '');
+    const url = baseUrl + '/timeline-fullscreen.html';
+    
+    const width = window.screen.width * 0.9;
+    const height = window.screen.height * 0.9;
+    const left = (window.screen.width - width) / 2;
+    const top = (window.screen.height - height) / 2;
+    
+    window.open(url, 'TimelineFullscreen', 
+        `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes,toolbar=no,menubar=no`);
+}
+
 // Make global
 window.initTimeline = initTimeline;
 window.timeline = timeline;
@@ -456,5 +508,6 @@ window.clearTimelineSearch = clearTimelineSearch;
 window.navigateTimelinePrev = navigateTimelinePrev;
 window.navigateTimelineNext = navigateTimelineNext;
 window.fitTimelineWindow = fitTimelineWindow;
+window.openTimelineFullscreen = openTimelineFullscreen;
 
 console.log('✅ Timeline.js loaded (Enhanced)');

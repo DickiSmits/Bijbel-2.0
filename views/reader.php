@@ -25,16 +25,21 @@
         <div id="timelineFilterPanel" class="timeline-filter-panel"></div>
         
         <!-- Timeline Navigation -->
-        <button class="timeline-nav-btn timeline-nav-prev" onclick="navigateTimelinePrev()" title="Vorig event">
+        <button class="timeline-nav-btn timeline-nav-prev" onclick="navigateTimelinePrev()" title="Vorige periode">
             <i class="bi bi-chevron-left"></i>
         </button>
         
         <!-- Timeline Container -->
-        <div id="timeline" class="timeline-container"></div>
+        <div id="timeline"></div>
         
         <!-- Timeline Navigation -->
-        <button class="timeline-nav-btn timeline-nav-next" onclick="navigateTimelineNext()" title="Volgend event">
+        <button class="timeline-nav-btn timeline-nav-next" onclick="navigateTimelineNext()" title="Volgende event">
             <i class="bi bi-chevron-right"></i>
+        </button>
+        
+        <!-- Fullscreen Timeline Button -->
+        <button class="timeline-fullscreen-btn" onclick="openTimelineFullscreen()" title="Open timeline in nieuw tabblad">
+            <i class="bi bi-arrows-fullscreen"></i>
         </button>
     </div>
 </div>
@@ -44,7 +49,7 @@
 .reader-layout {
     display: grid;
     grid-template-columns: 2fr 4px 1fr;
-    grid-template-rows: 1fr 4px 300px;
+    grid-template-rows: 1fr 4px minmax(300px, 35vh);
     height: calc(100vh - 120px);
     gap: 0;
 }
@@ -89,7 +94,10 @@
     grid-row: 3;
     position: relative;
     background: #fff;
+    display: flex;
+    flex-direction: column;
     overflow: hidden;
+    min-height: 0;
 }
 
 #map {
@@ -97,43 +105,29 @@
     width: 100%;
 }
 
-/* Timeline Container - ABSOLUTE positioning */
-.timeline-container,
 #timeline {
-    position: absolute !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
-    width: 100% !important;
-    height: 100% !important;
-    padding-top: 60px !important; /* Space for filter panel */
+    flex: 1 1 100%;
+    width: 100%;
+    min-height: 0;
+    height: 100%;
+    position: relative;
 }
 
-/* Force ALL Vis Timeline elements to 100% */
-#timeline .vis-timeline,
-.vis-timeline {
-    height: 100% !important;
-    width: 100% !important;
-}
-
-#timeline .vis-panel,
-.vis-panel {
+/* Force Vis Timeline to fill container */
+#timeline .vis-timeline {
     height: 100% !important;
 }
 
-#timeline .vis-content,
-.vis-content {
+#timeline .vis-panel.vis-center {
     height: 100% !important;
 }
 
-/* Timeline Filter Panel - ABSOLUTE on top */
+#timeline .vis-content {
+    height: 100% !important;
+}
+
+/* Timeline Filter Panel */
 .timeline-filter-panel {
-    position: absolute !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    z-index: 10 !important;
     background: #f8f9fa;
     border-bottom: 1px solid #dee2e6;
     padding: 0.5rem 1rem;
@@ -310,6 +304,32 @@
 
 .timeline-nav-next { 
     right: 10px; 
+}
+
+/* Fullscreen Timeline Button */
+.timeline-fullscreen-btn {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    z-index: 100;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(44, 82, 130, 0.9);
+    color: white;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    transition: all 0.2s;
+}
+
+.timeline-fullscreen-btn:hover {
+    background: #1a365d;
+    transform: scale(1.1);
 }
 
 /* Verse styling */
