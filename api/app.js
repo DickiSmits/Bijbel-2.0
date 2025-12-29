@@ -4,14 +4,28 @@
 
 // API helper functie
 async function apiCall(endpoint, options = {}) {
-    // Fix URL to work with existing query parameters
-    // If we're on ?mode=admin, we need ?mode=admin&api=... not ?api=...
+    // Build proper URL with existing query params
     const currentUrl = new URL(window.location.href);
-    const hasParams = currentUrl.search.length > 0;
-    const separator = hasParams ? '&' : '?';
-    const url = separator + 'api=' + endpoint;
     
-    console.log('API Call: ' + url);
+    // Parse endpoint to extract API call and parameters
+    // e.g. "delete_timeline&id=174" → api=delete_timeline, id=174
+    const parts = endpoint.split('&');
+    const apiName = parts[0];
+    
+    // Set api parameter
+    currentUrl.searchParams.set('api', apiName);
+    
+    // Add other parameters from endpoint
+    for (let i = 1; i < parts.length; i++) {
+        const [key, value] = parts[i].split('=');
+        if (key && value) {
+            currentUrl.searchParams.set(key, value);
+        }
+    }
+    
+    const url = currentUrl.toString();
+    
+    console.log('API Call:', url);
     
     try {
         const response = await fetch(url, options);
