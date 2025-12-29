@@ -105,6 +105,9 @@ if (!is_dir('images')) {
     
     <?php if ($mode === 'admin'): ?>
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <?php endif; ?>
+
+    <?php if ($mode === 'admin'): ?>
     <link href="assets/css/admin-datatable.css" rel="stylesheet">
     <?php endif; ?>
     
