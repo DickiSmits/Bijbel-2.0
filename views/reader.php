@@ -1,4 +1,4 @@
-<!-- Reader View - Enhanced Timeline with Filter & Search -->
+<!-- Reader View - Complete Interface -->
 <div class="reader-layout" id="readerContainer">
     <!-- Bible Text Panel -->
     <div class="bible-panel" id="bibleText">
@@ -19,27 +19,14 @@
     <!-- Horizontal Resize Handle -->
     <div class="resize-handle-h" id="horizontalHandle"></div>
     
-    <!-- Timeline Panel with Controls -->
+    <!-- Timeline Panel -->
     <div class="timeline-panel">
-        <!-- Timeline Controls (Filter & Search) -->
-        <div id="timelineFilterPanel" class="timeline-filter-panel"></div>
-        
-        <!-- Timeline Navigation -->
-        <button class="timeline-nav-btn timeline-nav-prev" onclick="navigateTimelinePrev()" title="Vorige periode">
+        <button class="timeline-nav-btn timeline-nav-prev" onclick="navigateTimelinePrev()" title="Vorig event">
             <i class="bi bi-chevron-left"></i>
         </button>
-        
-        <!-- Timeline Container -->
         <div id="timeline"></div>
-        
-        <!-- Timeline Navigation -->
-        <button class="timeline-nav-btn timeline-nav-next" onclick="navigateTimelineNext()" title="Volgende event">
+        <button class="timeline-nav-btn timeline-nav-next" onclick="navigateTimelineNext()" title="Volgend event">
             <i class="bi bi-chevron-right"></i>
-        </button>
-        
-        <!-- Fullscreen Timeline Button -->
-        <button class="timeline-fullscreen-btn" onclick="openTimelineFullscreen()" title="Open timeline in nieuw tabblad">
-            <i class="bi bi-arrows-fullscreen"></i>
         </button>
     </div>
 </div>
@@ -49,8 +36,8 @@
 .reader-layout {
     display: grid;
     grid-template-columns: 2fr 4px 1fr;
-    grid-template-rows: 1fr 4px minmax(300px, 35vh);
-    height: calc(100vh - 120px);
+    grid-template-rows: 1fr 4px 250px;
+    height: calc(100vh - 56px);  /* Fixed: Was 120px, should be actual header height */
     gap: 0;
 }
 
@@ -94,10 +81,6 @@
     grid-row: 3;
     position: relative;
     background: #fff;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    min-height: 0;
 }
 
 #map {
@@ -106,230 +89,8 @@
 }
 
 #timeline {
-    flex: 1 1 100%;
-    width: 100%;
-    min-height: 0;
     height: 100%;
-    position: relative;
-}
-
-/* Force Vis Timeline to fill container */
-#timeline .vis-timeline {
-    height: 100% !important;
-}
-
-#timeline .vis-panel.vis-center {
-    height: 100% !important;
-}
-
-#timeline .vis-content {
-    height: 100% !important;
-}
-
-/* Timeline Filter Panel */
-.timeline-filter-panel {
-    background: #f8f9fa;
-    border-bottom: 1px solid #dee2e6;
-    padding: 0.5rem 1rem;
-}
-
-.timeline-controls {
-    display: flex;
-    gap: 1rem;
-    align-items: center;
-    flex-wrap: wrap;
-}
-
-.timeline-search {
-    position: relative;
-    flex: 0 0 250px;
-}
-
-.timeline-search i {
-    position: absolute;
-    left: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #6c757d;
-    pointer-events: none;
-}
-
-.timeline-search input {
-    padding-left: 32px;
-    padding-right: 32px;
-    border-radius: 20px;
-}
-
-.timeline-search button {
-    position: absolute;
-    right: 5px;
-    top: 50%;
-    transform: translateY(-50%);
-    border: none;
-    border-radius: 50%;
-    width: 24px;
-    height: 24px;
-    padding: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.timeline-filters {
-    display: flex;
-    gap: 0.5rem;
-    align-items: center;
-    flex: 1;
-}
-
-.filter-label {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: #6c757d;
-    margin: 0;
-    flex-shrink: 0;
-}
-
-.timeline-group-filters-wrapper {
-    flex: 1;
-    overflow-x: auto;
-    overflow-y: hidden;
-    max-width: 600px;
-}
-
-.timeline-group-filters-wrapper::-webkit-scrollbar {
-    height: 6px;
-}
-
-.timeline-group-filters-wrapper::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 3px;
-}
-
-.timeline-group-filters-wrapper::-webkit-scrollbar-thumb {
-    background: #888;
-    border-radius: 3px;
-}
-
-.timeline-group-filters-wrapper::-webkit-scrollbar-thumb:hover {
-    background: #555;
-}
-
-.timeline-group-filters {
-    display: flex;
-    gap: 0.25rem;
-    padding: 0.25rem 0;
-}
-
-.timeline-filter-actions {
-    display: flex;
-    gap: 0.25rem;
-    flex-shrink: 0;
-}
-
-.group-filter-btn {
-    margin: 0;
-    cursor: pointer;
-    position: relative;
-}
-
-.group-filter-checkbox {
-    position: absolute;
-    opacity: 0;
-    pointer-events: none;
-}
-
-.group-badge {
-    display: inline-block;
-    padding: 0.25rem 0.75rem;
-    border-radius: 12px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: #fff;
-    transition: all 0.2s;
-    cursor: pointer;
-    user-select: none;
-}
-
-.group-filter-checkbox:not(:checked) + .group-badge {
-    opacity: 0.3;
-    filter: grayscale(0.8);
-}
-
-.group-badge:hover {
-    transform: scale(1.05);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-}
-
-.timeline-info {
-    font-size: 0.875rem;
-    color: #6c757d;
-    margin-left: auto;
-}
-
-.timeline-info span {
-    font-weight: 600;
-    color: #2c5282;
-}
-
-/* Timeline Navigation Buttons */
-.timeline-nav-btn {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    z-index: 100;
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    border: none;
-    background: rgba(44, 82, 130, 0.9);
-    color: white;
-    font-size: 1.2rem;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-    transition: all 0.2s;
-}
-
-.timeline-nav-btn:hover {
-    background: #1a365d;
-    transform: translateY(-50%) scale(1.1);
-}
-
-.timeline-nav-prev { 
-    left: 10px; 
-}
-
-.timeline-nav-next { 
-    right: 10px; 
-}
-
-/* Fullscreen Timeline Button */
-.timeline-fullscreen-btn {
-    position: absolute;
-    bottom: 10px;
-    right: 10px;
-    z-index: 100;
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    border: none;
-    background: rgba(44, 82, 130, 0.9);
-    color: white;
-    font-size: 1rem;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-    transition: all 0.2s;
-}
-
-.timeline-fullscreen-btn:hover {
-    background: #1a365d;
-    transform: scale(1.1);
+    width: 100%;
 }
 
 /* Verse styling */
@@ -371,11 +132,38 @@
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
+/* Timeline navigation */
+.timeline-nav-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 100;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: #2c5282;
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.timeline-nav-btn:hover {
+    background: #1a365d;
+}
+
+.timeline-nav-prev { left: 10px; }
+.timeline-nav-next { right: 10px; }
+
 /* Responsive */
 @media (max-width: 992px) {
     .reader-layout {
         grid-template-columns: 1fr;
-        grid-template-rows: 400px 300px 300px;
+        grid-template-rows: 400px 300px 250px;
     }
     
     .bible-panel {
@@ -399,20 +187,6 @@
     .timeline-panel {
         grid-column: 1;
         grid-row: 3;
-    }
-    
-    .timeline-controls {
-        flex-direction: column;
-        align-items: stretch;
-    }
-    
-    .timeline-search {
-        flex: 1 1 auto;
-    }
-    
-    .timeline-filters {
-        flex-direction: column;
-        align-items: flex-start;
     }
 }
 </style>
