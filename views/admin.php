@@ -158,8 +158,17 @@
         
         <div id="section-timeline" class="admin-section d-none">
             <h4 class="mb-4"><i class="bi bi-calendar-event"></i> Timeline Beheren</h4>
+            
+            <!-- Timeline Events -->
             <div class="card mb-4">
-                <div class="card-header">Timeline Event</div>
+                <div class="card-header">
+                    Timeline Event
+                    <button class="btn btn-sm btn-outline-secondary form-clear-btn" 
+                            onclick="clearTimelineForm()" 
+                            title="Form leegmaken">
+                        <i class="bi bi-x-circle"></i>
+                    </button>
+                </div>
                 <div class="card-body">
                     <input type="hidden" id="timelineEventId">
                     <div class="row g-3">
@@ -193,19 +202,69 @@
                     </div>
                 </div>
             </div>
-            <div class="card">
+            
+            <!-- Timeline Events List -->
+            <div class="card mb-4">
                 <div class="card-header">Timeline Events</div>
                 <div class="card-body">
                     <div id="timelineList"></div>
                 </div>
             </div>
-            <div class="card mt-3">
+            
+            <!-- Timeline Groups -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    Timeline Groep
+                    <button class="btn btn-sm btn-outline-secondary form-clear-btn" 
+                            onclick="clearTimelineGroupForm()" 
+                            title="Form leegmaken">
+                        <i class="bi bi-x-circle"></i>
+                    </button>
+                </div>
+                <div class="card-body">
+                    <input type="hidden" id="timelineGroupId">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Groep Naam</label>
+                            <input type="text" id="timelineGroupNaam" class="form-control" placeholder="Bijv. Leven van Jezus">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Kleur</label>
+                            <input type="color" id="timelineGroupKleur" class="form-control form-control-color w-100" value="#3498db">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Volgorde</label>
+                            <input type="number" id="timelineGroupVolgorde" class="form-control" placeholder="1" value="1">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Zichtbaar</label>
+                            <select id="timelineGroupZichtbaar" class="form-select">
+                                <option value="1" selected>Ja</option>
+                                <option value="0">Nee</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Beschrijving</label>
+                            <textarea id="timelineGroupBeschrijving" class="form-control" rows="2" placeholder="Optionele beschrijving..."></textarea>
+                        </div>
+                        <div class="col-12">
+                            <button class="btn btn-primary" onclick="saveTimelineGroup()">
+                                <i class="bi bi-save"></i> Opslaan
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Timeline Groups List -->
+            <div class="card">
                 <div class="card-header">Timeline Groepen</div>
                 <div class="card-body">
                     <div id="groupsList"></div>
                 </div>
             </div>
         </div>
+
         
         <div id="section-locations" class="admin-section d-none">
             <h4 class="mb-4"><i class="bi bi-geo-alt"></i> Locaties Beheren</h4>
