@@ -33,8 +33,13 @@
         <div id="timeline"></div>
         
         <!-- Timeline Navigation -->
-        <button class="timeline-nav-btn timeline-nav-next" onclick="navigateTimelineNext()" title="Volgende periode">
+        <button class="timeline-nav-btn timeline-nav-next" onclick="navigateTimelineNext()" title="Volgende event">
             <i class="bi bi-chevron-right"></i>
+        </button>
+        
+        <!-- Fullscreen Timeline Button -->
+        <button class="timeline-fullscreen-btn" onclick="openTimelineFullscreen()" title="Open timeline in nieuw tabblad">
+            <i class="bi bi-arrows-fullscreen"></i>
         </button>
     </div>
 </div>
@@ -44,7 +49,7 @@
 .reader-layout {
     display: grid;
     grid-template-columns: 2fr 4px 1fr;
-    grid-template-rows: 1fr 4px 300px;
+    grid-template-rows: 1fr 4px minmax(300px, 35vh);
     height: calc(100vh - 120px);
     gap: 0;
 }
@@ -283,6 +288,32 @@
 
 .timeline-nav-next { 
     right: 10px; 
+}
+
+/* Fullscreen Timeline Button */
+.timeline-fullscreen-btn {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    z-index: 100;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(44, 82, 130, 0.9);
+    color: white;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    transition: all 0.2s;
+}
+
+.timeline-fullscreen-btn:hover {
+    background: #1a365d;
+    transform: scale(1.1);
 }
 
 /* Verse styling */

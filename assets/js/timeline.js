@@ -171,7 +171,7 @@ function processTimelineEvents(events) {
         
         const item = {
             id: event.Event_ID,
-            content: event.Titel,
+            content: event.Titel,  // Only title, no verse numbers
             start: startDate,
             type: itemType,
             style: `background-color: ${event.Kleur}; color: ${event.Tekst_Kleur || '#ffffff'};`,
@@ -179,7 +179,9 @@ function processTimelineEvents(events) {
             title: event.Beschrijving || event.Titel,
             vers_id_start: event.Vers_ID_Start,
             vers_id_end: event.Vers_ID_End,
-            group_id: event.Group_ID
+            group_id: event.Group_ID,
+            // Store original data for tooltip
+            originalEvent: event
         };
         
         if (endDate) {
@@ -446,6 +448,21 @@ function fitTimelineWindow() {
     }
 }
 
+// Open timeline in fullscreen (new tab)
+function openTimelineFullscreen() {
+    // Open the fullscreen timeline page
+    const baseUrl = window.location.origin + window.location.pathname.replace(/\/[^/]*$/, '');
+    const url = baseUrl + '/timeline-fullscreen.html';
+    
+    const width = window.screen.width * 0.9;
+    const height = window.screen.height * 0.9;
+    const left = (window.screen.width - width) / 2;
+    const top = (window.screen.height - height) / 2;
+    
+    window.open(url, 'TimelineFullscreen', 
+        `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes,toolbar=no,menubar=no`);
+}
+
 // Make global
 window.initTimeline = initTimeline;
 window.timeline = timeline;
@@ -455,5 +472,6 @@ window.clearTimelineSearch = clearTimelineSearch;
 window.navigateTimelinePrev = navigateTimelinePrev;
 window.navigateTimelineNext = navigateTimelineNext;
 window.fitTimelineWindow = fitTimelineWindow;
+window.openTimelineFullscreen = openTimelineFullscreen;
 
 console.log('✅ Timeline.js loaded (Enhanced)');
