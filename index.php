@@ -183,6 +183,9 @@ if (!is_dir('images')) {
     
     <?php if ($mode === 'admin'): ?>
     <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+    <?php endif; ?>
+
+    <?php if ($mode === 'admin'): ?>
     <script src="assets/js/admin-extensions.js"></script>
     <script src="assets/js/admin-datatable-loaders.js"></script>
     <?php endif; ?>
