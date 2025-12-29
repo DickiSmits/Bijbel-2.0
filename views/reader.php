@@ -335,8 +335,13 @@ window.toggleTimelineFilter = function() {
     
     // Remove Bootstrap's collapse class if present (prevents conflicts)
     panel.classList.remove('collapse');
+    panel.classList.remove('show');
     
-    const isHidden = panel.style.display === 'none' || !panel.style.display;
+    // Check COMPUTED display (more reliable than style.display)
+    const computedDisplay = window.getComputedStyle(panel).display;
+    const isHidden = computedDisplay === 'none';
+    
+    console.log('Toggle - Currently:', isHidden ? 'HIDDEN' : 'VISIBLE');
     
     if (isHidden) {
         panel.style.display = 'block';
@@ -377,8 +382,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize resize handles
     initResizeHandles();
     
-    // Restore filter panel state
-    restoreFilterPanelState();
+    // Restore filter panel state (with delay to ensure timeline loaded)
+    setTimeout(() => {
+        restoreFilterPanelState();
+    }, 500);
 });
 
 // Resize functionality
@@ -471,17 +478,26 @@ function restoreFilterPanelState() {
     const panel = document.getElementById('timelineFilterPanel');
     
     if (panel) {
-        // Remove Bootstrap's collapse class if present
-        panel.classList.remove('collapse');
+        console.log('📋 Restoring filter panel state...');
         
-        // Default closed (display: none) if not set
+        // Remove Bootstrap's collapse classes if present
+        panel.classList.remove('collapse');
+        panel.classList.remove('show');
+        panel.classList.remove('collapsing');
+        
+        // Set display based on saved state
+        // Default closed (display: none) if not set or explicitly false
         if (panelOpen === 'true') {
             panel.style.display = 'block';
-            console.log('📋 Filter panel: OPEN (restored)');
+            panel.style.visibility = 'visible';
+            panel.style.opacity = '1';
+            console.log('✅ Filter panel: OPEN (restored)');
         } else {
             panel.style.display = 'none';
-            console.log('📋 Filter panel: CLOSED (default)');
+            console.log('✅ Filter panel: CLOSED (default)');
         }
+    } else {
+        console.warn('⚠️ Filter panel not found during restore');
     }
 }
 </script>
