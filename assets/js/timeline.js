@@ -37,10 +37,38 @@ function initTimeline() {
         stack: true,
         selectable: true,
         multiselect: false,
-        showTooltips: true,
         tooltip: {
-            followMouse: true,
-            overflowMethod: 'cap'
+            followMouse: false,
+            overflowMethod: 'cap',
+            delay: 100
+        },
+        // Custom tooltip template
+        template: function(item) {
+            if (!item) return '';
+            
+            // Find original event data
+            const event = allTimelineEvents.find(e => e.Event_ID === item.id);
+            if (!event) return item.content;
+            
+            let html = `<div style="padding: 8px; max-width: 300px;">`;
+            html += `<strong style="font-size: 1.1em;">${event.Titel}</strong>`;
+            
+            if (event.Beschrijving) {
+                html += `<br><span style="margin-top: 4px; display: block;">${event.Beschrijving}</span>`;
+            }
+            
+            // Show date range
+            if (event.Start_Datum) {
+                html += `<br><small style="color: #666; margin-top: 4px; display: block;">`;
+                html += event.Start_Datum;
+                if (event.End_Datum && event.End_Datum !== event.Start_Datum) {
+                    html += ` - ${event.End_Datum}`;
+                }
+                html += `</small>`;
+            }
+            
+            html += `</div>`;
+            return html;
         }
     };
     
@@ -53,7 +81,9 @@ function initTimeline() {
             const eventId = properties.items[0];
             const event = allTimelineEvents.find(e => e.Event_ID === eventId);
             if (event) {
-                onTimelineEventClick(event);
+                console.log('Timeline event selected:', event.Titel);
+                // Could navigate to verse here if needed
+                // if (event.Vers_ID_Start) { ... }
             }
         }
     });
@@ -334,72 +364,79 @@ function filterTimeline() {
     console.log(`Filtered: ${items.length} events, ${visibleGroups.length} of ${allTimelineGroupsData.length} groups visible`);
 }
 
-// Handle timeline event click
-function onTimelineEventClick(event) {
-    console.log('Timeline event clicked:', event.Titel);
-    
-    // Show event details
-    showTimelineEventDetails(event);
-    
-    // If event has verse references, navigate to verse
-    if (event.Vers_ID_Start) {
-        // TODO: Navigate to verse in bible text
-        console.log('Navigate to verse:', event.Vers_ID_Start);
-    }
-}
-
-// Show event details in modal/panel
-function showTimelineEventDetails(event) {
-    // Simple notification for now
-    let details = `<strong>${event.Titel}</strong>`;
-    if (event.Beschrijving) {
-        details += `<br>${event.Beschrijving}`;
-    }
-    
-    // Create temporary detail display
-    const existing = document.getElementById('timelineEventDetail');
-    if (existing) existing.remove();
-    
-    const detail = document.createElement('div');
-    detail.id = 'timelineEventDetail';
-    detail.className = 'timeline-event-detail';
-    detail.innerHTML = `
-        <button class="btn-close" onclick="this.parentElement.remove()"></button>
-        ${details}
-    `;
-    
-    const panel = document.querySelector('.timeline-panel');
-    if (panel) {
-        panel.appendChild(detail);
-        
-        // Auto-remove after 10 seconds
-        setTimeout(() => {
-            if (detail.parentElement) detail.remove();
-        }, 10000);
-    }
-}
-
-// Navigation functions
+// Navigation functions - jump to prev/next EVENT
 function navigateTimelinePrev() {
     if (!timeline) return;
     
-    const range = timeline.getWindow();
-    const interval = range.end - range.start;
-    const newStart = new Date(range.start.getTime() - interval / 2);
-    const newEnd = new Date(range.end.getTime() - interval / 2);
+    // Get currently visible/filtered events
+    const visibleItems = timelineItems.get();
+    if (visibleItems.length === 0) return;
     
-    timeline.setWindow(newStart, newEnd, { animation: true });
+    // Sort by start date
+    visibleItems.sort((a, b) => a.start - b.start);
+    
+    // Get current selection or window center
+    const selection = timeline.getSelection();
+    let currentIndex = -1;
+    
+    if (selection.length > 0) {
+        // Find index of selected item
+        currentIndex = visibleItems.findIndex(item => item.id === selection[0]);
+    } else {
+        // Find item closest to current window center
+        const window = timeline.getWindow();
+        const centerTime = window.start.getTime() + (window.end.getTime() - window.start.getTime()) / 2;
+        
+        currentIndex = visibleItems.findIndex(item => item.start.getTime() > centerTime);
+        if (currentIndex === -1) currentIndex = visibleItems.length;
+    }
+    
+    // Go to previous
+    const prevIndex = currentIndex > 0 ? currentIndex - 1 : visibleItems.length - 1;
+    const prevItem = visibleItems[prevIndex];
+    
+    // Select and focus
+    timeline.setSelection(prevItem.id);
+    timeline.focus(prevItem.id, { animation: true });
+    
+    console.log(`◀ Previous event: ${prevItem.content}`);
 }
 
 function navigateTimelineNext() {
     if (!timeline) return;
     
-    const range = timeline.getWindow();
-    const interval = range.end - range.start;
-    const newStart = new Date(range.start.getTime() + interval / 2);
-    const newEnd = new Date(range.end.getTime() + interval / 2);
+    // Get currently visible/filtered events
+    const visibleItems = timelineItems.get();
+    if (visibleItems.length === 0) return;
     
-    timeline.setWindow(newStart, newEnd, { animation: true });
+    // Sort by start date
+    visibleItems.sort((a, b) => a.start - b.start);
+    
+    // Get current selection or window center
+    const selection = timeline.getSelection();
+    let currentIndex = -1;
+    
+    if (selection.length > 0) {
+        // Find index of selected item
+        currentIndex = visibleItems.findIndex(item => item.id === selection[0]);
+    } else {
+        // Find item closest to current window center
+        const window = timeline.getWindow();
+        const centerTime = window.start.getTime() + (window.end.getTime() - window.start.getTime()) / 2;
+        
+        currentIndex = visibleItems.findIndex(item => item.start.getTime() >= centerTime);
+        if (currentIndex === -1) currentIndex = -1;
+    }
+    
+    // Go to next
+    const nextIndex = currentIndex < visibleItems.length - 1 ? currentIndex + 1 : 0;
+    const nextItem = visibleItems[nextIndex];
+    
+    // Select and focus
+    timeline.setSelection(nextItem.id);
+    timeline.focus(nextItem.id, { animation: true });
+    
+    console.log(`▶ Next event: ${nextItem.content}`);
 }
 
 // Fit timeline to show all events

@@ -314,38 +314,6 @@
     transform: scale(1.1);
 }
 
-/* Timeline Event Detail */
-.timeline-event-detail {
-    position: absolute;
-    top: 70px;
-    right: 50px;
-    background: white;
-    border: 1px solid #dee2e6;
-    border-radius: 8px;
-    padding: 1rem;
-    max-width: 400px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    z-index: 200;
-    animation: slideIn 0.3s;
-}
-
-@keyframes slideIn {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.timeline-event-detail .btn-close {
-    position: absolute;
-    top: 0.5rem;
-    right: 0.5rem;
-}
-
 /* Verse styling */
 .verse {
     padding: 0.5rem;
