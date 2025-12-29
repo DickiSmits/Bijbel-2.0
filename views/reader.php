@@ -36,11 +36,6 @@
         <button class="timeline-nav-btn timeline-nav-next" onclick="navigateTimelineNext()" title="Volgende periode">
             <i class="bi bi-chevron-right"></i>
         </button>
-        
-        <!-- Fit Timeline Button -->
-        <button class="timeline-fit-btn" onclick="fitTimelineWindow()" title="Toon alles">
-            <i class="bi bi-arrows-fullscreen"></i>
-        </button>
     </div>
 </div>
 
@@ -96,6 +91,7 @@
     background: #fff;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
 }
 
 #map {
@@ -106,6 +102,7 @@
 #timeline {
     flex: 1;
     width: 100%;
+    min-height: 0;
 }
 
 /* Timeline Filter Panel */
@@ -286,32 +283,6 @@
 
 .timeline-nav-next { 
     right: 10px; 
-}
-
-/* Fit Timeline Button */
-.timeline-fit-btn {
-    position: absolute;
-    bottom: 10px;
-    right: 10px;
-    z-index: 100;
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    border: none;
-    background: rgba(44, 82, 130, 0.9);
-    color: white;
-    font-size: 1rem;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-    transition: all 0.2s;
-}
-
-.timeline-fit-btn:hover {
-    background: #1a365d;
-    transform: scale(1.1);
 }
 
 /* Verse styling */

@@ -26,7 +26,7 @@ function initTimeline() {
     
     // Timeline options
     const options = {
-        height: '250px',
+        height: '100%',
         orientation: 'top',
         zoomMin: 1000 * 60 * 60 * 24 * 365, // 1 year
         zoomMax: 1000 * 60 * 60 * 24 * 365 * 100, // 100 years
