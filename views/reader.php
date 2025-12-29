@@ -162,7 +162,6 @@
     gap: 0.5rem;
     align-items: center;
     flex: 1;
-    flex-wrap: wrap;
 }
 
 .filter-label {
@@ -170,12 +169,44 @@
     font-weight: 600;
     color: #6c757d;
     margin: 0;
+    flex-shrink: 0;
+}
+
+.timeline-group-filters-wrapper {
+    flex: 1;
+    overflow-x: auto;
+    overflow-y: hidden;
+    max-width: 600px;
+}
+
+.timeline-group-filters-wrapper::-webkit-scrollbar {
+    height: 6px;
+}
+
+.timeline-group-filters-wrapper::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.timeline-group-filters-wrapper::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 3px;
+}
+
+.timeline-group-filters-wrapper::-webkit-scrollbar-thumb:hover {
+    background: #555;
 }
 
 .timeline-group-filters {
     display: flex;
     gap: 0.25rem;
-    flex-wrap: wrap;
+    padding: 0.25rem 0;
+}
+
+.timeline-filter-actions {
+    display: flex;
+    gap: 0.25rem;
+    flex-shrink: 0;
 }
 
 .group-filter-btn {

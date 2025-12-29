@@ -6,6 +6,7 @@ let timeline = null;
 let timelineItems = null;
 let timelineGroups = null;
 let allTimelineEvents = []; // Store all events
+let allTimelineGroupsData = []; // Store all groups data
 let activeGroupFilters = new Set(); // Active group filters
 let searchQuery = '';
 
@@ -79,6 +80,9 @@ async function loadTimelineData() {
                 style: `background-color: ${group.Kleur}20; border-color: ${group.Kleur};`,
                 kleur: group.Kleur
             }));
+        
+        // Store for filtering
+        allTimelineGroupsData = groupData;
         
         timelineGroups.clear();
         timelineGroups.add(groupData);
@@ -184,7 +188,8 @@ function createFilterUI(groups) {
             
             <div class="timeline-filters">
                 <label class="filter-label">Groepen:</label>
-                <div class="timeline-group-filters">
+                <div class="timeline-group-filters-wrapper">
+                    <div class="timeline-group-filters">
     `;
     
     groups.forEach(group => {
@@ -203,13 +208,16 @@ function createFilterUI(groups) {
     });
     
     html += `
+                    </div>
                 </div>
-                <button class="btn btn-sm btn-outline-secondary" onclick="toggleAllGroups(true)">
-                    <i class="bi bi-check-all"></i> Alles
-                </button>
-                <button class="btn btn-sm btn-outline-secondary" onclick="toggleAllGroups(false)">
-                    <i class="bi bi-x-circle"></i> Niets
-                </button>
+                <div class="timeline-filter-actions">
+                    <button class="btn btn-sm btn-outline-secondary" onclick="toggleAllGroups(true)" title="Alle groepen tonen">
+                        <i class="bi bi-check-all"></i> Alles
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="toggleAllGroups(false)" title="Alle groepen verbergen">
+                        <i class="bi bi-x-circle"></i> Niets
+                    </button>
+                </div>
             </div>
             
             <div class="timeline-info">
@@ -234,6 +242,8 @@ function createFilterUI(groups) {
             }
         });
     }
+    
+    console.log(`✅ Created ${groups.length} group filter buttons`);
 }
 
 // Toggle group filter
@@ -281,7 +291,7 @@ function clearTimelineSearch() {
 
 // Filter timeline based on groups and search
 function filterTimeline() {
-    if (!timeline || !timelineItems) return;
+    if (!timeline || !timelineItems || !timelineGroups) return;
     
     // Filter events
     let filteredEvents = allTimelineEvents.filter(event => {
@@ -300,10 +310,20 @@ function filterTimeline() {
         return true;
     });
     
-    // Update timeline
+    // Update timeline events
     const items = processTimelineEvents(filteredEvents);
     timelineItems.clear();
     timelineItems.add(items);
+    
+    // Update visible groups - hide groups that are filtered out
+    const visibleGroups = allTimelineGroupsData.filter(group => {
+        // Hide if group is in activeGroupFilters (disabled)
+        return !activeGroupFilters.has(group.id);
+    });
+    
+    // Clear and re-add only visible groups
+    timelineGroups.clear();
+    timelineGroups.add(visibleGroups);
     
     // Update count
     const countEl = document.getElementById('timelineEventCount');
@@ -311,7 +331,7 @@ function filterTimeline() {
         countEl.textContent = items.length;
     }
     
-    console.log(`Filtered: ${items.length} of ${allTimelineEvents.length} events`);
+    console.log(`Filtered: ${items.length} events, ${visibleGroups.length} of ${allTimelineGroupsData.length} groups visible`);
 }
 
 // Handle timeline event click
