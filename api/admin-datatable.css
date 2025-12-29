@@ -1,0 +1,254 @@
+/* ============================================
+   DATATABLE COMPONENT STYLING
+   ============================================ */
+
+.datatable-wrapper {
+    background: #fff;
+    border-radius: 8px;
+}
+
+.datatable-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid #dee2e6;
+    gap: 1rem;
+}
+
+.datatable-search {
+    position: relative;
+    flex: 0 0 300px;
+}
+
+.datatable-search i {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6c757d;
+    pointer-events: none;
+}
+
+.datatable-search input {
+    padding-left: 36px;
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+}
+
+.datatable-search input:focus {
+    border-color: #2c5282;
+    box-shadow: 0 0 0 0.2rem rgba(44, 82, 130, 0.15);
+}
+
+.datatable-info {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+.datatable-info span {
+    font-weight: 600;
+    color: #2c5282;
+}
+
+/* Table Styling */
+.datatable {
+    margin-bottom: 0;
+}
+
+.datatable thead th {
+    background-color: #f8f9fa;
+    color: #495057;
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid #dee2e6;
+    padding: 1rem 0.75rem;
+    white-space: nowrap;
+}
+
+.datatable thead th.sortable {
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.15s;
+}
+
+.datatable thead th.sortable:hover {
+    background-color: #e9ecef;
+}
+
+.datatable thead th.sortable {
+    padding-right: 1.5rem;
+    position: relative;
+}
+
+.sort-icon {
+    position: absolute;
+    right: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.75rem;
+    color: #6c757d;
+    transition: color 0.15s;
+}
+
+.datatable thead th.sortable:hover .sort-icon {
+    color: #2c5282;
+}
+
+.datatable tbody tr {
+    transition: background-color 0.15s;
+}
+
+.datatable tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.datatable tbody td {
+    padding: 0.875rem 0.75rem;
+    vertical-align: middle;
+}
+
+.datatable tbody td img {
+    display: block;
+}
+
+/* Color Badge */
+.color-badge {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    border: 1px solid rgba(0,0,0,0.1);
+    vertical-align: middle;
+    margin-right: 0.5rem;
+}
+
+/* Empty State */
+.datatable tbody td .bi-inbox {
+    opacity: 0.3;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .datatable-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .datatable-search {
+        flex: 1 1 auto;
+    }
+    
+    .datatable-info {
+        text-align: center;
+    }
+}
+
+/* Action Buttons */
+.datatable .btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+.datatable .btn-outline-primary:hover {
+    background-color: #2c5282;
+    border-color: #2c5282;
+    color: #fff;
+}
+
+.datatable .btn-outline-danger:hover {
+    background-color: #dc3545;
+    border-color: #dc3545;
+    color: #fff;
+}
+
+/* ============================================
+   FORM IMPROVEMENTS
+   ============================================ */
+
+/* Clear Form Button */
+.form-clear-btn {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+}
+
+.card-header {
+    position: relative;
+}
+
+/* Required Field Indicator */
+.form-label.required::after {
+    content: ' *';
+    color: #dc3545;
+}
+
+/* Form Group Spacing */
+.row.g-3 {
+    margin-bottom: 1rem;
+}
+
+/* ============================================
+   ADMIN SECTIONS IMPROVEMENTS
+   ============================================ */
+
+/* Section Headers */
+.admin-section h4 {
+    color: #2c5282;
+    font-weight: 600;
+    border-bottom: 2px solid #e9ecef;
+    padding-bottom: 0.75rem;
+}
+
+/* Card Shadows */
+.card {
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    transition: box-shadow 0.15s;
+}
+
+.card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+}
+
+/* Form Focus States */
+.form-control:focus,
+.form-select:focus {
+    border-color: #2c5282;
+    box-shadow: 0 0 0 0.2rem rgba(44, 82, 130, 0.15);
+}
+
+/* Success/Error States */
+.form-control.is-valid {
+    border-color: #28a745;
+}
+
+.form-control.is-invalid {
+    border-color: #dc3545;
+}
+
+/* Loading State */
+.datatable-wrapper.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.datatable-wrapper.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 40px;
+    height: 40px;
+    margin: -20px 0 0 -20px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #2c5282;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}

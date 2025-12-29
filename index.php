@@ -105,6 +105,7 @@ if (!is_dir('images')) {
     
     <?php if ($mode === 'admin'): ?>
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <link href="assets/css/admin-datatable.css" rel="stylesheet">
     <?php endif; ?>
     
     <?php if (file_exists(__DIR__ . '/assets/css/style.css')): ?>
@@ -182,6 +183,8 @@ if (!is_dir('images')) {
     
     <?php if ($mode === 'admin'): ?>
     <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+    <script src="assets/js/admin-extensions.js"></script>
+    <script src="assets/js/admin-datatable-loaders.js"></script>
     <?php endif; ?>
     
     <script>
