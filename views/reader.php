@@ -132,6 +132,18 @@
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
+/* Timeline events - single line with ellipsis */
+.vis-item .vis-item-content {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 100% !important;
+}
+
+.vis-item-overflow {
+    overflow: hidden !important;
+}
+
 /* Timeline navigation */
 .timeline-nav-btn {
     position: absolute;
@@ -216,5 +228,92 @@ document.addEventListener('DOMContentLoaded', function() {
     } else {
         console.warn('timeline.js not loaded - timeline functionality disabled');
     }
+    
+    // Initialize resize handles
+    initResizeHandles();
 });
+
+// Resize functionality
+function initResizeHandles() {
+    const readerLayout = document.querySelector('.reader-layout');
+    const verticalHandle = document.getElementById('verticalHandle');
+    const horizontalHandle = document.getElementById('horizontalHandle');
+    
+    if (!readerLayout) return;
+    
+    // Vertical resize (Bible/Map split)
+    if (verticalHandle) {
+        let isResizingVertical = false;
+        let startX = 0;
+        let startColumns = '';
+        
+        verticalHandle.addEventListener('mousedown', (e) => {
+            isResizingVertical = true;
+            startX = e.clientX;
+            startColumns = getComputedStyle(readerLayout).gridTemplateColumns;
+            document.body.style.cursor = 'col-resize';
+            document.body.style.userSelect = 'none';
+            e.preventDefault();
+        });
+        
+        document.addEventListener('mousemove', (e) => {
+            if (!isResizingVertical) return;
+            
+            const diff = e.clientX - startX;
+            const containerWidth = readerLayout.offsetWidth;
+            const leftPercent = ((e.clientX - readerLayout.offsetLeft) / containerWidth) * 100;
+            
+            // Constrain between 20% and 80%
+            if (leftPercent > 20 && leftPercent < 80) {
+                const rightPercent = 100 - leftPercent;
+                readerLayout.style.gridTemplateColumns = `${leftPercent}fr 4px ${rightPercent}fr`;
+            }
+        });
+        
+        document.addEventListener('mouseup', () => {
+            if (isResizingVertical) {
+                isResizingVertical = false;
+                document.body.style.cursor = '';
+                document.body.style.userSelect = '';
+            }
+        });
+    }
+    
+    // Horizontal resize (Top/Timeline split)
+    if (horizontalHandle) {
+        let isResizingHorizontal = false;
+        let startY = 0;
+        
+        horizontalHandle.addEventListener('mousedown', (e) => {
+            isResizingHorizontal = true;
+            startY = e.clientY;
+            document.body.style.cursor = 'row-resize';
+            document.body.style.userSelect = 'none';
+            e.preventDefault();
+        });
+        
+        document.addEventListener('mousemove', (e) => {
+            if (!isResizingHorizontal) return;
+            
+            const containerHeight = readerLayout.offsetHeight;
+            const topHeight = e.clientY - readerLayout.offsetTop;
+            const timelineHeight = containerHeight - topHeight - 4; // 4px for handle
+            
+            // Constrain timeline between 150px and 500px
+            if (timelineHeight >= 150 && timelineHeight <= 500) {
+                readerLayout.style.gridTemplateRows = `1fr 4px ${timelineHeight}px`;
+            }
+        });
+        
+        document.addEventListener('mouseup', () => {
+            if (isResizingHorizontal) {
+                isResizingHorizontal = false;
+                document.body.style.cursor = '';
+                document.body.style.userSelect = '';
+            }
+        });
+    }
+    
+    console.log('✅ Resize handles initialized');
+}
 </script>
