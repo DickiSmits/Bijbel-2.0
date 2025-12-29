@@ -21,8 +21,8 @@
     
     <!-- Timeline Panel with Collapsible Filter -->
     <div class="timeline-panel">
-        <!-- Filter Panel (collapsible) -->
-        <div id="timelineFilterPanel" class="timeline-filter-panel"></div>
+        <!-- Filter Panel (collapsible, NO Bootstrap collapse class!) -->
+        <div id="timelineFilterPanel" class="timeline-filter-panel" style="display: none;"></div>
         
         <!-- Timeline Navigation -->
         <button class="timeline-nav-btn timeline-nav-prev" onclick="navigateTimelinePrev()" title="Vorig event">
@@ -104,21 +104,14 @@
     min-height: 0;
 }
 
-/* Timeline Filter Panel - Collapsible */
+/* Timeline Filter Panel - Collapsible (no Bootstrap conflict) */
 .timeline-filter-panel {
     background: #f8f9fa;
     border-bottom: 1px solid #dee2e6;
     padding: 0.75rem 1rem;
     flex-shrink: 0;
-    max-height: 200px;
     overflow: hidden;
-    transition: max-height 0.3s ease, padding 0.3s ease, border 0.3s ease;
-}
-
-.timeline-filter-panel.collapsed {
-    max-height: 0;
-    padding: 0 1rem;
-    border-bottom: none;
+    /* display controlled by JS */
 }
 
 .timeline-controls {
@@ -331,6 +324,31 @@
 </style>
 
 <script>
+// Toggle timeline filter panel (called from navbar button)
+// MUST be available immediately, not in DOMContentLoaded!
+window.toggleTimelineFilter = function() {
+    const panel = document.getElementById('timelineFilterPanel');
+    if (!panel) {
+        console.log('⚠️ Filter panel not found yet');
+        return;
+    }
+    
+    // Remove Bootstrap's collapse class if present (prevents conflicts)
+    panel.classList.remove('collapse');
+    
+    const isHidden = panel.style.display === 'none' || !panel.style.display;
+    
+    if (isHidden) {
+        panel.style.display = 'block';
+        localStorage.setItem('timelineFilterOpen', 'true');
+        console.log('✅ Filter panel OPENED');
+    } else {
+        panel.style.display = 'none';
+        localStorage.setItem('timelineFilterOpen', 'false');
+        console.log('✅ Filter panel CLOSED');
+    }
+};
+
 // Initialize reader when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Reader view loaded');
@@ -358,6 +376,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize resize handles
     initResizeHandles();
+    
+    // Restore filter panel state
+    restoreFilterPanelState();
 });
 
 // Resize functionality
@@ -444,44 +465,23 @@ function initResizeHandles() {
     console.log('✅ Resize handles initialized');
 }
 
-// Toggle timeline filter panel (called from navbar button)
-function toggleTimelineFilter() {
-    const panel = document.getElementById('timelineFilterPanel');
-    if (!panel) return;
-    
-    const isCollapsed = panel.classList.contains('collapsed');
-    
-    if (isCollapsed) {
-        panel.classList.remove('collapsed');
-        localStorage.setItem('timelineFilterOpen', 'true');
-    } else {
-        panel.classList.add('collapsed');
-        localStorage.setItem('timelineFilterOpen', 'false');
-    }
-    
-    console.log('Timeline filter toggled:', isCollapsed ? 'opened' : 'closed');
-}
-
 // Restore filter panel state on load
 function restoreFilterPanelState() {
     const panelOpen = localStorage.getItem('timelineFilterOpen');
     const panel = document.getElementById('timelineFilterPanel');
     
     if (panel) {
-        // Default closed if not set
-        if (panelOpen === 'false' || !panelOpen) {
-            panel.classList.add('collapsed');
+        // Remove Bootstrap's collapse class if present
+        panel.classList.remove('collapse');
+        
+        // Default closed (display: none) if not set
+        if (panelOpen === 'true') {
+            panel.style.display = 'block';
+            console.log('📋 Filter panel: OPEN (restored)');
         } else {
-            panel.classList.remove('collapsed');
+            panel.style.display = 'none';
+            console.log('📋 Filter panel: CLOSED (default)');
         }
     }
 }
-
-// Call on DOMContentLoaded
-setTimeout(() => {
-    restoreFilterPanelState();
-}, 100);
-
-// Make global
-window.toggleTimelineFilter = toggleTimelineFilter;
 </script>

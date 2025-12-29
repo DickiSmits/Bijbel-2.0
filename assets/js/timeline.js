@@ -289,10 +289,13 @@ function restoreFilterState() {
     // Restore panel open/closed state
     const panel = document.getElementById('timelineFilterPanel');
     if (panel) {
-        if (panelOpen === 'false' || !panelOpen) {
-            panel.classList.add('collapsed');
+        // Remove Bootstrap's collapse class if present
+        panel.classList.remove('collapse');
+        
+        if (panelOpen === 'true') {
+            panel.style.display = 'block';
         } else {
-            panel.classList.remove('collapsed');
+            panel.style.display = 'none';
         }
     }
     
