@@ -19,10 +19,19 @@
     <!-- Horizontal Resize Handle -->
     <div class="resize-handle-h" id="horizontalHandle"></div>
     
-    <!-- Timeline Panel with Filter Panel -->
+    <!-- Timeline Panel with Collapsible Filter -->
     <div class="timeline-panel">
-        <!-- Filter Panel (populated by timeline.js) -->
-        <div id="timelineFilterPanel" class="timeline-filter-panel"></div>
+        <!-- Filter Toggle Button (always visible) -->
+        <div class="timeline-header">
+            <button class="timeline-filter-toggle" onclick="toggleTimelineFilter()" title="Filter in/uitklappen - Aantal actieve groepen">
+                <i class="bi bi-funnel"></i>
+                <span id="visibleEventCount">0</span>
+                <span class="filter-label-text">groepen</span>
+            </button>
+        </div>
+        
+        <!-- Filter Panel (collapsible, starts closed) -->
+        <div id="timelineFilterPanel" class="timeline-filter-panel collapsed"></div>
         
         <!-- Timeline Navigation -->
         <button class="timeline-nav-btn timeline-nav-prev" onclick="navigateTimelinePrev()" title="Vorig event">
@@ -104,12 +113,63 @@
     min-height: 0;
 }
 
+/* Timeline Header with Filter Toggle */
+.timeline-header {
+    background: #2c5282;
+    padding: 0.5rem 1rem;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.timeline-filter-toggle {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+}
+
+.timeline-filter-toggle:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.timeline-filter-toggle i {
+    font-size: 1.1rem;
+}
+
+#visibleEventCount {
+    font-weight: bold;
+    min-width: 20px;
+    text-align: center;
+}
+
+.filter-label-text {
+    font-size: 0.85rem;
+    opacity: 0.9;
+}
+
 /* Timeline Filter Panel */
 .timeline-filter-panel {
     background: #f8f9fa;
     border-bottom: 1px solid #dee2e6;
-    padding: 0.5rem 1rem;
+    padding: 0.75rem 1rem;
     flex-shrink: 0;
+    max-height: 200px;
+    overflow: hidden;
+    transition: max-height 0.3s ease, padding 0.3s ease;
+}
+
+.timeline-filter-panel.collapsed {
+    max-height: 0;
+    padding: 0 1rem;
+    border-bottom: none;
 }
 
 .timeline-controls {
@@ -434,4 +494,25 @@ function initResizeHandles() {
     
     console.log('✅ Resize handles initialized');
 }
+
+// Toggle timeline filter panel
+function toggleTimelineFilter() {
+    const panel = document.getElementById('timelineFilterPanel');
+    if (!panel) return;
+    
+    const isCollapsed = panel.classList.contains('collapsed');
+    
+    if (isCollapsed) {
+        panel.classList.remove('collapsed');
+        localStorage.setItem('timelineFilterOpen', 'true');
+    } else {
+        panel.classList.add('collapsed');
+        localStorage.setItem('timelineFilterOpen', 'false');
+    }
+    
+    console.log('Timeline filter toggled:', isCollapsed ? 'opened' : 'closed');
+}
+
+// Make global
+window.toggleTimelineFilter = toggleTimelineFilter;
 </script>

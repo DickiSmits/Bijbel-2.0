@@ -249,23 +249,21 @@ function createFilterUI(groups) {
                     </button>
                 </div>
             </div>
-            
-            <div class="timeline-info">
-                <span id="timelineEventCount">0</span> events
-            </div>
         </div>
     `;
     
     panel.innerHTML = html;
     
     // Initially hide all events (filters start unchecked)
-    updateVisibleEvents();
+    // But restore saved filter state
+    restoreFilterState();
     
     // Attach search handler
     const searchInput = document.getElementById('timelineSearchInput');
     if (searchInput) {
         searchInput.addEventListener('input', (e) => {
             searchQuery = e.target.value.toLowerCase();
+            saveFilterState();  // Save search query
             filterTimeline();
             
             // Show/hide clear button
@@ -279,18 +277,63 @@ function createFilterUI(groups) {
     console.log(`✅ Created ${groups.length} group filter buttons`);
 }
 
-// Update visible events (called after filter UI is created)
-function updateVisibleEvents() {
-    // Initialize: all checkboxes unchecked = all groups filtered
+// Restore filter state from localStorage
+function restoreFilterState() {
+    console.log('📋 Restoring filter state...');
+    
+    // Get saved state
+    const savedFilters = localStorage.getItem('timelineActiveFilters');
+    const savedSearch = localStorage.getItem('timelineSearch');
+    const panelOpen = localStorage.getItem('timelineFilterOpen');
+    
+    // Restore panel open/closed state
+    const panel = document.getElementById('timelineFilterPanel');
+    if (panel) {
+        if (panelOpen === 'false' || !panelOpen) {
+            panel.classList.add('collapsed');
+        } else {
+            panel.classList.remove('collapsed');
+        }
+    }
+    
+    // Restore checkboxes and activeGroupFilters
+    activeGroupFilters.clear();
+    
+    if (savedFilters) {
+        try {
+            const filters = JSON.parse(savedFilters);
+            filters.forEach(id => activeGroupFilters.add(id));
+            console.log('Restored filters:', filters);
+        } catch (e) {
+            console.warn('Could not parse saved filters:', e);
+        }
+    }
+    
+    // Update checkboxes based on activeGroupFilters
     const checkboxes = document.querySelectorAll('.group-filter-checkbox');
     checkboxes.forEach(cb => {
-        activeGroupFilters.add(parseInt(cb.value));
+        const groupId = parseInt(cb.value);
+        // Checked if NOT in activeGroupFilters (filters = hidden groups)
+        cb.checked = !activeGroupFilters.has(groupId);
     });
+    
+    // Restore search query
+    if (savedSearch) {
+        searchQuery = savedSearch;
+        const searchInput = document.getElementById('timelineSearchInput');
+        if (searchInput) {
+            searchInput.value = savedSearch;
+            if (savedSearch) {
+                const clearBtn = document.getElementById('clearSearchBtn');
+                if (clearBtn) clearBtn.style.display = 'block';
+            }
+        }
+    }
     
     // Apply filters
     filterTimeline();
     
-    console.log('✅ Initial filter state: all groups hidden');
+    console.log('✅ Filter state restored');
 }
 
 // Toggle group filter
@@ -302,6 +345,9 @@ function toggleGroupFilter(groupId) {
     } else {
         activeGroupFilters.add(groupId);
     }
+    
+    // Save to localStorage
+    saveFilterState();
     
     filterTimeline();
 }
@@ -320,7 +366,17 @@ function toggleAllGroups(show) {
         });
     }
     
+    // Save to localStorage
+    saveFilterState();
+    
     filterTimeline();
+}
+
+// Save filter state to localStorage
+function saveFilterState() {
+    const filtersArray = Array.from(activeGroupFilters);
+    localStorage.setItem('timelineActiveFilters', JSON.stringify(filtersArray));
+    localStorage.setItem('timelineSearch', searchQuery || '');
 }
 
 // Clear search
@@ -329,6 +385,7 @@ function clearTimelineSearch() {
     if (searchInput) {
         searchInput.value = '';
         searchQuery = '';
+        saveFilterState();  // Save cleared search
         filterTimeline();
         
         const clearBtn = document.getElementById('clearSearchBtn');
@@ -372,10 +429,12 @@ function filterTimeline() {
     timelineGroups.clear();
     timelineGroups.add(visibleGroups);
     
-    // Update count
-    const countEl = document.getElementById('timelineEventCount');
+    // Update count in header (aantal ACTIEVE groepen)
+    const countEl = document.getElementById('visibleEventCount');
     if (countEl) {
-        countEl.textContent = items.length;
+        const totalGroups = allTimelineGroupsData.length;
+        const activeGroups = totalGroups - activeGroupFilters.size;
+        countEl.textContent = activeGroups;
     }
     
     console.log(`Filtered: ${items.length} events, ${visibleGroups.length} of ${allTimelineGroupsData.length} groups visible`);
