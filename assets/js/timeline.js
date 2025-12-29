@@ -429,8 +429,8 @@ function filterTimeline() {
     timelineGroups.clear();
     timelineGroups.add(visibleGroups);
     
-    // Update count in header (aantal ACTIEVE groepen)
-    const countEl = document.getElementById('visibleEventCount');
+    // Update count in navbar (aantal ACTIEVE groepen)
+    const countEl = document.getElementById('groupFilterCount');
     if (countEl) {
         const totalGroups = allTimelineGroupsData.length;
         const activeGroups = totalGroups - activeGroupFilters.size;
