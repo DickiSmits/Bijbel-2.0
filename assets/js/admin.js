@@ -1739,4 +1739,225 @@ window.createNewNote = createNewNote;
 window.saveCurrentNote = saveCurrentNote;
 window.deleteCurrentNote = deleteCurrentNote;
 
+// ============= TIMELINE CRUD FUNCTIES =============
+
+async function saveTimeline() {
+    const eventId = document.getElementById('timelineEventId')?.value;
+    const titel = document.getElementById('timelineTitel')?.value;
+    const groupId = document.getElementById('timelineGroup')?.value || null;
+    const startDatum = document.getElementById('timelineStartDatum')?.value;
+    const endDatum = document.getElementById('timelineEndDatum')?.value || null;
+    const kleur = document.getElementById('timelineKleur')?.value || '#3498db';
+    
+    if (!titel || !startDatum) {
+        window.showNotification('Vul titel en start datum in', true);
+        return;
+    }
+    
+    const endpoint = eventId ? 'update_timeline' : 'create_timeline';
+    const data = {
+        titel,
+        group_id: groupId,
+        start_datum: startDatum,
+        end_datum: endDatum,
+        kleur
+    };
+    
+    if (eventId) {
+        data.event_id = eventId;
+    }
+    
+    const result = await window.apiCall(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    });
+    
+    if (result && result.success) {
+        window.showNotification('Timeline event opgeslagen!');
+        // Clear form
+        document.getElementById('timelineEventId').value = '';
+        document.getElementById('timelineTitel').value = '';
+        document.getElementById('timelineStartDatum').value = '';
+        document.getElementById('timelineEndDatum').value = '';
+        // Reload list
+        loadTimelineList();
+    }
+}
+
+async function editTimeline(eventId) {
+    // Voor nu simpel - later kunnen we de data laden en invullen
+    window.showNotification('Edit functionaliteit TODO - edit ID: ' + eventId);
+}
+
+async function deleteTimeline(eventId) {
+    if (!confirm('Weet je zeker dat je dit timeline event wilt verwijderen?')) return;
+    
+    const result = await window.apiCall(`delete_timeline&id=${eventId}`);
+    
+    if (result && result.success) {
+        window.showNotification('Timeline event verwijderd');
+        loadTimelineList();
+    }
+}
+
+async function editTimelineGroup(groupId, naam, kleur) {
+    // Simpele prompt edit - later mooiere UI
+    const newNaam = prompt('Groep naam:', naam);
+    if (!newNaam) return;
+    
+    const newKleur = prompt('Kleur (hex):', kleur);
+    if (!newKleur) return;
+    
+    const result = await window.apiCall('update_timeline_group', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            group_id: groupId,
+            naam: newNaam,
+            kleur: newKleur
+        })
+    });
+    
+    if (result && result.success) {
+        window.showNotification('Groep bijgewerkt');
+        loadTimelineGroups();
+    }
+}
+
+async function deleteTimelineGroup(groupId) {
+    if (!confirm('Weet je zeker dat je deze groep wilt verwijderen?')) return;
+    
+    const result = await window.apiCall(`delete_timeline_group&id=${groupId}`);
+    
+    if (result && result.success) {
+        window.showNotification('Groep verwijderd');
+        loadTimelineGroups();
+        loadTimelineList(); // Reload events too
+    }
+}
+
+// ============= LOCATIONS CRUD FUNCTIES =============
+
+async function saveLocation() {
+    const locationId = document.getElementById('locationId')?.value;
+    const naam = document.getElementById('locationName')?.value;
+    const lat = document.getElementById('locationLat')?.value;
+    const lng = document.getElementById('locationLng')?.value;
+    
+    if (!naam || !lat || !lng) {
+        window.showNotification('Vul alle velden in', true);
+        return;
+    }
+    
+    const endpoint = locationId ? 'update_location' : 'create_location';
+    const data = {
+        naam,
+        latitude: parseFloat(lat),
+        longitude: parseFloat(lng),
+        type: 'overig',
+        beschrijving: ''
+    };
+    
+    if (locationId) {
+        data.locatie_id = locationId;
+    }
+    
+    const result = await window.apiCall(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    });
+    
+    if (result && result.success) {
+        window.showNotification('Locatie opgeslagen!');
+        // Clear form
+        document.getElementById('locationId').value = '';
+        document.getElementById('locationName').value = '';
+        document.getElementById('locationLat').value = '';
+        document.getElementById('locationLng').value = '';
+        // Reload list
+        loadLocationList();
+    }
+}
+
+async function editLocation(locationId) {
+    window.showNotification('Edit functionaliteit TODO - edit ID: ' + locationId);
+}
+
+async function deleteLocation(locationId) {
+    if (!confirm('Weet je zeker dat je deze locatie wilt verwijderen?')) return;
+    
+    const result = await window.apiCall(`delete_location&id=${locationId}`);
+    
+    if (result && result.success) {
+        window.showNotification('Locatie verwijderd');
+        loadLocationList();
+    }
+}
+
+// ============= IMAGES CRUD FUNCTIES =============
+
+async function uploadImage() {
+    const fileInput = document.getElementById('imageFile');
+    const caption = document.getElementById('imageCaption')?.value;
+    
+    if (!fileInput || !fileInput.files || !fileInput.files[0]) {
+        window.showNotification('Selecteer een afbeelding', true);
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('image', fileInput.files[0]);
+    if (caption) formData.append('caption', caption);
+    
+    try {
+        const response = await fetch('?api=upload_image', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (result && result.success) {
+            window.showNotification('Afbeelding geüpload!');
+            fileInput.value = '';
+            document.getElementById('imageCaption').value = '';
+            loadImageList();
+        } else {
+            window.showNotification('Upload mislukt: ' + (result.error || 'Onbekende fout'), true);
+        }
+    } catch (error) {
+        window.showNotification('Upload fout: ' + error.message, true);
+    }
+}
+
+async function editImage(imageId) {
+    window.showNotification('Edit functionaliteit TODO - edit ID: ' + imageId);
+}
+
+async function deleteImage(imageId) {
+    if (!confirm('Weet je zeker dat je deze afbeelding wilt verwijderen?')) return;
+    
+    const result = await window.apiCall(`delete_image&id=${imageId}`);
+    
+    if (result && result.success) {
+        window.showNotification('Afbeelding verwijderd');
+        loadImageList();
+    }
+}
+
+// Maak nieuwe functies globally beschikbaar
+window.saveTimeline = saveTimeline;
+window.editTimeline = editTimeline;
+window.deleteTimeline = deleteTimeline;
+window.editTimelineGroup = editTimelineGroup;
+window.deleteTimelineGroup = deleteTimelineGroup;
+window.saveLocation = saveLocation;
+window.editLocation = editLocation;
+window.deleteLocation = deleteLocation;
+window.uploadImage = uploadImage;
+window.editImage = editImage;
+window.deleteImage = deleteImage;
+
 console.log('✅ Data loading functions registered');
