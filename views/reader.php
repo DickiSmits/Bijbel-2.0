@@ -97,6 +97,7 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    min-height: 0;
 }
 
 #map {
@@ -105,9 +106,24 @@
 }
 
 #timeline {
-    flex: 1;
+    flex: 1 1 100%;
     width: 100%;
     min-height: 0;
+    height: 100%;
+    position: relative;
+}
+
+/* Force Vis Timeline to fill container */
+#timeline .vis-timeline {
+    height: 100% !important;
+}
+
+#timeline .vis-panel.vis-center {
+    height: 100% !important;
+}
+
+#timeline .vis-content {
+    height: 100% !important;
 }
 
 /* Timeline Filter Panel */

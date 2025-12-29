@@ -75,6 +75,29 @@ function initTimeline() {
     // Create timeline
     timeline = new vis.Timeline(container, timelineItems, timelineGroups, options);
     
+    // Force timeline to fill container height
+    setTimeout(() => {
+        if (timeline) {
+            const container = document.getElementById('timeline');
+            if (container) {
+                const height = container.clientHeight;
+                timeline.setOptions({ height: height + 'px' });
+                console.log('Timeline height set to:', height);
+            }
+        }
+    }, 100);
+    
+    // Handle window resize
+    window.addEventListener('resize', () => {
+        if (timeline) {
+            const container = document.getElementById('timeline');
+            if (container) {
+                const height = container.clientHeight;
+                timeline.setOptions({ height: height + 'px' });
+            }
+        }
+    });
+    
     // Add click handler for events
     timeline.on('select', function (properties) {
         if (properties.items.length > 0) {
@@ -89,7 +112,20 @@ function initTimeline() {
     });
     
     // Load data
-    loadTimelineData();
+    loadTimelineData().then(() => {
+        // Fix timeline height after data loads
+        setTimeout(() => {
+            if (timeline) {
+                const container = document.getElementById('timeline');
+                if (container) {
+                    const height = container.clientHeight;
+                    timeline.setOptions({ height: height + 'px' });
+                    timeline.redraw();
+                    console.log('📏 Timeline height adjusted after data load:', height);
+                }
+            }
+        }, 500);
+    });
     
     console.log('✅ Timeline initialized');
 }
