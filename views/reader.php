@@ -1,4 +1,4 @@
-<!-- Reader View - Complete Interface -->
+<!-- Reader View - Complete Interface with Filter Panel -->
 <div class="reader-layout" id="readerContainer">
     <!-- Bible Text Panel -->
     <div class="bible-panel" id="bibleText">
@@ -19,12 +19,20 @@
     <!-- Horizontal Resize Handle -->
     <div class="resize-handle-h" id="horizontalHandle"></div>
     
-    <!-- Timeline Panel -->
+    <!-- Timeline Panel with Filter Panel -->
     <div class="timeline-panel">
+        <!-- Filter Panel (populated by timeline.js) -->
+        <div id="timelineFilterPanel" class="timeline-filter-panel"></div>
+        
+        <!-- Timeline Navigation -->
         <button class="timeline-nav-btn timeline-nav-prev" onclick="navigateTimelinePrev()" title="Vorig event">
             <i class="bi bi-chevron-left"></i>
         </button>
+        
+        <!-- Timeline Container -->
         <div id="timeline"></div>
+        
+        <!-- Timeline Navigation -->
         <button class="timeline-nav-btn timeline-nav-next" onclick="navigateTimelineNext()" title="Volgend event">
             <i class="bi bi-chevron-right"></i>
         </button>
@@ -37,7 +45,7 @@
     display: grid;
     grid-template-columns: 2fr 4px 1fr;
     grid-template-rows: 1fr 4px 250px;
-    height: calc(100vh - 56px);  /* Fixed: Was 120px, should be actual header height */
+    height: calc(100vh - 56px);  /* Fixed: exact header height */
     gap: 0;
 }
 
@@ -81,6 +89,8 @@
     grid-row: 3;
     position: relative;
     background: #fff;
+    display: flex;
+    flex-direction: column;
 }
 
 #map {
@@ -89,8 +99,112 @@
 }
 
 #timeline {
-    height: 100%;
+    flex: 1;
     width: 100%;
+    min-height: 0;
+}
+
+/* Timeline Filter Panel */
+.timeline-filter-panel {
+    background: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    padding: 0.5rem 1rem;
+    flex-shrink: 0;
+}
+
+.timeline-controls {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.timeline-search {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 0 0 250px;
+}
+
+.timeline-search i {
+    color: #6c757d;
+}
+
+.timeline-filters {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+}
+
+.filter-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #495057;
+    margin: 0;
+}
+
+.timeline-group-filters-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+}
+
+.timeline-group-filters {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.group-filter-btn {
+    display: inline-flex;
+    align-items: center;
+    margin: 0;
+    cursor: pointer;
+    user-select: none;
+}
+
+.group-filter-checkbox {
+    margin-right: 0.25rem;
+    cursor: pointer;
+}
+
+.group-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: white;
+    white-space: nowrap;
+}
+
+.group-filter-btn input:not(:checked) + .group-badge {
+    opacity: 0.4;
+}
+
+.timeline-event-count {
+    font-size: 0.875rem;
+    color: #6c757d;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+/* Timeline events - FORCE single line */
+.vis-item .vis-item-content {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 100% !important;
+    line-height: 1.2 !important;
+}
+
+.vis-item.vis-range .vis-item-content {
+    white-space: nowrap !important;
+}
+
+.vis-item-overflow {
+    overflow: hidden !important;
 }
 
 /* Verse styling */
@@ -130,18 +244,6 @@
     background: #fff;
     z-index: 100;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-/* Timeline events - single line with ellipsis */
-.vis-item .vis-item-content {
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    max-width: 100% !important;
-}
-
-.vis-item-overflow {
-    overflow: hidden !important;
 }
 
 /* Timeline navigation */
@@ -245,12 +347,10 @@ function initResizeHandles() {
     if (verticalHandle) {
         let isResizingVertical = false;
         let startX = 0;
-        let startColumns = '';
         
         verticalHandle.addEventListener('mousedown', (e) => {
             isResizingVertical = true;
             startX = e.clientX;
-            startColumns = getComputedStyle(readerLayout).gridTemplateColumns;
             document.body.style.cursor = 'col-resize';
             document.body.style.userSelect = 'none';
             e.preventDefault();
@@ -259,7 +359,6 @@ function initResizeHandles() {
         document.addEventListener('mousemove', (e) => {
             if (!isResizingVertical) return;
             
-            const diff = e.clientX - startX;
             const containerWidth = readerLayout.offsetWidth;
             const leftPercent = ((e.clientX - readerLayout.offsetLeft) / containerWidth) * 100;
             
@@ -282,11 +381,9 @@ function initResizeHandles() {
     // Horizontal resize (Top/Timeline split)
     if (horizontalHandle) {
         let isResizingHorizontal = false;
-        let startY = 0;
         
         horizontalHandle.addEventListener('mousedown', (e) => {
             isResizingHorizontal = true;
-            startY = e.clientY;
             document.body.style.cursor = 'row-resize';
             document.body.style.userSelect = 'none';
             e.preventDefault();
@@ -302,6 +399,11 @@ function initResizeHandles() {
             // Constrain timeline between 150px and 500px
             if (timelineHeight >= 150 && timelineHeight <= 500) {
                 readerLayout.style.gridTemplateRows = `1fr 4px ${timelineHeight}px`;
+                
+                // Notify timeline to redraw
+                if (window.timeline && window.timeline.redraw) {
+                    setTimeout(() => window.timeline.redraw(), 50);
+                }
             }
         });
         
