@@ -187,12 +187,7 @@ if (!is_dir('images')) {
     <?php if ($mode === 'admin'): ?>
     <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
     <?php endif; ?>
-
-    <?php if ($mode === 'admin'): ?>
-    <script src="assets/js/admin-extensions.js"></script>
-    <script src="assets/js/admin-datatable-loaders.js"></script>
-    <?php endif; ?>
-    
+ 
     <script>
         const mode = '<?php echo $mode; ?>';
         const isAdmin = <?php echo $is_admin ? 'true' : 'false'; ?>;
@@ -418,5 +413,9 @@ if (!is_dir('images')) {
         <script src="assets/js/admin.js"></script>
         <?php endif; ?>
     <?php endif; ?>
+    <?php if ($mode === 'admin'): ?>
+    <script src="assets/js/admin-extensions.js"></script>
+    <script src="assets/js/admin-datatable-loaders.js"></script>
+<?php endif; ?>
 </body>
 </html>
