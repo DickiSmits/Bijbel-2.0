@@ -32,6 +32,9 @@ function initTimeline() {
         zoomable: true,
         moveable: true,
         horizontalScroll: true,
+        verticalScroll: true,  // Enable vertical scrolling
+        zoomKey: 'ctrlKey',    // Zoom with Ctrl+scroll (not just scroll)
+        maxHeight: '250px',    // Maximum height (matches CSS)
         groupOrder: 'order',
         stack: true,
         selectable: true,
