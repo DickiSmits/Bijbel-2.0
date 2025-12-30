@@ -5,6 +5,11 @@
  * Handelt alle afbeelding-gerelateerde API calls af
  */
 
+// Include dependencies
+require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../includes/Database.php';
+require_once __DIR__ . '/../includes/helpers.php';
+
 $db = Database::getInstance();
 $endpoint = $_GET['api'];
 
