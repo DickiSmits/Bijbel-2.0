@@ -30,7 +30,7 @@ define('VIS_JS', 'https://unpkg.com/vis-timeline@7.7.3/standalone/umd/vis-timeli
 define('QUILL_CSS', 'https://cdn.quilljs.com/1.3.6/quill.snow.css');
 define('QUILL_JS', 'https://cdn.quilljs.com/1.3.6/quill.min.js');
 
-define('IMAGES_DIR', __DIR__ . '/images');
+
 define('MAX_UPLOAD_SIZE', 5 * 1024 * 1024); // 5MB
 define('ALLOWED_IMAGE_TYPES', [
     'image/jpeg',
