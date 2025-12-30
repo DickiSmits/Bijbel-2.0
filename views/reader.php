@@ -40,10 +40,7 @@
 </div>
 
 <style>
-    /* ============================================
-   IMAGE TEXT WRAPPING
-   ============================================ */
-
+    
 /* Float images */
 .verse-image.text-start {
     float: left !important;
@@ -87,7 +84,8 @@
         text-align: center !important;
     }
 }
-</style>
+
+
 /* Reader Layout */
 .reader-layout {
     display: grid;
