@@ -31,11 +31,11 @@ switch ($endpoint) {
         break;
         
     case 'delete_image':
+        deleteImage($db);
+        break;
     
     case 'verse_images':
         getVerseImages($db);
-        break;
-        deleteImage($db);
         break;
         
     default:
@@ -186,6 +186,6 @@ function getVerseImages($db) {
             WHERE a.Vers_ID = ?
             ORDER BY a.Geupload_Op ASC";
     
-    $images = $db->query($sql, [$versId]);
+    $images = $db->query($sql);
     jsonResponse($images);
 }
