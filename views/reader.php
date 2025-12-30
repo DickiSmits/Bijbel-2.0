@@ -40,6 +40,54 @@
 </div>
 
 <style>
+    /* ============================================
+   IMAGE TEXT WRAPPING
+   ============================================ */
+
+/* Float images */
+.verse-image.text-start {
+    float: left !important;
+    max-width: 450px !important;
+    margin: 0.5rem 1.5rem 0.5rem 0 !important;
+}
+
+.verse-image.text-end {
+    float: right !important;
+    max-width: 450px !important;
+    margin: 0.5rem 0 0.5rem 1.5rem !important;
+}
+
+.verse-image.text-center {
+    float: none !important;
+    clear: both !important;
+    text-align: center !important;
+    margin: 1.5rem auto !important;
+}
+
+/* CRITICAL: Verses do NOT clear floats! */
+.verse {
+    clear: none !important;
+}
+
+.verse::after {
+    content: none !important;
+    display: none !important;
+}
+
+.chapter-header {
+    clear: both !important;
+}
+
+/* Mobile: geen float */
+@media (max-width: 768px) {
+    .verse-image.text-start,
+    .verse-image.text-end {
+        float: none !important;
+        margin: 1rem auto !important;
+        text-align: center !important;
+    }
+}
+</style>
 /* Reader Layout */
 .reader-layout {
     display: grid;
