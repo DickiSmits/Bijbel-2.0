@@ -1959,3 +1959,46 @@ window.editImage = editImage;
 window.deleteImage = deleteImage;
 
 console.log('✅ Data loading functions registered');
+
+// Images fix - prevent 404 errors
+async function silentApiCall(endpoint){
+    try{
+        const response=await fetch('?api='+endpoint);
+        if(!response.ok)return null;
+        const contentType=response.headers.get('content-type');
+        if(!contentType||!contentType.includes('application/json'))return null;
+        return await response.json();
+    }catch(error){
+        return null;
+    }
+}
+
+// Override loadImageList if it exists
+if(typeof loadImageList === 'undefined'){
+    window.loadImageList=async function(){
+        const imgList=document.getElementById('imageList');
+        if(!imgList)return;
+        
+        imgList.innerHTML='<div class="col-12 text-center py-3"><div class="spinner-border spinner-border-sm"></div></div>';
+        
+        let imgs=await silentApiCall('images');
+        if(!imgs)imgs=await silentApiCall('afbeeldingen');
+        if(!imgs)imgs=await silentApiCall('get_images');
+        
+        if(!imgs||!Array.isArray(imgs)||imgs.length===0){
+            imgList.innerHTML='<div class="col-12"><div class="alert alert-info text-center"><i class="bi bi-image" style="font-size:3rem;"></i><h5 class="mt-3">Afbeeldingen Functionaliteit</h5><p class="mb-0">De afbeeldingen API is nog niet geïmplementeerd.</p></div></div>';
+            return;
+        }
+        
+        imgList.innerHTML='';
+        imgs.forEach(img=>{
+            const col=document.createElement('div');
+            col.className='col-md-4 col-lg-3';
+            const imgPath=img.Bestandspad||img.path||img.url||'';
+            const caption=img.Bijschrift||img.caption||'Geen bijschrift';
+            const imgId=img.Afbeelding_ID||img.id||0;
+            col.innerHTML='<div class="card h-100"><img src="'+imgPath+'" class="card-img-top" style="height:200px;object-fit:cover;"><div class="card-body"><p class="card-text small">'+caption+'</p></div></div>';
+            imgList.appendChild(col);
+        });
+    };
+}
