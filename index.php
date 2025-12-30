@@ -14,15 +14,15 @@ require_once __DIR__ . '/config.php';
 if (isset($_GET['api'])) {
     header('Content-Type: application/json');
     
-   $endpoint = $_GET['api'];
-
-// Image endpoints router - alle image calls gaan naar images.php
-$imageEndpoints = ['all_images', 'upload_image', 'get_image', 'update_image', 'delete_image'];
-if (in_array($endpoint, $imageEndpoints)) {
-    $apiFile = __DIR__ . '/api/images.php';
-} else {
-    $apiFile = __DIR__ . '/api/' . $endpoint . '.php';
-}
+    $endpoint = $_GET['api'];
+    
+    // Image endpoints router - alle image-gerelateerde endpoints gebruiken images.php
+    $imageEndpoints = ['all_images', 'upload_image', 'get_image', 'update_image', 'delete_image'];
+    if (in_array($endpoint, $imageEndpoints)) {
+        $apiFile = __DIR__ . '/images.php';
+    } else {
+        $apiFile = __DIR__ . '/api/' . $endpoint . '.php';
+    }
     
     if (file_exists($apiFile)) {
         require_once $apiFile;
