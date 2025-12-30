@@ -31,6 +31,10 @@ switch ($endpoint) {
         break;
         
     case 'delete_image':
+    
+    case 'verse_images':
+        getVerseImages($db);
+        break;
         deleteImage($db);
         break;
         
@@ -165,4 +169,23 @@ function deleteImage($db) {
     $db->execute("DELETE FROM Afbeeldingen WHERE Afbeelding_ID = ?", [$afbeeldingId]);
     
     jsonSuccess([], 'Afbeelding verwijderd');
+}
+
+/**
+ * Haal afbeeldingen voor specifiek vers op
+ */
+function getVerseImages($db) {
+    $versId = isset($_GET['vers_id']) ? (int)$_GET['vers_id'] : 0;
+    
+    if (!$versId) {
+        jsonError('Vers_ID vereist');
+    }
+    
+    $sql = "SELECT a.* 
+            FROM Afbeeldingen a 
+            WHERE a.Vers_ID = ?
+            ORDER BY a.Geupload_Op ASC";
+    
+    $images = $db->query($sql, [$versId]);
+    jsonResponse($images);
 }

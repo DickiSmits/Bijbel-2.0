@@ -301,35 +301,241 @@
             </div>
         </div>
         
-        <div id="section-images" class="admin-section d-none">
-            <h4 class="mb-4"><i class="bi bi-image"></i> Afbeeldingen</h4>
-            <div class="card mb-4">
-                <div class="card-header">Afbeelding Uploaden</div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label">Afbeelding</label>
-                            <input type="file" id="imageFile" class="form-control" accept="image/*">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Bijschrift</label>
-                            <input type="text" id="imageCaption" class="form-control">
-                        </div>
-                        <div class="col-12">
-                            <button class="btn btn-primary" onclick="uploadImage()">
-                                <i class="bi bi-upload"></i> Uploaden
-                            </button>
-                        </div>
+<!-- REPLACE section-images in admin.php with this -->
+
+<div id="section-images" class="admin-section d-none">
+    <h4 class="mb-4"><i class="bi bi-image"></i> Afbeeldingen Beheren</h4>
+    
+    <!-- Upload Card -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <i class="bi bi-upload"></i> Afbeelding Uploaden
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <!-- File Input -->
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Afbeelding</label>
+                    <div class="input-group">
+                        <input type="file" 
+                               id="imageFileInput" 
+                               class="form-control" 
+                               accept="image/*">
+                        <label class="input-group-text" for="imageFileInput">
+                            <i class="bi bi-folder2-open"></i> Bestand kiezen
+                        </label>
                     </div>
+                    <small id="imageFileName" class="text-muted d-none"></small>
                 </div>
-            </div>
-            <div class="card">
-                <div class="card-header">GeÃ¼ploade Afbeeldingen</div>
-                <div class="card-body">
-                    <div id="imageList" class="row g-3"></div>
+                
+                <!-- Caption -->
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Bijschrift</label>
+                    <input type="text" 
+                           id="imageCaptionInput" 
+                           class="form-control" 
+                           placeholder="Optioneel bijschrift">
+                </div>
+                
+                <!-- Book -->
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Boek (optioneel)</label>
+                    <select id="imageBookSelect" class="form-select">
+                        <option value="">Kies boek...</option>
+                    </select>
+                </div>
+                
+                <!-- Chapter -->
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Hoofdstuk</label>
+                    <select id="imageChapterSelect" class="form-select" disabled>
+                        <option value="">Hoofdstuk</option>
+                    </select>
+                </div>
+                
+                <!-- Verse -->
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Vers</label>
+                    <select id="imageVerseSelect" class="form-select" disabled>
+                        <option value="">Vers</option>
+                    </select>
+                </div>
+                
+                <!-- Alignment -->
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Uitlijning</label>
+                    <select id="imageAlignmentSelect" class="form-select">
+                        <option value="left">Links</option>
+                        <option value="center" selected>Gecentreerd</option>
+                        <option value="right">Rechts</option>
+                    </select>
+                </div>
+                
+                <!-- Width -->
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Breedte (px)</label>
+                    <input type="number" 
+                           id="imageWidthInput" 
+                           class="form-control" 
+                           value="400" 
+                           min="100" 
+                           max="1200">
+                </div>
+                
+                <!-- Height -->
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Hoogte (px)</label>
+                    <input type="number" 
+                           id="imageHeightInput" 
+                           class="form-control" 
+                           placeholder="Auto">
+                </div>
+                
+                <!-- Upload Button -->
+                <div class="col-12">
+                    <button class="btn btn-primary btn-lg w-100" onclick="uploadImage()">
+                        <i class="bi bi-cloud-upload"></i> Uploaden
+                    </button>
                 </div>
             </div>
         </div>
+    </div>
+    
+    <!-- Gallery Card -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-images"></i> Afbeeldingen Gallery</span>
+            <button class="btn btn-sm btn-outline-primary" onclick="loadImageGallery()">
+                <i class="bi bi-arrow-clockwise"></i> Vernieuwen
+            </button>
+        </div>
+        <div class="card-body">
+            <div id="imageGallery" class="row">
+                <div class="col-12 text-center py-3">
+                    <div class="spinner-border spinner-border-sm"></div> Laden...
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal fade" id="imageEditModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-pencil"></i> Afbeelding Bewerken
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editImageId">
+                
+                <!-- Preview -->
+                <div class="text-center mb-3">
+                    <img id="editImagePreview" 
+                         class="img-fluid rounded" 
+                         style="max-height: 200px;">
+                </div>
+                
+                <!-- Verse Info -->
+                <div id="editImageVerseInfo" class="alert alert-info d-none"></div>
+                
+                <!-- Caption -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Bijschrift</label>
+                    <input type="text" id="editImageCaption" class="form-control">
+                </div>
+                
+                <!-- Alignment -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Uitlijning</label>
+                    <select id="editImageAlignment" class="form-select">
+                        <option value="left">Links</option>
+                        <option value="center">Gecentreerd</option>
+                        <option value="right">Rechts</option>
+                    </select>
+                </div>
+                
+                <!-- Width -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Breedte (px)</label>
+                    <input type="number" id="editImageWidth" class="form-control" min="100" max="1200">
+                </div>
+                
+                <!-- Height -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Hoogte (px)</label>
+                    <input type="number" id="editImageHeight" class="form-control" placeholder="Auto">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuleren</button>
+                <button type="button" class="btn btn-primary" onclick="saveImageEdit()">
+                    <i class="bi bi-save"></i> Opslaan
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- View Modal -->
+<div class="modal fade" id="imageViewModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Afbeelding</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="imageViewImg" class="img-fluid" style="max-height: 70vh;">
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Image Card Hover Effect */
+.image-card {
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.image-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+}
+
+/* Enable chapter/verse selects when book is selected */
+#imageBookSelect:not([value=""]) ~ * #imageChapterSelect {
+    pointer-events: all;
+    opacity: 1;
+}
+</style>
+
+<script>
+// Enable/disable chapter and verse selects based on selections
+document.addEventListener('DOMContentLoaded', function() {
+    const bookSelect = document.getElementById('imageBookSelect');
+    const chapterSelect = document.getElementById('imageChapterSelect');
+    const verseSelect = document.getElementById('imageVerseSelect');
+    
+    if (bookSelect) {
+        bookSelect.addEventListener('change', function() {
+            chapterSelect.disabled = !this.value;
+            verseSelect.disabled = true;
+            verseSelect.innerHTML = '<option value="">Vers</option>';
+        });
+    }
+    
+    if (chapterSelect) {
+        chapterSelect.addEventListener('change', function() {
+            verseSelect.disabled = !this.value;
+        });
+    }
+});
+</script>
+
         
         <div id="section-notes" class="admin-section d-none">
             <h4 class="mb-4"><i class="bi bi-journal-text"></i> Notities</h4>

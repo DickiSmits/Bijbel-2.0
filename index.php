@@ -17,7 +17,7 @@ if (isset($_GET['api'])) {
     $endpoint = $_GET['api'];
     
     // Image endpoints router - alle image-gerelateerde endpoints gebruiken images.php
-    $imageEndpoints = ['all_images', 'upload_image', 'get_image', 'update_image', 'delete_image'];
+    $imageEndpoints = ['all_images', 'upload_image', 'get_image', 'update_image', 'delete_image', 'verse_images'];
     if (in_array($endpoint, $imageEndpoints)) {
         $apiFile = __DIR__ . '/api/images.php';
     } else {
