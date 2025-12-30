@@ -190,16 +190,81 @@ function deleteImage($db) {
  */
 function getVerseImages($db) {
     $versId = isset($_GET['vers_id']) ? (int)$_GET['vers_id'] : 0;
+    $debug = isset($_GET['debug']) && $_GET['debug'] == '1';
     
     if (!$versId) {
         jsonError('Vers_ID vereist');
     }
     
+    // Debug mode: return extensive info
+    if ($debug) {
+        $debugInfo = [
+            'vers_id_parameter' => $versId,
+            'tests' => []
+        ];
+        
+        // Test 1: Table exists
+        try {
+            $tableCheck = $db->query("SHOW TABLES LIKE 'Afbeeldingen'");
+            $debugInfo['tests']['table_exists'] = count($tableCheck) > 0;
+        } catch (Exception $e) {
+            $debugInfo['tests']['table_exists'] = 'ERROR: ' . $e->getMessage();
+        }
+        
+        // Test 2: Total count
+        try {
+            $total = $db->queryOne("SELECT COUNT(*) as cnt FROM Afbeeldingen");
+            $debugInfo['tests']['total_images'] = (int)$total['cnt'];
+        } catch (Exception $e) {
+            $debugInfo['tests']['total_images'] = 'ERROR: ' . $e->getMessage();
+        }
+        
+        // Test 3: Count for this Vers_ID
+        try {
+            $count = $db->queryOne("SELECT COUNT(*) as cnt FROM Afbeeldingen WHERE Vers_ID = ?", [$versId]);
+            $debugInfo['tests']['images_for_vers'] = (int)$count['cnt'];
+        } catch (Exception $e) {
+            $debugInfo['tests']['images_for_vers'] = 'ERROR: ' . $e->getMessage();
+        }
+        
+        // Test 4: All images with Vers_ID (any)
+        try {
+            $withVers = $db->query("SELECT Afbeelding_ID, Bestandsnaam, Vers_ID FROM Afbeeldingen WHERE Vers_ID IS NOT NULL LIMIT 5");
+            $debugInfo['tests']['sample_linked_images'] = $withVers;
+        } catch (Exception $e) {
+            $debugInfo['tests']['sample_linked_images'] = 'ERROR: ' . $e->getMessage();
+        }
+        
+        // Test 5: Try the actual query
+        $sql = "SELECT a.* FROM Afbeeldingen a WHERE a.Vers_ID = ? ORDER BY a.Geupload_Op ASC";
+        try {
+            $images = $db->query($sql, [$versId]);
+            $debugInfo['tests']['query_result_count'] = count($images);
+            $debugInfo['tests']['query_result_data'] = $images;
+        } catch (Exception $e) {
+            $debugInfo['tests']['query_result_count'] = 'ERROR: ' . $e->getMessage();
+        }
+        
+        // Test 6: Table structure
+        try {
+            $columns = $db->query("SHOW COLUMNS FROM Afbeeldingen");
+            $debugInfo['tests']['table_columns'] = array_map(function($col) {
+                return $col['Field'];
+            }, $columns);
+        } catch (Exception $e) {
+            $debugInfo['tests']['table_columns'] = 'ERROR: ' . $e->getMessage();
+        }
+        
+        jsonResponse($debugInfo);
+        return;
+    }
+    
+    // Normal mode: return images
     $sql = "SELECT a.* 
             FROM Afbeeldingen a 
             WHERE a.Vers_ID = ?
             ORDER BY a.Geupload_Op ASC";
     
-    $images = $db->query($sql);
+    $images = $db->query($sql, [$versId]);
     jsonResponse($images);
 }
