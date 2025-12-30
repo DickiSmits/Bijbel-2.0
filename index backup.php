@@ -15,14 +15,7 @@ if (isset($_GET['api'])) {
     header('Content-Type: application/json');
     
     $endpoint = $_GET['api'];
-    
-    // Image endpoints router - alle image-gerelateerde endpoints gebruiken images.php
-    $imageEndpoints = ['all_images', 'upload_image', 'get_image', 'update_image', 'delete_image'];
-    if (in_array($endpoint, $imageEndpoints)) {
-        $apiFile = __DIR__ . '/images.php';
-    } else {
-        $apiFile = __DIR__ . '/api/' . $endpoint . '.php';
-    }
+    $apiFile = __DIR__ . '/api/' . $endpoint . '.php';
     
     if (file_exists($apiFile)) {
         require_once $apiFile;
@@ -33,7 +26,6 @@ if (isset($_GET['api'])) {
     
     exit;
 }
-
 
 // LOGIN/LOGOUT
 if (isset($_POST['login'])) {
