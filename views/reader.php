@@ -528,3 +528,5 @@ function initResizeHandles() {
     console.log('✅ Resize handles initialized');
 }
 </script>
+<!-- Include reader images module -->
+<script src="assets/js/reader-images.js"></script>

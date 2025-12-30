@@ -1147,8 +1147,13 @@ function showAdminSection(section) {
             break;
             
         case 'images':
+            // Load image list
             if (typeof loadImageList === 'function') {
                 loadImageList();
+            }
+            // Initialize images section UI
+            if (typeof initImagesSection === 'function') {
+                initImagesSection();
             }
             break;
             
