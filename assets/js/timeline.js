@@ -286,22 +286,17 @@ function restoreFilterState() {
     const savedSearch = localStorage.getItem('timelineSearch');
     const panelOpen = localStorage.getItem('timelineFilterOpen');
     
-    // Restore panel open/closed state
-    const panel = document.getElementById('timelineFilterPanel');
-    if (panel) {
-        // Remove Bootstrap's collapse classes if present
-        panel.classList.remove('collapse');
-        panel.classList.remove('show');
-        panel.classList.remove('collapsing');
-        
-        if (panelOpen === 'true') {
-            panel.style.display = 'block';
-            panel.style.visibility = 'visible';
-            panel.style.opacity = '1';
-        } else {
-            panel.style.display = 'none';
-        }
-    }
+function restoreFilterState() {
+    console.log('📋 Restoring filter state...');
+    
+    // Get saved state
+    const savedFilters = localStorage.getItem('timelineActiveFilters');
+    const savedSearch = localStorage.getItem('timelineSearch');
+    
+    // NOTE: Panel open/closed state is managed by reader.php
+    // We don't touch the panel here to avoid conflicts
+    
+    // Restore checkboxes and activeGroupFilters
     
     // Restore checkboxes and activeGroupFilters
     activeGroupFilters.clear();

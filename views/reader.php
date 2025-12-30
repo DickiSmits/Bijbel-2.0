@@ -1,4 +1,4 @@
-<!-- Reader View - Complete Interface with Filter Panel -->
+<!-- Reader View - Nuclear Fix Version -->
 <div class="reader-layout" id="readerContainer">
     <!-- Bible Text Panel -->
     <div class="bible-panel" id="bibleText">
@@ -19,9 +19,9 @@
     <!-- Horizontal Resize Handle -->
     <div class="resize-handle-h" id="horizontalHandle"></div>
     
-    <!-- Timeline Panel with Collapsible Filter -->
+    <!-- Timeline Panel -->
     <div class="timeline-panel">
-        <!-- Filter Panel (collapsible, NO Bootstrap collapse class!) -->
+        <!-- Filter Panel - NO Bootstrap attributes! -->
         <div id="timelineFilterPanel" class="timeline-filter-panel" style="display: none;"></div>
         
         <!-- Timeline Navigation -->
@@ -45,7 +45,7 @@
     display: grid;
     grid-template-columns: 2fr 4px 1fr;
     grid-template-rows: 1fr 4px 250px;
-    height: calc(100vh - 56px);  /* Fixed: exact header height */
+    height: calc(100vh - 56px);
     gap: 0;
 }
 
@@ -104,14 +104,13 @@
     min-height: 0;
 }
 
-/* Timeline Filter Panel - Collapsible (no Bootstrap conflict) */
+/* Timeline Filter Panel */
 .timeline-filter-panel {
     background: #f8f9fa;
     border-bottom: 1px solid #dee2e6;
     padding: 0.75rem 1rem;
     flex-shrink: 0;
     overflow: hidden;
-    /* display controlled by JS */
 }
 
 .timeline-controls {
@@ -185,14 +184,7 @@
     opacity: 0.4;
 }
 
-.timeline-event-count {
-    font-size: 0.875rem;
-    color: #6c757d;
-    font-weight: 500;
-    white-space: nowrap;
-}
-
-/* Timeline events - FORCE single line - AGGRESSIVE */
+/* Timeline events - single line */
 .vis-item .vis-item-content {
     white-space: nowrap !important;
     overflow: hidden !important;
@@ -207,16 +199,6 @@
     white-space: nowrap !important;
 }
 
-.vis-item.vis-range .vis-item-content {
-    white-space: nowrap !important;
-    display: block !important;
-}
-
-.vis-item-overflow {
-    overflow: hidden !important;
-}
-
-/* Hide any internal divs/spans that create newlines */
 .vis-item .vis-item-content br {
     display: none !important;
 }
@@ -324,69 +306,102 @@
 </style>
 
 <script>
-// Toggle timeline filter panel (called from navbar button)
-// MUST be available immediately, not in DOMContentLoaded!
+// NUCLEAR FIX VERSION - Simple boolean toggle
+// No Bootstrap, no complex logic, just works!
+
+let panelIsOpen = false;
+
+// Simple toggle function
 window.toggleTimelineFilter = function() {
     const panel = document.getElementById('timelineFilterPanel');
     if (!panel) {
-        console.log('⚠️ Filter panel not found yet');
+        console.log('⚠️ Panel not found');
         return;
     }
     
-    // Remove Bootstrap's collapse class if present (prevents conflicts)
-    panel.classList.remove('collapse');
-    panel.classList.remove('show');
+    console.log('🔄 Toggle:', panelIsOpen ? 'CLOSE' : 'OPEN');
     
-    // Check COMPUTED display (more reliable than style.display)
-    const computedDisplay = window.getComputedStyle(panel).display;
-    const isHidden = computedDisplay === 'none';
-    
-    console.log('Toggle - Currently:', isHidden ? 'HIDDEN' : 'VISIBLE');
-    
-    if (isHidden) {
-        panel.style.display = 'block';
-        localStorage.setItem('timelineFilterOpen', 'true');
-        console.log('✅ Filter panel OPENED');
-    } else {
+    if (panelIsOpen) {
+        // CLOSE
         panel.style.display = 'none';
-        localStorage.setItem('timelineFilterOpen', 'false');
-        console.log('✅ Filter panel CLOSED');
+        panelIsOpen = false;
+        console.log('✅ Panel CLOSED');
+    } else {
+        // OPEN
+        panel.style.display = 'block';
+        panelIsOpen = true;
+        console.log('✅ Panel OPENED');
     }
 };
 
 // Initialize reader when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Reader view loaded');
+    console.log('Reader view loaded - Nuclear Fix version');
     
-    // Initialize reader
+    // Initialize components
     if (typeof initReader === 'function') {
         initReader();
     } else {
-        console.warn('reader.js not loaded - reader functionality may be limited');
+        console.warn('reader.js not loaded');
     }
     
-    // Initialize map
     if (typeof initMap === 'function') {
         initMap();
     } else {
-        console.warn('map.js not loaded - map functionality disabled');
+        console.warn('map.js not loaded');
     }
     
-    // Initialize timeline
     if (typeof initTimeline === 'function') {
         initTimeline();
     } else {
-        console.warn('timeline.js not loaded - timeline functionality disabled');
+        console.warn('timeline.js not loaded');
     }
     
     // Initialize resize handles
     initResizeHandles();
     
-    // Restore filter panel state (with delay to ensure timeline loaded)
+    // Clean panel after timeline loads
     setTimeout(() => {
-        restoreFilterPanelState();
-    }, 500);
+        cleanPanel();
+    }, 1000);
 });
+
+// Clean panel from Bootstrap
+function cleanPanel() {
+    const panel = document.getElementById('timelineFilterPanel');
+    if (!panel) return;
+    
+    console.log('🧹 Cleaning panel...');
+    
+    // Destroy any Bootstrap instance
+    try {
+        if (typeof bootstrap !== 'undefined' && bootstrap.Collapse) {
+            const bsInstance = bootstrap.Collapse.getInstance(panel);
+            if (bsInstance) {
+                bsInstance.dispose();
+                console.log('✅ Bootstrap instance destroyed');
+            }
+        }
+    } catch (e) {
+        // No Bootstrap or no instance - OK
+    }
+    
+    // Keep only base class
+    panel.className = 'timeline-filter-panel';
+    
+    // Remove Bootstrap attributes
+    panel.removeAttribute('data-bs-toggle');
+    panel.removeAttribute('data-bs-target');
+    panel.removeAttribute('data-toggle');
+    panel.removeAttribute('data-target');
+    panel.removeAttribute('aria-expanded');
+    
+    // Force closed
+    panel.style.display = 'none';
+    panelIsOpen = false;
+    
+    console.log('✅ Panel cleaned and closed');
+}
 
 // Resize functionality
 function initResizeHandles() {
@@ -396,14 +411,12 @@ function initResizeHandles() {
     
     if (!readerLayout) return;
     
-    // Vertical resize (Bible/Map split)
+    // Vertical resize
     if (verticalHandle) {
         let isResizingVertical = false;
-        let startX = 0;
         
         verticalHandle.addEventListener('mousedown', (e) => {
             isResizingVertical = true;
-            startX = e.clientX;
             document.body.style.cursor = 'col-resize';
             document.body.style.userSelect = 'none';
             e.preventDefault();
@@ -415,7 +428,6 @@ function initResizeHandles() {
             const containerWidth = readerLayout.offsetWidth;
             const leftPercent = ((e.clientX - readerLayout.offsetLeft) / containerWidth) * 100;
             
-            // Constrain between 20% and 80%
             if (leftPercent > 20 && leftPercent < 80) {
                 const rightPercent = 100 - leftPercent;
                 readerLayout.style.gridTemplateColumns = `${leftPercent}fr 4px ${rightPercent}fr`;
@@ -431,7 +443,7 @@ function initResizeHandles() {
         });
     }
     
-    // Horizontal resize (Top/Timeline split)
+    // Horizontal resize
     if (horizontalHandle) {
         let isResizingHorizontal = false;
         
@@ -447,13 +459,11 @@ function initResizeHandles() {
             
             const containerHeight = readerLayout.offsetHeight;
             const topHeight = e.clientY - readerLayout.offsetTop;
-            const timelineHeight = containerHeight - topHeight - 4; // 4px for handle
+            const timelineHeight = containerHeight - topHeight - 4;
             
-            // Constrain timeline between 150px and 500px
             if (timelineHeight >= 150 && timelineHeight <= 500) {
                 readerLayout.style.gridTemplateRows = `1fr 4px ${timelineHeight}px`;
                 
-                // Notify timeline to redraw
                 if (window.timeline && window.timeline.redraw) {
                     setTimeout(() => window.timeline.redraw(), 50);
                 }
@@ -470,34 +480,5 @@ function initResizeHandles() {
     }
     
     console.log('✅ Resize handles initialized');
-}
-
-// Restore filter panel state on load
-function restoreFilterPanelState() {
-    const panelOpen = localStorage.getItem('timelineFilterOpen');
-    const panel = document.getElementById('timelineFilterPanel');
-    
-    if (panel) {
-        console.log('📋 Restoring filter panel state...');
-        
-        // Remove Bootstrap's collapse classes if present
-        panel.classList.remove('collapse');
-        panel.classList.remove('show');
-        panel.classList.remove('collapsing');
-        
-        // Set display based on saved state
-        // Default closed (display: none) if not set or explicitly false
-        if (panelOpen === 'true') {
-            panel.style.display = 'block';
-            panel.style.visibility = 'visible';
-            panel.style.opacity = '1';
-            console.log('✅ Filter panel: OPEN (restored)');
-        } else {
-            panel.style.display = 'none';
-            console.log('✅ Filter panel: CLOSED (default)');
-        }
-    } else {
-        console.warn('⚠️ Filter panel not found during restore');
-    }
 }
 </script>
