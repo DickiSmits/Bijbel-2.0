@@ -59,10 +59,11 @@ function uploadImage($db) {
     
     // Genereer veilige bestandsnaam
     $filename = generateSafeFilename($file['name']);
-    $filepath = IMAGES_DIR . '/' . $filename;
+    $serverPath = IMAGES_DIR . '/' . $filename;     // Absolute path for file operations
+    $relativePath = 'images/' . $filename;          // Relative path for database/display
     
     // Verplaats bestand
-    if (!move_uploaded_file($file['tmp_name'], $filepath)) {
+    if (!move_uploaded_file($file['tmp_name'], $serverPath)) {
         jsonError('Upload mislukt');
     }
     
@@ -81,7 +82,7 @@ function uploadImage($db) {
     $db->execute($sql, [
         $filename,
         $file['name'],
-        $filepath,
+        $relativePath,  // Use relative path for database
         $versId,
         $caption,
         $uitlijning,
@@ -91,7 +92,7 @@ function uploadImage($db) {
     
     jsonSuccess([
         'id' => $db->lastInsertId(),
-        'url' => $filepath
+        'url' => $relativePath  // Return relative path
     ], 'Afbeelding geüpload');
 }
 
@@ -161,8 +162,21 @@ function deleteImage($db) {
     $sql = "SELECT Bestandspad FROM Afbeeldingen WHERE Afbeelding_ID = ?";
     $image = $db->queryOne($sql, [$afbeeldingId]);
     
-    if ($image && file_exists($image['Bestandspad'])) {
-        unlink($image['Bestandspad']);
+    if ($image) {
+        $path = $image['Bestandspad'];
+        
+        // Handle both absolute and relative paths
+        if (strpos($path, '/') === 0) {
+            // Absolute path (old format)
+            $filePath = $path;
+        } else {
+            // Relative path (new format)
+            $filePath = __DIR__ . '/../' . $path;
+        }
+        
+        if (file_exists($filePath)) {
+            unlink($filePath);
+        }
     }
     
     // Verwijder uit database
