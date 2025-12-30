@@ -9,10 +9,36 @@ console.log('🖼️ [IMAGES] Loading bulletproof reader images module...');
 const loadedVerses = new Set();
 
 /**
+ * Remove duplicate images from DOM
+ */
+function cleanDuplicates() {
+    const seen = new Set();
+    const duplicates = [];
+    
+    document.querySelectorAll('.verse-image').forEach(container => {
+        const key = `${container.dataset.versId}-${container.dataset.imageId}`;
+        
+        if (seen.has(key)) {
+            duplicates.push(container);
+        } else {
+            seen.add(key);
+        }
+    });
+    
+    if (duplicates.length > 0) {
+        console.log(`🧹 [IMAGES] Removing ${duplicates.length} duplicate images`);
+        duplicates.forEach(dup => dup.remove());
+    }
+}
+
+/**
  * Load images for all visible verses
  */
 async function loadVerseImages() {
     console.log('📸 [IMAGES] Starting loadVerseImages...');
+    
+    // Clean any duplicates first
+    cleanDuplicates();
     
     const verses = document.querySelectorAll('.verse[data-vers-id]');
     
@@ -61,6 +87,13 @@ async function loadVerseImages() {
  */
 function displayVerseImages(versId, images, verseElement) {
     images.forEach(img => {
+        // Check if this image is already displayed for this verse
+        const existingImage = document.querySelector(`.verse-image[data-image-id="${img.Afbeelding_ID}"][data-vers-id="${versId}"]`);
+        if (existingImage) {
+            console.log(`⏭️ [IMAGES] Image ${img.Afbeelding_ID} already displayed for verse ${versId}, skipping`);
+            return; // Skip duplicate
+        }
+        
         const imgContainer = document.createElement('div');
         imgContainer.className = 'verse-image my-3';
         imgContainer.dataset.imageId = img.Afbeelding_ID;
@@ -100,19 +133,20 @@ function displayVerseImages(versId, images, verseElement) {
 function clearRemovedImages() {
     console.log('🧹 [IMAGES] Clearing removed images...');
     
+    // Remove all existing verse-image containers
+    const oldImages = document.querySelectorAll('.verse-image');
+    oldImages.forEach(img => img.remove());
+    console.log(`   Removed ${oldImages.length} old image containers`);
+    
     const currentVerses = new Set(
         Array.from(document.querySelectorAll('.verse[data-vers-id]'))
             .map(v => v.dataset.versId)
     );
     
-    // Remove from loaded set if verse is gone
-    for (const versId of loadedVerses) {
-        if (!currentVerses.has(versId)) {
-            loadedVerses.delete(versId);
-        }
-    }
+    // Clear loaded verses cache completely on chapter change
+    loadedVerses.clear();
     
-    console.log(`ℹ️ [IMAGES] Tracking ${loadedVerses.size} loaded verses`);
+    console.log(`ℹ️ [IMAGES] Cache cleared, ready for new load`);
 }
 
 /**
@@ -321,6 +355,7 @@ function initReaderImages() {
 // Make functions globally available
 window.loadVerseImages = loadVerseImages;
 window.openImageFullscreen = openImageFullscreen;
+window.cleanDuplicates = cleanDuplicates; // For manual cleanup in console
 
 // Initialize when DOM is ready
 if (document.readyState === 'loading') {
