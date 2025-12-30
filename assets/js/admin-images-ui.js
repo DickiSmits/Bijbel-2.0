@@ -1,15 +1,18 @@
 /**
- * ADMIN IMAGES UI
- * Complete upload/edit interface
+ * ADMIN IMAGES UI - EXTENDED VERSION
+ * Met vers koppeling bewerken functionaliteit
  */
 
-console.log('🖼️ Loading admin images UI...');
+console.log('🖼️ Loading admin images UI (Extended)...');
 
 // Global state
 let currentEditingImage = null;
 let allBooks = [];
 let allChapters = [];
 let allVerses = [];
+let editBooks = [];
+let editChapters = [];
+let editVerses = [];
 
 /**
  * Initialize images section
@@ -29,7 +32,7 @@ async function initImagesSection() {
 }
 
 /**
- * Populate book dropdown
+ * Populate book dropdown (upload form)
  */
 function populateBookDropdown() {
     const bookSelect = document.getElementById('imageBookSelect');
@@ -48,9 +51,30 @@ function populateBookDropdown() {
 }
 
 /**
+ * Populate book dropdown (edit modal)
+ */
+function populateEditBookDropdown() {
+    const bookSelect = document.getElementById('editImageBook');
+    if (!bookSelect) return;
+    
+    bookSelect.innerHTML = '<option value="">Geen koppeling</option>';
+    
+    if (allBooks && allBooks.length > 0) {
+        allBooks.forEach(book => {
+            const option = document.createElement('option');
+            option.value = book.Bijbelboeknaam;
+            option.textContent = book.Bijbelboeknaam;
+            bookSelect.appendChild(option);
+        });
+    }
+}
+
+/**
  * Setup event listeners
  */
 function setupImageEventListeners() {
+    // UPLOAD FORM
+    
     // Book change
     const bookSelect = document.getElementById('imageBookSelect');
     if (bookSelect) {
@@ -93,10 +117,43 @@ function setupImageEventListeners() {
             }
         });
     }
+    
+    // EDIT MODAL
+    
+    // Edit book change
+    const editBookSelect = document.getElementById('editImageBook');
+    if (editBookSelect) {
+        editBookSelect.addEventListener('change', async (e) => {
+            const book = e.target.value;
+            if (book) {
+                await loadEditChapters(book);
+            } else {
+                document.getElementById('editImageChapter').innerHTML = '<option value="">Hoofdstuk</option>';
+                document.getElementById('editImageVerse').innerHTML = '<option value="">Vers</option>';
+                document.getElementById('editImageChapter').disabled = true;
+                document.getElementById('editImageVerse').disabled = true;
+            }
+        });
+    }
+    
+    // Edit chapter change
+    const editChapterSelect = document.getElementById('editImageChapter');
+    if (editChapterSelect) {
+        editChapterSelect.addEventListener('change', async (e) => {
+            const chapter = e.target.value;
+            const book = document.getElementById('editImageBook').value;
+            if (book && chapter) {
+                await loadEditVerses(book, chapter);
+            } else {
+                document.getElementById('editImageVerse').innerHTML = '<option value="">Vers</option>';
+                document.getElementById('editImageVerse').disabled = true;
+            }
+        });
+    }
 }
 
 /**
- * Load chapters for selected book
+ * Load chapters for selected book (upload)
  */
 async function loadChaptersForImage(book) {
     const chapterSelect = document.getElementById('imageChapterSelect');
@@ -120,7 +177,7 @@ async function loadChaptersForImage(book) {
 }
 
 /**
- * Load verses for selected chapter
+ * Load verses for selected chapter (upload)
  */
 async function loadVersesForImage(book, chapter) {
     const verseSelect = document.getElementById('imageVerseSelect');
@@ -130,6 +187,56 @@ async function loadVersesForImage(book, chapter) {
     
     const verses = await apiCall(`verses&boek=${encodeURIComponent(book)}&hoofdstuk=${chapter}&limit=999`);
     allVerses = verses || [];
+    
+    verseSelect.innerHTML = '<option value="">Vers</option>';
+    
+    if (verses && verses.length > 0) {
+        verses.forEach(v => {
+            const option = document.createElement('option');
+            option.value = v.Vers_ID;
+            option.textContent = v.Versnummer;
+            verseSelect.appendChild(option);
+        });
+    }
+}
+
+/**
+ * Load chapters for edit modal
+ */
+async function loadEditChapters(book) {
+    const chapterSelect = document.getElementById('editImageChapter');
+    if (!chapterSelect) return;
+    
+    chapterSelect.innerHTML = '<option value="">Laden...</option>';
+    chapterSelect.disabled = false;
+    
+    const chapters = await apiCall(`chapters&boek=${encodeURIComponent(book)}`);
+    editChapters = chapters || [];
+    
+    chapterSelect.innerHTML = '<option value="">Hoofdstuk</option>';
+    
+    if (chapters && chapters.length > 0) {
+        chapters.forEach(ch => {
+            const option = document.createElement('option');
+            option.value = ch.Hoofdstuknummer;
+            option.textContent = ch.Hoofdstuknummer;
+            chapterSelect.appendChild(option);
+        });
+    }
+}
+
+/**
+ * Load verses for edit modal
+ */
+async function loadEditVerses(book, chapter) {
+    const verseSelect = document.getElementById('editImageVerse');
+    if (!verseSelect) return;
+    
+    verseSelect.innerHTML = '<option value="">Laden...</option>';
+    verseSelect.disabled = false;
+    
+    const verses = await apiCall(`verses&boek=${encodeURIComponent(book)}&hoofdstuk=${chapter}&limit=999`);
+    editVerses = verses || [];
     
     verseSelect.innerHTML = '<option value="">Vers</option>';
     
@@ -279,7 +386,6 @@ function viewImage(path) {
         const bsModal = new bootstrap.Modal(modal);
         bsModal.show();
     } else {
-        // Fallback: open in new tab
         window.open(path, '_blank');
     }
 }
@@ -298,7 +404,7 @@ async function editImage(imageId) {
         
         currentEditingImage = image;
         
-        // Fill edit form
+        // Fill basic fields
         document.getElementById('editImageId').value = image.Afbeelding_ID;
         document.getElementById('editImageCaption').value = image.Caption || '';
         document.getElementById('editImageAlignment').value = image.Uitlijning || 'center';
@@ -308,13 +414,28 @@ async function editImage(imageId) {
         // Show image preview
         document.getElementById('editImagePreview').src = image.Bestandspad;
         
-        // Show verse info if linked
-        if (image.Bijbelboeknaam) {
-            document.getElementById('editImageVerseInfo').textContent = 
-                `Gekoppeld aan: ${image.Bijbelboeknaam} ${image.Hoofdstuknummer}:${image.Versnummer}`;
-            document.getElementById('editImageVerseInfo').classList.remove('d-none');
+        // Populate edit book dropdown
+        populateEditBookDropdown();
+        
+        // Set verse link if exists
+        if (image.Bijbelboeknaam && image.Hoofdstuknummer && image.Versnummer) {
+            // Select book
+            document.getElementById('editImageBook').value = image.Bijbelboeknaam;
+            
+            // Load and select chapter
+            await loadEditChapters(image.Bijbelboeknaam);
+            document.getElementById('editImageChapter').value = image.Hoofdstuknummer;
+            
+            // Load and select verse
+            await loadEditVerses(image.Bijbelboeknaam, image.Hoofdstuknummer);
+            document.getElementById('editImageVerse').value = image.Vers_ID;
         } else {
-            document.getElementById('editImageVerseInfo').classList.add('d-none');
+            // No link
+            document.getElementById('editImageBook').value = '';
+            document.getElementById('editImageChapter').innerHTML = '<option value="">Hoofdstuk</option>';
+            document.getElementById('editImageVerse').innerHTML = '<option value="">Vers</option>';
+            document.getElementById('editImageChapter').disabled = true;
+            document.getElementById('editImageVerse').disabled = true;
         }
         
         // Show modal
@@ -336,6 +457,7 @@ async function saveImageEdit() {
     const alignment = document.getElementById('editImageAlignment').value;
     const width = document.getElementById('editImageWidth').value;
     const height = document.getElementById('editImageHeight').value;
+    const versId = document.getElementById('editImageVerse').value;
     
     try {
         const result = await apiCall('update_image', {
@@ -347,7 +469,7 @@ async function saveImageEdit() {
                 uitlijning: alignment,
                 breedte: parseInt(width),
                 hoogte: height ? parseInt(height) : null,
-                vers_id: currentEditingImage ? currentEditingImage.Vers_ID : null
+                vers_id: versId ? parseInt(versId) : null
             })
         });
         
@@ -402,4 +524,4 @@ window.saveImageEdit = saveImageEdit;
 window.deleteImageConfirm = deleteImageConfirm;
 window.viewImage = viewImage;
 
-console.log('✅ Admin images UI loaded');
+console.log('✅ Admin images UI loaded (Extended)');

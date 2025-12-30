@@ -1,60 +1,58 @@
 /**
- * READER IMAGES MODULE
- * Load and display images for verses
+ * READER IMAGES MODULE - BULLETPROOF VERSION
+ * Met event listeners en MutationObserver voor 100% betrouwbaarheid
  */
 
-console.log('🖼️ Loading reader images module...');
+console.log('🖼️ [IMAGES] Loading bulletproof reader images module...');
+
+// Track loaded verses to prevent duplicate loading
+const loadedVerses = new Set();
 
 /**
  * Load images for all visible verses
  */
 async function loadVerseImages() {
-    console.log('📸 Loading verse images...');
+    console.log('📸 [IMAGES] Starting loadVerseImages...');
     
     const verses = document.querySelectorAll('.verse[data-vers-id]');
     
     if (verses.length === 0) {
-        console.log('No verses found to load images for');
+        console.log('⚠️ [IMAGES] No verses found');
         return;
     }
     
-    console.log(`Found ${verses.length} verses to check for images`);
+    console.log(`📊 [IMAGES] Found ${verses.length} verses`);
     
-    let imagesLoaded = 0;
+    let newlyLoaded = 0;
     
     for (const verseElement of verses) {
         const versId = verseElement.dataset.versId;
         
-        // Check if images already loaded for this verse
-        if (verseElement.dataset.imagesLoaded === 'true') {
+        // Skip if already loaded
+        if (loadedVerses.has(versId)) {
             continue;
         }
         
         try {
-            // Get images for this verse
             const images = await apiCall(`verse_images&vers_id=${versId}`);
             
             if (images && images.length > 0) {
-                console.log(`✅ Found ${images.length} image(s) for verse ${versId}`);
-                
-                // Display images
+                console.log(`✅ [IMAGES] Found ${images.length} image(s) for verse ${versId}`);
                 displayVerseImages(versId, images, verseElement);
-                imagesLoaded += images.length;
+                newlyLoaded++;
             }
             
             // Mark as loaded
-            verseElement.dataset.imagesLoaded = 'true';
+            loadedVerses.add(versId);
             
         } catch (error) {
-            console.warn(`Could not load images for verse ${versId}:`, error);
-            verseElement.dataset.imagesLoaded = 'true'; // Mark anyway to prevent retry
+            console.warn(`❌ [IMAGES] Error for verse ${versId}:`, error);
+            loadedVerses.add(versId); // Mark anyway to prevent retry
         }
     }
     
-    if (imagesLoaded > 0) {
-        console.log(`✅ Loaded ${imagesLoaded} total images`);
-    } else {
-        console.log('ℹ️ No images found for current verses');
+    if (newlyLoaded > 0) {
+        console.log(`✅ [IMAGES] Loaded ${newlyLoaded} new images`);
     }
 }
 
@@ -66,6 +64,7 @@ function displayVerseImages(versId, images, verseElement) {
         const imgContainer = document.createElement('div');
         imgContainer.className = 'verse-image my-3';
         imgContainer.dataset.imageId = img.Afbeelding_ID;
+        imgContainer.dataset.versId = versId;
         
         // Apply alignment
         let alignmentClass = 'text-center';
@@ -85,21 +84,41 @@ function displayVerseImages(versId, images, verseElement) {
                      class="img-fluid rounded shadow-sm verse-image-img"
                      style="max-width: ${width}px; ${height} cursor: pointer;"
                      onclick="openImageFullscreen('${img.Bestandspad}', '${escapeForJs(img.Caption || '')}')"
-                     onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=\\'alert alert-warning\\'><i class=\\'bi bi-exclamation-triangle\\'></i> Afbeelding niet gevonden</div>';">
+                     onerror="console.error('[IMAGES] Failed to load:', '${img.Bestandspad}'); this.style.display='none';">
                 ${caption}
             </div>
         `;
         
-        // Insert after verse (you can change this to 'before' if needed)
+        // Insert after verse
         verseElement.after(imgContainer);
     });
+}
+
+/**
+ * Clear images for verses that are no longer in DOM
+ */
+function clearRemovedImages() {
+    console.log('🧹 [IMAGES] Clearing removed images...');
+    
+    const currentVerses = new Set(
+        Array.from(document.querySelectorAll('.verse[data-vers-id]'))
+            .map(v => v.dataset.versId)
+    );
+    
+    // Remove from loaded set if verse is gone
+    for (const versId of loadedVerses) {
+        if (!currentVerses.has(versId)) {
+            loadedVerses.delete(versId);
+        }
+    }
+    
+    console.log(`ℹ️ [IMAGES] Tracking ${loadedVerses.size} loaded verses`);
 }
 
 /**
  * Open image in fullscreen modal
  */
 function openImageFullscreen(imagePath, caption) {
-    // Create modal if doesn't exist
     let modal = document.getElementById('readerImageModal');
     
     if (!modal) {
@@ -125,20 +144,18 @@ function openImageFullscreen(imagePath, caption) {
         modal = document.getElementById('readerImageModal');
     }
     
-    // Set image and caption
     const img = document.getElementById('readerImageModalImg');
     const title = document.getElementById('readerImageModalTitle');
     
     if (img) img.src = imagePath;
     if (title) title.textContent = caption || 'Afbeelding';
     
-    // Show modal
     const bsModal = new bootstrap.Modal(modal);
     bsModal.show();
 }
 
 /**
- * Escape HTML for display
+ * Escape HTML
  */
 function escapeHtml(text) {
     const div = document.createElement('div');
@@ -147,42 +164,169 @@ function escapeHtml(text) {
 }
 
 /**
- * Escape for JavaScript string
+ * Escape for JS
  */
 function escapeForJs(text) {
     return text.replace(/'/g, "\\'").replace(/"/g, '\\"').replace(/\n/g, '\\n');
 }
 
 /**
- * Load images when verses are loaded
- * Hook into existing loadVerses function
+ * Setup event listeners for book/chapter changes
  */
-if (typeof window.loadVerses === 'function') {
-    const originalLoadVerses = window.loadVerses;
+function setupEventListeners() {
+    console.log('🎧 [IMAGES] Setting up event listeners...');
     
-    window.loadVerses = async function(...args) {
-        // Call original function
-        await originalLoadVerses.apply(this, args);
+    const bookSelect = document.getElementById('bookSelect');
+    const chapterSelect = document.getElementById('chapterSelect');
+    
+    if (bookSelect) {
+        bookSelect.addEventListener('change', () => {
+            console.log('📖 [IMAGES] Book changed, will reload images...');
+            clearRemovedImages();
+            // Wait for verses to load, then load images
+            setTimeout(() => {
+                console.log('⏰ [IMAGES] Loading images after book change...');
+                loadVerseImages();
+            }, 1500);
+        });
+        console.log('✅ [IMAGES] Book select listener added');
+    }
+    
+    if (chapterSelect) {
+        chapterSelect.addEventListener('change', () => {
+            console.log('📑 [IMAGES] Chapter changed, will reload images...');
+            clearRemovedImages();
+            // Wait for verses to load, then load images
+            setTimeout(() => {
+                console.log('⏰ [IMAGES] Loading images after chapter change...');
+                loadVerseImages();
+            }, 1500);
+        });
+        console.log('✅ [IMAGES] Chapter select listener added');
+    }
+}
+
+/**
+ * Setup MutationObserver to detect new verses
+ */
+function setupMutationObserver() {
+    console.log('👁️ [IMAGES] Setting up MutationObserver...');
+    
+    const bibleText = document.getElementById('bibleText');
+    if (!bibleText) {
+        console.warn('⚠️ [IMAGES] bibleText container not found');
+        return;
+    }
+    
+    const observer = new MutationObserver((mutations) => {
+        let hasNewVerses = false;
         
-        // Load images after verses are loaded
-        setTimeout(() => {
-            loadVerseImages();
-        }, 500);
-    };
+        for (const mutation of mutations) {
+            if (mutation.addedNodes.length > 0) {
+                // Check if any added nodes are verses
+                for (const node of mutation.addedNodes) {
+                    if (node.nodeType === 1) { // Element node
+                        if (node.classList && node.classList.contains('verse')) {
+                            hasNewVerses = true;
+                            break;
+                        }
+                        // Check children
+                        if (node.querySelectorAll && node.querySelectorAll('.verse').length > 0) {
+                            hasNewVerses = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (hasNewVerses) break;
+        }
+        
+        if (hasNewVerses) {
+            console.log('🆕 [IMAGES] New verses detected by MutationObserver');
+            // Small delay to ensure verses are fully rendered
+            setTimeout(() => {
+                loadVerseImages();
+            }, 300);
+        }
+    });
     
-    console.log('✅ Hooked into loadVerses');
+    observer.observe(bibleText, {
+        childList: true,
+        subtree: true
+    });
+    
+    console.log('✅ [IMAGES] MutationObserver active');
+}
+
+/**
+ * Hook into loadVerses if it exists
+ */
+function hookLoadVerses() {
+    if (typeof window.loadVerses === 'function') {
+        console.log('🔗 [IMAGES] Hooking into loadVerses...');
+        
+        const originalLoadVerses = window.loadVerses;
+        
+        window.loadVerses = async function(...args) {
+            console.log('📖 [IMAGES] loadVerses called');
+            
+            // Call original
+            const result = await originalLoadVerses.apply(this, args);
+            
+            // Clear and reload images
+            const append = args[0]; // First arg is append mode
+            if (!append) {
+                console.log('🔄 [IMAGES] Fresh load, clearing cache...');
+                clearRemovedImages();
+            }
+            
+            setTimeout(() => {
+                console.log('⏰ [IMAGES] Loading images after loadVerses...');
+                loadVerseImages();
+            }, 500);
+            
+            return result;
+        };
+        
+        console.log('✅ [IMAGES] Successfully hooked into loadVerses');
+    } else {
+        console.log('ℹ️ [IMAGES] loadVerses not found yet, will rely on event listeners');
+    }
+}
+
+/**
+ * Initialize everything
+ */
+function initReaderImages() {
+    console.log('🚀 [IMAGES] Initializing reader images...');
+    
+    // Setup event listeners
+    setupEventListeners();
+    
+    // Setup MutationObserver
+    setupMutationObserver();
+    
+    // Hook loadVerses if available
+    hookLoadVerses();
+    
+    // Initial load
+    setTimeout(() => {
+        console.log('⏰ [IMAGES] Initial image load...');
+        loadVerseImages();
+    }, 1000);
+    
+    console.log('✅ [IMAGES] Reader images initialized');
 }
 
 // Make functions globally available
 window.loadVerseImages = loadVerseImages;
 window.openImageFullscreen = openImageFullscreen;
 
-console.log('✅ Reader images module loaded');
+// Initialize when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initReaderImages);
+} else {
+    initReaderImages();
+}
 
-// Auto-load images on page load
-document.addEventListener('DOMContentLoaded', () => {
-    // Wait a bit for verses to load
-    setTimeout(() => {
-        loadVerseImages();
-    }, 2000);
-});
+console.log('✅ [IMAGES] Reader images module loaded (bulletproof)');

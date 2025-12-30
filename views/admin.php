@@ -419,59 +419,119 @@
     </div>
 </div>
 
-<!-- Edit Modal -->
+<!-- EDIT MODAL - EXTENDED VERSION -->
+<!-- Replace the existing imageEditModal in admin.php with this -->
+
 <div class="modal fade" id="imageEditModal" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header">
+            <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title">
                     <i class="bi bi-pencil"></i> Afbeelding Bewerken
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <input type="hidden" id="editImageId">
                 
                 <!-- Preview -->
-                <div class="text-center mb-3">
+                <div class="text-center mb-4">
                     <img id="editImagePreview" 
-                         class="img-fluid rounded" 
+                         class="img-fluid rounded shadow" 
                          style="max-height: 200px;">
                 </div>
                 
-                <!-- Verse Info -->
-                <div id="editImageVerseInfo" class="alert alert-info d-none"></div>
-                
-                <!-- Caption -->
-                <div class="mb-3">
-                    <label class="form-label fw-semibold">Bijschrift</label>
-                    <input type="text" id="editImageCaption" class="form-control">
-                </div>
-                
-                <!-- Alignment -->
-                <div class="mb-3">
-                    <label class="form-label fw-semibold">Uitlijning</label>
-                    <select id="editImageAlignment" class="form-select">
-                        <option value="left">Links</option>
-                        <option value="center">Gecentreerd</option>
-                        <option value="right">Rechts</option>
-                    </select>
-                </div>
-                
-                <!-- Width -->
-                <div class="mb-3">
-                    <label class="form-label fw-semibold">Breedte (px)</label>
-                    <input type="number" id="editImageWidth" class="form-control" min="100" max="1200">
-                </div>
-                
-                <!-- Height -->
-                <div class="mb-3">
-                    <label class="form-label fw-semibold">Hoogte (px)</label>
-                    <input type="number" id="editImageHeight" class="form-control" placeholder="Auto">
+                <div class="row g-3">
+                    <!-- Caption -->
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">
+                            <i class="bi bi-chat-square-text"></i> Bijschrift
+                        </label>
+                        <input type="text" 
+                               id="editImageCaption" 
+                               class="form-control" 
+                               placeholder="Optioneel bijschrift">
+                    </div>
+                    
+                    <!-- Verse Linking Section -->
+                    <div class="col-12">
+                        <div class="card bg-light">
+                            <div class="card-header">
+                                <i class="bi bi-link-45deg"></i> Vers Koppeling
+                                <small class="text-muted">(Optioneel - koppel aan specifiek vers)</small>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <!-- Book -->
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-semibold">Boek</label>
+                                        <select id="editImageBook" class="form-select">
+                                            <option value="">Geen koppeling</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <!-- Chapter -->
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-semibold">Hoofdstuk</label>
+                                        <select id="editImageChapter" class="form-select" disabled>
+                                            <option value="">Hoofdstuk</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <!-- Verse -->
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-semibold">Vers</label>
+                                        <select id="editImageVerse" class="form-select" disabled>
+                                            <option value="">Vers</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Alignment -->
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">
+                            <i class="bi bi-align-center"></i> Uitlijning
+                        </label>
+                        <select id="editImageAlignment" class="form-select">
+                            <option value="left">Links</option>
+                            <option value="center">Gecentreerd</option>
+                            <option value="right">Rechts</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Width -->
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">
+                            <i class="bi bi-arrows-expand"></i> Breedte (px)
+                        </label>
+                        <input type="number" 
+                               id="editImageWidth" 
+                               class="form-control" 
+                               min="100" 
+                               max="1200" 
+                               value="400">
+                    </div>
+                    
+                    <!-- Height -->
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">
+                            <i class="bi bi-arrows-vertical"></i> Hoogte (px)
+                        </label>
+                        <input type="number" 
+                               id="editImageHeight" 
+                               class="form-control" 
+                               placeholder="Auto">
+                        <small class="text-muted">Leeg = auto</small>
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuleren</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle"></i> Annuleren
+                </button>
                 <button type="button" class="btn btn-primary" onclick="saveImageEdit()">
                     <i class="bi bi-save"></i> Opslaan
                 </button>
@@ -479,6 +539,7 @@
         </div>
     </div>
 </div>
+
 
 <!-- View Modal -->
 <div class="modal fade" id="imageViewModal" tabindex="-1">
