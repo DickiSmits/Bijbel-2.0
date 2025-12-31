@@ -1147,13 +1147,8 @@ function showAdminSection(section) {
             break;
             
         case 'images':
-            // Load image list
             if (typeof loadImageList === 'function') {
                 loadImageList();
-            }
-            // Initialize images section UI
-            if (typeof initImagesSection === 'function') {
-                initImagesSection();
             }
             break;
             
@@ -1450,7 +1445,8 @@ async function loadImageList() {
 
 let notesQuill = null;
 let currentNoteId = null;
-let notes = [];
+// Make notes globally accessible to avoid scope issues
+window.notesArray = [];
 
 async function initNotesEditor() {
     console.log('📝 Initializing notes editor...');
@@ -1478,10 +1474,20 @@ async function initNotesEditor() {
                 ]
             }
         });
+        
+        // Make Quill globally accessible
+        window.notesQuill = notesQuill;
+        
         console.log('✅ Notes Quill editor initialized');
         
         // Setup auto-save
         setupNotesAutoSave();
+    } else if (container) {
+        // Quill might be in container already
+        if (container.__quill) {
+            notesQuill = container.__quill;
+            window.notesQuill = notesQuill;
+        }
     }
     
     // Load notes from database
@@ -1494,16 +1500,16 @@ async function loadNotes() {
     const result = await window.apiCall('notes');
     
     if (result) {
-        notes = result.map(n => ({
+        window.notesArray = result.map(n => ({
             id: n.Notitie_ID,
             title: n.Titel || '',
             content: n.Inhoud || '',
             created: n.Aangemaakt,
             updated: n.Gewijzigd
         }));
-        console.log(`✅ Loaded ${notes.length} notes`);
+        console.log(`✅ Loaded ${window.notesArray.length} notes`);
     } else {
-        notes = [];
+        window.notesArray = [];
         console.log('No notes found');
     }
     
@@ -1517,7 +1523,7 @@ function renderNotesList() {
         return;
     }
     
-    if (notes.length === 0) {
+    if (!window.notesArray || window.notesArray.length === 0) {
         listContainer.innerHTML = `
             <div class="text-center p-4 text-muted">
                 <p>Nog geen notities</p>
@@ -1527,7 +1533,7 @@ function renderNotesList() {
     }
     
     // Sort by updated date
-    const sortedNotes = [...notes].sort((a, b) => new Date(b.updated) - new Date(a.updated));
+    const sortedNotes = [...window.notesArray].sort((a, b) => new Date(b.updated) - new Date(a.updated));
     
     listContainer.innerHTML = sortedNotes.map(note => {
         const date = new Date(note.updated);
@@ -1558,19 +1564,32 @@ function renderNotesList() {
 }
 
 function selectNote(noteId) {
+    // Convert to number (onclick passes string)
+    noteId = parseInt(noteId);
     currentNoteId = noteId;
-    const note = notes.find(n => n.id === noteId);
+    
+    const note = window.notesArray?.find(n => n.id === noteId);
     
     if (!note) {
         console.error('Note not found:', noteId);
         return;
     }
     
+    console.log('📝 Loading note:', note.title);
+    
+    // Ensure Quill is available
+    if (!window.notesQuill && notesQuill) {
+        window.notesQuill = notesQuill;
+    }
+    
     // Show editor, hide empty state
     const emptyState = document.getElementById('emptyNotesState');
     const editorContent = document.getElementById('noteEditorContent');
     
-    if (emptyState) emptyState.classList.add('d-none');
+    if (emptyState) {
+        emptyState.classList.add('d-none');
+    }
+    
     if (editorContent) {
         editorContent.classList.remove('d-none');
         editorContent.classList.add('d-flex');
@@ -1582,7 +1601,23 @@ function selectNote(noteId) {
         titleInput.value = note.title || '';
     }
     
-    if (notesQuill) {
+    if (window.notesQuill) {
+        // Clear editor first
+        window.notesQuill.setText('');
+        
+        // Load HTML content if available
+        if (note.content && note.content.trim()) {
+            window.notesQuill.clipboard.dangerouslyPasteHTML(note.content);
+        }
+        
+        console.log('✅ Note loaded in editor');
+    } else {
+        console.error('❌ notesQuill not available');
+    }
+    
+    // Update active state in list
+    renderNotesList();
+}
         if (note.content) {
             notesQuill.root.innerHTML = note.content;
         } else {
@@ -1633,7 +1668,9 @@ function setupNotesAutoSave() {
 }
 
 async function createNewNote() {
-    if (!notesQuill) {
+    const quillInstance = window.notesQuill || notesQuill;
+    
+    if (!quillInstance) {
         await initNotesEditor();
     }
     
@@ -1660,15 +1697,30 @@ async function createNewNote() {
         }, 100);
         
         console.log('✅ New note created');
+    } else {
+        console.error('❌ Failed to create note:', result);
+        window.showNotification('Nieuwe notitie maken mislukt', true);
     }
 }
 
 async function saveCurrentNote() {
-    if (!currentNoteId || !notesQuill) return;
+    if (!currentNoteId) {
+        console.log('⚠️ No note selected');
+        return;
+    }
+    
+    // Ensure Quill is available
+    const quillInstance = window.notesQuill || notesQuill;
+    if (!quillInstance) {
+        console.error('❌ Quill editor not available');
+        return;
+    }
     
     const titleInput = document.getElementById('noteTitleInput');
     const titel = titleInput ? titleInput.value || 'Naamloos' : 'Naamloos';
-    const inhoud = notesQuill.root.innerHTML;
+    const inhoud = quillInstance.root.innerHTML;
+    
+    console.log('💾 Saving note:', currentNoteId, titel);
     
     const result = await window.apiCall('save_note', {
         method: 'POST',
@@ -1682,11 +1734,11 @@ async function saveCurrentNote() {
     
     if (result && result.success) {
         // Update local cache
-        const noteIndex = notes.findIndex(n => n.id === currentNoteId);
+        const noteIndex = window.notesArray.findIndex(n => n.id === currentNoteId);
         if (noteIndex !== -1) {
-            notes[noteIndex].title = titel;
-            notes[noteIndex].content = inhoud;
-            notes[noteIndex].updated = new Date().toISOString();
+            window.notesArray[noteIndex].title = titel;
+            window.notesArray[noteIndex].content = inhoud;
+            window.notesArray[noteIndex].updated = new Date().toISOString();
         }
         
         renderNotesList();
@@ -1699,7 +1751,11 @@ async function saveCurrentNote() {
             }, 2000);
         }
         
-        console.log('✅ Note saved');
+        console.log('✅ Note saved successfully');
+        window.showNotification('Notitie opgeslagen');
+    } else {
+        console.error('❌ Save failed:', result);
+        window.showNotification('Opslaan mislukt', true);
     }
 }
 
@@ -1708,10 +1764,13 @@ async function deleteCurrentNote() {
     
     if (!confirm('Weet je zeker dat je deze notitie wilt verwijderen?')) return;
     
+    console.log('🗑️ Deleting note:', currentNoteId);
+    
     const result = await window.apiCall(`delete_note&id=${currentNoteId}`);
     
     if (result && result.success) {
-        notes = notes.filter(n => n.id !== currentNoteId);
+        // Remove from local array
+        window.notesArray = window.notesArray.filter(n => n.id !== currentNoteId);
         currentNoteId = null;
         
         // Show empty state
@@ -1725,8 +1784,13 @@ async function deleteCurrentNote() {
         }
         
         renderNotesList();
-        showNotification('Notitie verwijderd');
-        console.log('✅ Note deleted');
+        window.showNotification('Notitie verwijderd');
+        console.log('✅ Note deleted successfully');
+    } else {
+        console.error('❌ Delete failed:', result);
+        window.showNotification('Verwijderen mislukt', true);
+    }
+}
     }
 }
 
@@ -1964,204 +2028,3 @@ window.editImage = editImage;
 window.deleteImage = deleteImage;
 
 console.log('✅ Data loading functions registered');
-
-/**
- * ADMIN.JS - FIXED VERSION with Images Support
- * Add this to the END of your existing admin.js
- */
-
-// ============================================
-// IMAGES FIX - Permanent Solution
-// ============================================
-
-console.log('🖼️ Loading images module...');
-
-// Silent API call (doesn't spam console with errors)
-async function silentApiCall(endpoint) {
-    try {
-        const response = await fetch('?api=' + endpoint);
-        if (!response.ok) return null;
-        
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-            return null;
-        }
-        
-        return await response.json();
-    } catch (error) {
-        return null;
-    }
-}
-
-// Load image list (tries multiple endpoints)
-window.loadImageList = async function() {
-    console.log('🖼️ Loading images...');
-    
-    const imgList = document.getElementById('imageList');
-    if (!imgList) {
-        console.warn('⚠️ imageList element not found');
-        return;
-    }
-    
-    // Show loading
-    imgList.innerHTML = '<div class="col-12 text-center py-3"><div class="spinner-border spinner-border-sm"></div><p class="mt-2 text-muted">Laden...</p></div>';
-    
-    // Try multiple endpoints silently
-    let imgs = await silentApiCall('images');
-    if (!imgs) imgs = await silentApiCall('afbeeldingen');
-    if (!imgs) imgs = await silentApiCall('get_images');
-    
-    // No images or no API
-    if (!imgs || !Array.isArray(imgs) || imgs.length === 0) {
-        console.log('ℹ️ No images available (API not implemented)');
-        imgList.innerHTML = `
-            <div class="col-12">
-                <div class="alert alert-info">
-                    <div class="text-center mb-3">
-                        <i class="bi bi-image" style="font-size: 4rem; opacity: 0.3;"></i>
-                    </div>
-                    <h5 class="alert-heading">
-                        <i class="bi bi-info-circle"></i> Afbeeldingen Functionaliteit
-                    </h5>
-                    <p class="mb-2">De afbeeldingen API is nog niet geïmplementeerd in de backend.</p>
-                    <hr>
-                    <h6 class="mb-2">Vereiste Backend Implementatie:</h6>
-                    <ul class="small mb-2">
-                        <li>Database tabellen: <code>Afbeeldingen</code> en <code>Vers_Afbeeldingen</code></li>
-                        <li>API endpoint: <code>?api=images</code></li>
-                        <li>Upload endpoint: <code>?api=upload_image</code></li>
-                        <li>Upload directory: <code>/images/</code> (chmod 755)</li>
-                    </ul>
-                    <p class="small text-muted mb-0">
-                        📖 Zie <strong>IMAGES-COMPLETE-GUIDE.md</strong> voor volledige implementatie instructies
-                    </p>
-                </div>
-            </div>
-        `;
-        return;
-    }
-    
-    // Display images
-    console.log(`✅ Loaded ${imgs.length} images`);
-    imgList.innerHTML = '';
-    
-    imgs.forEach(img => {
-        const col = document.createElement('div');
-        col.className = 'col-md-4 col-lg-3 mb-3';
-        
-        const imgPath = img.Bestandspad || img.path || img.url || '';
-        const caption = img.Bijschrift || img.caption || img.beschrijving || 'Geen bijschrift';
-        const imgId = img.Afbeelding_ID || img.id || img.image_id || 0;
-        
-        col.innerHTML = `
-            <div class="card h-100 shadow-sm">
-                <img src="${imgPath}" 
-                     class="card-img-top" 
-                     alt="${caption}"
-                     style="height: 200px; object-fit: cover; cursor: pointer;"
-                     onclick="window.open('${imgPath}', '_blank')"
-                     onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=\\'p-3 text-center text-muted\\'><i class=\\'bi bi-image\\' style=\\'font-size:3rem;\\'></i><p class=\\'small\\'>Afbeelding niet gevonden</p></div>';">
-                <div class="card-body">
-                    <p class="card-text small mb-2">${caption}</p>
-                    ${imgId ? `
-                        <button class="btn btn-sm btn-danger w-100" onclick="deleteImage(${imgId})">
-                            <i class="bi bi-trash"></i> Verwijderen
-                        </button>
-                    ` : ''}
-                </div>
-            </div>
-        `;
-        
-        imgList.appendChild(col);
-    });
-};
-
-// Upload image function
-window.uploadImage = async function() {
-    const fileInput = document.getElementById('imageFile');
-    const captionInput = document.getElementById('imageCaption');
-    
-    if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
-        showNotification('Selecteer eerst een afbeelding', true);
-        return;
-    }
-    
-    const caption = captionInput ? captionInput.value : '';
-    
-    try {
-        const formData = new FormData();
-        formData.append('image', fileInput.files[0]);
-        formData.append('bijschrift', caption);
-        
-        showNotification('Uploaden...');
-        
-        const response = await fetch('?api=upload_image', {
-            method: 'POST',
-            body: formData
-        });
-        
-        if (!response.ok) {
-            throw new Error('Upload failed: ' + response.status);
-        }
-        
-        const result = await response.json();
-        
-        if (result && result.success) {
-            showNotification('Afbeelding geüpload!');
-            fileInput.value = '';
-            if (captionInput) captionInput.value = '';
-            loadImageList();
-        } else {
-            showNotification('Upload mislukt: ' + (result.error || 'Unknown error'), true);
-        }
-        
-    } catch (error) {
-        console.error('Upload error:', error);
-        showNotification('Upload mislukt: API endpoint niet beschikbaar', true);
-    }
-};
-
-// Delete image function
-window.deleteImage = async function(id) {
-    if (!id) {
-        showNotification('Geen image ID', true);
-        return;
-    }
-    
-    if (!confirm('Weet je zeker dat je deze afbeelding wilt verwijderen?')) {
-        return;
-    }
-    
-    try {
-        const result = await silentApiCall(`delete_image&id=${id}`);
-        
-        if (result && result.success) {
-            showNotification('Afbeelding verwijderd');
-            loadImageList();
-        } else {
-            showNotification('Verwijderen mislukt: API endpoint niet beschikbaar', true);
-        }
-        
-    } catch (error) {
-        console.error('Delete error:', error);
-        showNotification('Verwijderen mislukt', true);
-    }
-};
-
-console.log('✅ Images module loaded');
-
-// Auto-load images when section is opened
-const originalShowAdminSection = window.showAdminSection;
-window.showAdminSection = function(section) {
-    // Call original function
-    if (originalShowAdminSection) {
-        originalShowAdminSection(section);
-    }
-    
-    // Auto-load images
-    if (section === 'images') {
-        setTimeout(() => {
-            loadImageList();
-        }, 100);
-    }
-};

@@ -1445,7 +1445,8 @@ async function loadImageList() {
 
 let notesQuill = null;
 let currentNoteId = null;
-let notes = [];
+// Make notes globally accessible to avoid scope issues
+window.notesArray = [];
 
 async function initNotesEditor() {
     console.log('📝 Initializing notes editor...');
@@ -1473,10 +1474,20 @@ async function initNotesEditor() {
                 ]
             }
         });
+        
+        // Make Quill globally accessible
+        window.notesQuill = notesQuill;
+        
         console.log('✅ Notes Quill editor initialized');
         
         // Setup auto-save
         setupNotesAutoSave();
+    } else if (container) {
+        // Quill might be in container already
+        if (container.__quill) {
+            notesQuill = container.__quill;
+            window.notesQuill = notesQuill;
+        }
     }
     
     // Load notes from database
@@ -1489,16 +1500,16 @@ async function loadNotes() {
     const result = await window.apiCall('notes');
     
     if (result) {
-        notes = result.map(n => ({
+        window.notesArray = result.map(n => ({
             id: n.Notitie_ID,
             title: n.Titel || '',
             content: n.Inhoud || '',
             created: n.Aangemaakt,
             updated: n.Gewijzigd
         }));
-        console.log(`✅ Loaded ${notes.length} notes`);
+        console.log(`✅ Loaded ${window.notesArray.length} notes`);
     } else {
-        notes = [];
+        window.notesArray = [];
         console.log('No notes found');
     }
     
@@ -1512,7 +1523,7 @@ function renderNotesList() {
         return;
     }
     
-    if (notes.length === 0) {
+    if (!window.notesArray || window.notesArray.length === 0) {
         listContainer.innerHTML = `
             <div class="text-center p-4 text-muted">
                 <p>Nog geen notities</p>
@@ -1522,7 +1533,7 @@ function renderNotesList() {
     }
     
     // Sort by updated date
-    const sortedNotes = [...notes].sort((a, b) => new Date(b.updated) - new Date(a.updated));
+    const sortedNotes = [...window.notesArray].sort((a, b) => new Date(b.updated) - new Date(a.updated));
     
     listContainer.innerHTML = sortedNotes.map(note => {
         const date = new Date(note.updated);
@@ -1553,19 +1564,32 @@ function renderNotesList() {
 }
 
 function selectNote(noteId) {
+    // Convert to number (onclick passes string)
+    noteId = parseInt(noteId);
     currentNoteId = noteId;
-    const note = notes.find(n => n.id === noteId);
+    
+    const note = window.notesArray?.find(n => n.id === noteId);
     
     if (!note) {
         console.error('Note not found:', noteId);
         return;
     }
     
+    console.log('📝 Loading note:', note.title);
+    
+    // Ensure Quill is available
+    if (!window.notesQuill && notesQuill) {
+        window.notesQuill = notesQuill;
+    }
+    
     // Show editor, hide empty state
     const emptyState = document.getElementById('emptyNotesState');
     const editorContent = document.getElementById('noteEditorContent');
     
-    if (emptyState) emptyState.classList.add('d-none');
+    if (emptyState) {
+        emptyState.classList.add('d-none');
+    }
+    
     if (editorContent) {
         editorContent.classList.remove('d-none');
         editorContent.classList.add('d-flex');
@@ -1577,7 +1601,23 @@ function selectNote(noteId) {
         titleInput.value = note.title || '';
     }
     
-    if (notesQuill) {
+    if (window.notesQuill) {
+        // Clear editor first
+        window.notesQuill.setText('');
+        
+        // Load HTML content if available
+        if (note.content && note.content.trim()) {
+            window.notesQuill.clipboard.dangerouslyPasteHTML(note.content);
+        }
+        
+        console.log('✅ Note loaded in editor');
+    } else {
+        console.error('❌ notesQuill not available');
+    }
+    
+    // Update active state in list
+    renderNotesList();
+}
         if (note.content) {
             notesQuill.root.innerHTML = note.content;
         } else {
@@ -1628,7 +1668,9 @@ function setupNotesAutoSave() {
 }
 
 async function createNewNote() {
-    if (!notesQuill) {
+    const quillInstance = window.notesQuill || notesQuill;
+    
+    if (!quillInstance) {
         await initNotesEditor();
     }
     
@@ -1655,15 +1697,30 @@ async function createNewNote() {
         }, 100);
         
         console.log('✅ New note created');
+    } else {
+        console.error('❌ Failed to create note:', result);
+        window.showNotification('Nieuwe notitie maken mislukt', true);
     }
 }
 
 async function saveCurrentNote() {
-    if (!currentNoteId || !notesQuill) return;
+    if (!currentNoteId) {
+        console.log('⚠️ No note selected');
+        return;
+    }
+    
+    // Ensure Quill is available
+    const quillInstance = window.notesQuill || notesQuill;
+    if (!quillInstance) {
+        console.error('❌ Quill editor not available');
+        return;
+    }
     
     const titleInput = document.getElementById('noteTitleInput');
     const titel = titleInput ? titleInput.value || 'Naamloos' : 'Naamloos';
-    const inhoud = notesQuill.root.innerHTML;
+    const inhoud = quillInstance.root.innerHTML;
+    
+    console.log('💾 Saving note:', currentNoteId, titel);
     
     const result = await window.apiCall('save_note', {
         method: 'POST',
@@ -1677,11 +1734,11 @@ async function saveCurrentNote() {
     
     if (result && result.success) {
         // Update local cache
-        const noteIndex = notes.findIndex(n => n.id === currentNoteId);
+        const noteIndex = window.notesArray.findIndex(n => n.id === currentNoteId);
         if (noteIndex !== -1) {
-            notes[noteIndex].title = titel;
-            notes[noteIndex].content = inhoud;
-            notes[noteIndex].updated = new Date().toISOString();
+            window.notesArray[noteIndex].title = titel;
+            window.notesArray[noteIndex].content = inhoud;
+            window.notesArray[noteIndex].updated = new Date().toISOString();
         }
         
         renderNotesList();
@@ -1694,7 +1751,11 @@ async function saveCurrentNote() {
             }, 2000);
         }
         
-        console.log('✅ Note saved');
+        console.log('✅ Note saved successfully');
+        window.showNotification('Notitie opgeslagen');
+    } else {
+        console.error('❌ Save failed:', result);
+        window.showNotification('Opslaan mislukt', true);
     }
 }
 
@@ -1703,10 +1764,13 @@ async function deleteCurrentNote() {
     
     if (!confirm('Weet je zeker dat je deze notitie wilt verwijderen?')) return;
     
+    console.log('🗑️ Deleting note:', currentNoteId);
+    
     const result = await window.apiCall(`delete_note&id=${currentNoteId}`);
     
     if (result && result.success) {
-        notes = notes.filter(n => n.id !== currentNoteId);
+        // Remove from local array
+        window.notesArray = window.notesArray.filter(n => n.id !== currentNoteId);
         currentNoteId = null;
         
         // Show empty state
@@ -1720,8 +1784,13 @@ async function deleteCurrentNote() {
         }
         
         renderNotesList();
-        showNotification('Notitie verwijderd');
-        console.log('✅ Note deleted');
+        window.showNotification('Notitie verwijderd');
+        console.log('✅ Note deleted successfully');
+    } else {
+        console.error('❌ Delete failed:', result);
+        window.showNotification('Verwijderen mislukt', true);
+    }
+}
     }
 }
 
