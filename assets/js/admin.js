@@ -2014,7 +2014,7 @@ async function deleteImage(imageId) {
     }
 }
 
-// Maak nieuwe functies globally beschikbaar
+// Maak nieuwe functies globally beschikbaar 
 window.saveTimeline = saveTimeline;
 window.editTimeline = editTimeline;
 window.deleteTimeline = deleteTimeline;
