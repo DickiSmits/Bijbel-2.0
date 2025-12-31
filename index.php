@@ -18,14 +18,8 @@ if (isset($_GET['api'])) {
     
     // Image endpoints router - alle image-gerelateerde endpoints gebruiken images.php
     $imageEndpoints = ['all_images', 'upload_image', 'get_image', 'update_image', 'delete_image', 'verse_images'];
-    
-    // Notes endpoints router - alle notes-gerelateerde endpoints gebruiken notes.php
-    $notesEndpoints = ['notes', 'get_note', 'save_note', 'delete_note'];
-    
     if (in_array($endpoint, $imageEndpoints)) {
         $apiFile = __DIR__ . '/api/images.php';
-    } elseif (in_array($endpoint, $notesEndpoints)) {
-        $apiFile = __DIR__ . '/api/notes.php';
     } else {
         $apiFile = __DIR__ . '/api/' . $endpoint . '.php';
     }
