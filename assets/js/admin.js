@@ -1558,6 +1558,8 @@ function renderNotesList() {
 }
 
 function selectNote(noteId) {
+    // Convert to number (onclick passes string)
+    noteId = parseInt(noteId);
     currentNoteId = noteId;
     const note = notes.find(n => n.id === noteId);
     
