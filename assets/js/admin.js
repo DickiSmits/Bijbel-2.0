@@ -1561,7 +1561,7 @@ function selectNote(noteId) {
     // Convert to number (onclick passes string)
     noteId = parseInt(noteId);
     currentNoteId = noteId;
-    const note = notes.find(n => n.Notitie_ID === noteId);
+    const note = notes.find(n => n.id === noteId);
     
     if (!note) {
         console.error('Note not found:', noteId);
@@ -1581,19 +1581,19 @@ function selectNote(noteId) {
     // Load note content
     const titleInput = document.getElementById('noteTitleInput');
     if (titleInput) {
-        titleInput.value = note.Titel || '';
+        titleInput.value = note.title || '';
     }
     
     if (notesQuill) {
-        if (note.Inhoud) {
-            notesQuill.root.innerHTML = note.Inhoud;
+        if (note.content) {
+            notesQuill.root.innerHTML = note.content;
         } else {
             notesQuill.setText('');
         }
     }
     
-    // Reload list to update active state
-    window.loadNotes();
+    // Update list selection
+    renderNotesList();
     
     console.log('✅ Note selected:', noteId);
 }
@@ -1649,7 +1649,7 @@ async function createNewNote() {
     });
     
     if (result && result.success) {
-        await window.loadNotes();
+        await loadNotes();
         selectNote(result.notitie_id);
         
         // Focus on title input
@@ -1683,8 +1683,15 @@ async function saveCurrentNote() {
     });
     
     if (result && result.success) {
-        // Reload notes list from database
-        await window.loadNotes();
+        // Update local cache
+        const noteIndex = notes.findIndex(n => n.id === currentNoteId);
+        if (noteIndex !== -1) {
+            notes[noteIndex].title = titel;
+            notes[noteIndex].content = inhoud;
+            notes[noteIndex].updated = new Date().toISOString();
+        }
+        
+        renderNotesList();
         
         const statusEl = document.getElementById('noteSaveStatus');
         if (statusEl) {
@@ -1706,6 +1713,7 @@ async function deleteCurrentNote() {
     const result = await window.apiCall(`delete_note&id=${currentNoteId}`);
     
     if (result && result.success) {
+        notes = notes.filter(n => n.id !== currentNoteId);
         currentNoteId = null;
         
         // Show empty state
@@ -1718,8 +1726,7 @@ async function deleteCurrentNote() {
             editorContent.classList.remove('d-flex');
         }
         
-        // Reload notes list from database
-        await window.loadNotes();
+        renderNotesList();
         showNotification('Notitie verwijderd');
         console.log('✅ Note deleted');
     }
