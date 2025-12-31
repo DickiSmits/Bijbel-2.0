@@ -99,7 +99,7 @@
     grid-column: 1;
     grid-row: 1;
     overflow-y: auto;
-    padding: 1rem;
+    padding: 0 1rem 1rem 1rem;  /* 0 top padding */
     background: #fff;
 }
 
