@@ -17,31 +17,31 @@ let selectedChapter = null;        // Remember originally selected chapter
 
 // Initialize reader
 async function initReader() {
-    console.log('🚀 Initializing reader...');
+    console.log('ðŸš€ Initializing reader...');
     
     // Load books
-    console.log('📚 Loading books...');
+    console.log('ðŸ“š Loading books...');
     try {
         const books = await apiCall('books');
-        console.log('📚 Books received:', books);
+        console.log('ðŸ“š Books received:', books);
         
         if (!books) {
-            console.error('❌ No books data received!');
+            console.error('âŒ No books data received!');
             return;
         }
         
         if (!Array.isArray(books)) {
-            console.error('❌ Books is not an array:', typeof books);
+            console.error('âŒ Books is not an array:', typeof books);
             return;
         }
         
         const bookSelect = document.getElementById('bookSelect');
         if (!bookSelect) {
-            console.error('❌ bookSelect element not found!');
+            console.error('âŒ bookSelect element not found!');
             return;
         }
         
-        console.log(`📚 Populating dropdown with ${books.length} books...`);
+        console.log(`ðŸ“š Populating dropdown with ${books.length} books...`);
         
         books.forEach((book, index) => {
             const option = document.createElement('option');
@@ -50,26 +50,26 @@ async function initReader() {
             bookSelect.appendChild(option);
             
             if (index < 3) {
-                console.log(`  ✅ Added: ${book.Bijbelboeknaam}`);
+                console.log(`  âœ… Added: ${book.Bijbelboeknaam}`);
             }
         });
         
-        console.log(`✅ Books loaded: ${books.length} books in dropdown`);
+        console.log(`âœ… Books loaded: ${books.length} books in dropdown`);
         
     } catch (error) {
-        console.error('❌ Error loading books:', error);
+        console.error('âŒ Error loading books:', error);
     }
     
     // Load profiles
-    console.log('📋 Loading profiles...');
+    console.log('ðŸ“‹ Loading profiles...');
     try {
         const profiles = await apiCall('profiles');
-        console.log('📋 Profiles received:', profiles);
+        console.log('ðŸ“‹ Profiles received:', profiles);
         
         if (profiles && Array.isArray(profiles)) {
             const profileSelect = document.getElementById('profileSelect');
             if (profileSelect) {
-                console.log(`📋 Populating dropdown with ${profiles.length} profiles...`);
+                console.log(`ðŸ“‹ Populating dropdown with ${profiles.length} profiles...`);
                 
                 profiles.forEach((profile, index) => {
                     const option = document.createElement('option');
@@ -78,24 +78,24 @@ async function initReader() {
                     profileSelect.appendChild(option);
                     
                     if (index < 3) {
-                        console.log(`  ✅ Added: ${profile.Profiel_Naam} (ID: ${profile.Profiel_ID})`);
+                        console.log(`  âœ… Added: ${profile.Profiel_Naam} (ID: ${profile.Profiel_ID})`);
                     }
                 });
                 
-                console.log(`✅ Profiles loaded: ${profiles.length} profiles in dropdown`);
+                console.log(`âœ… Profiles loaded: ${profiles.length} profiles in dropdown`);
             } else {
-                console.error('❌ profileSelect element not found!');
+                console.error('âŒ profileSelect element not found!');
             }
         } else {
-            console.error('❌ No profiles data or not an array');
+            console.error('âŒ No profiles data or not an array');
         }
         
     } catch (error) {
-        console.error('❌ Error loading profiles:', error);
+        console.error('âŒ Error loading profiles:', error);
     }
     
     // Setup event listeners
-    console.log('🔧 Setting up event listeners...');
+    console.log('ðŸ”§ Setting up event listeners...');
     setupEventListeners();
     
     // Restore saved values from localStorage
@@ -103,7 +103,7 @@ async function initReader() {
     const savedBook = localStorage.getItem('reader_book');
     const savedChapter = localStorage.getItem('reader_chapter');
     
-    console.log('💾 Restoring saved values:', { savedProfile, savedBook, savedChapter });
+    console.log('ðŸ’¾ Restoring saved values:', { savedProfile, savedBook, savedChapter });
     
     // Restore profile
     if (savedProfile) {
@@ -111,7 +111,7 @@ async function initReader() {
         if (profileSelect) {
             profileSelect.value = savedProfile;
             currentProfile = savedProfile;
-            console.log('✅ Restored profile:', savedProfile);
+            console.log('âœ… Restored profile:', savedProfile);
         }
     }
     
@@ -121,7 +121,7 @@ async function initReader() {
         if (bookSelect) {
             bookSelect.value = savedBook;
             currentBook = savedBook;
-            console.log('✅ Restored book:', savedBook);
+            console.log('âœ… Restored book:', savedBook);
             
             // Load chapters for this book
             const chapters = await apiCall(`chapters&boek=${encodeURIComponent(savedBook)}`);
@@ -140,18 +140,18 @@ async function initReader() {
                 if (savedChapter) {
                     chapterSelect.value = savedChapter;
                     currentChapter = savedChapter;
-                    console.log('✅ Restored chapter:', savedChapter);
+                    console.log('âœ… Restored chapter:', savedChapter);
                 }
             }
         }
     }
     
     // Load initial content
-    console.log('📖 Loading initial verses...');
+    console.log('ðŸ“– Loading initial verses...');
     await loadVerses();
     
     // Setup infinite scroll
-    console.log('♾️ Setting up infinite scroll...');
+    console.log('â™¾ï¸ Setting up infinite scroll...');
     const bibleTextContainer = document.getElementById('bibleText');
     if (bibleTextContainer) {
         bibleTextContainer.addEventListener('scroll', (e) => {
@@ -161,16 +161,16 @@ async function initReader() {
             const nearBottom = element.scrollHeight - element.scrollTop <= element.clientHeight + 100;
             
             if (nearBottom && !loading && !allLoaded) {
-                console.log('📜 Near bottom - loading more verses...');
+                console.log('ðŸ“œ Near bottom - loading more verses...');
                 loadVerses(true); // Append mode
             }
         });
-        console.log('✅ Infinite scroll activated!');
+        console.log('âœ… Infinite scroll activated!');
     } else {
-        console.error('❌ bibleText container not found for scroll listener!');
+        console.error('âŒ bibleText container not found for scroll listener!');
     }
     
-    console.log('✅ Reader initialized successfully!');
+    console.log('âœ… Reader initialized successfully!');
 }
 
 // Setup event listeners
@@ -237,7 +237,7 @@ function setupEventListeners() {
                 localStorage.removeItem('reader_profile');
             }
             
-            console.log('📋 Profile changed to:', currentProfile);
+            console.log('ðŸ“‹ Profile changed to:', currentProfile);
             loadVerses();
         });
     }
@@ -283,7 +283,7 @@ async function loadVerses(append = false) {
     if (continuousScrolling && lastLoadedVersId) {
         params.append('after_vers_id', lastLoadedVersId);
         params.append('offset', 0);
-        console.log('🔄 Continuous mode: Loading after vers_id', lastLoadedVersId);
+        console.log('ðŸ”„ Continuous mode: Loading after vers_id', lastLoadedVersId);
     } else {
         params.append('offset', currentOffset);
         // Only filter by chapter if NOT in continuous mode
@@ -293,7 +293,7 @@ async function loadVerses(append = false) {
     }
     
     const url = 'verses&' + params.toString();
-    console.log('📖 Loading verses:', url);
+    console.log('ðŸ“– Loading verses:', url);
     console.log('   Current profile:', currentProfile);
     console.log('   Continuous mode:', continuousScrolling);
     
@@ -304,8 +304,8 @@ async function loadVerses(append = false) {
             container.innerHTML = '<div class="text-center py-5 text-muted">Geen verzen gevonden</div>';
             allLoaded = true;
         } else if (selectedChapter && !continuousScrolling && lastLoadedVersId) {
-            // Selected chapter is complete → Switch to continuous scrolling!
-            console.log('✅ Chapter complete! Enabling continuous scrolling from vers_id:', lastLoadedVersId);
+            // Selected chapter is complete â†’ Switch to continuous scrolling!
+            console.log('âœ… Chapter complete! Enabling continuous scrolling from vers_id:', lastLoadedVersId);
             continuousScrolling = true;
             loading = false;
             loadVerses(true); // Load more (now without chapter filter)
@@ -328,7 +328,7 @@ async function loadVerses(append = false) {
         }
     });
     
-    console.log(`✅ Loaded ${verses.length} verses: ${withOpmaak} with opmaak, ${withoutOpmaak} without`);
+    console.log(`âœ… Loaded ${verses.length} verses: ${withOpmaak} with opmaak, ${withoutOpmaak} without`);
     
     // Track last loaded verse for continuous scrolling
     if (verses.length > 0) {
@@ -343,13 +343,20 @@ async function loadVerses(append = false) {
     let lastChapter = null;
     
     verses.forEach(verse => {
-        // Add chapter header
+        // Add chapter header (check if not already exists in DOM)
         const chapterKey = `${verse.Bijbelboeknaam}_${verse.Hoofdstuknummer}`;
         if (lastChapter !== chapterKey) {
-            const header = document.createElement('div');
-            header.className = 'chapter-header';
-            header.textContent = `${verse.Bijbelboeknaam} ${verse.Hoofdstuknummer}`;
-            container.appendChild(header);
+            // Check if this chapter header already exists in container
+            const chapterText = `${verse.Bijbelboeknaam} ${verse.Hoofdstuknummer}`;
+            const existingHeaders = Array.from(container.querySelectorAll('.chapter-header'));
+            const headerExists = existingHeaders.some(h => h.textContent.trim() === chapterText);
+            
+            if (!headerExists) {
+                const header = document.createElement('div');
+                header.className = 'chapter-header';
+                header.textContent = chapterText;
+                container.appendChild(header);
+            }
             lastChapter = chapterKey;
         }
         
@@ -383,9 +390,9 @@ async function loadVerses(append = false) {
     // Smart allLoaded detection
     if (verses.length < 50) {
         if (continuousScrolling || !currentChapter) {
-            // In continuous mode OR no chapter selected → truly done
+            // In continuous mode OR no chapter selected â†’ truly done
             allLoaded = true;
-            console.log('🏁 All verses loaded (end of content)');
+            console.log('ðŸ All verses loaded (end of content)');
         }
         // If we have a chapter filter and got < 50, we'll switch to continuous on next scroll
     }
