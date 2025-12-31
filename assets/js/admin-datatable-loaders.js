@@ -206,15 +206,22 @@ async function loadImageList() {
 
 // ============= NOTES LIST (keep simple list, edit works differently) =============
 
+// Global notes array so selectNote can access it
+let notes = [];
+
 async function loadNotes() {
     console.log('📋 Loading notes from database...');
     
-    const notes = await window.apiCall('notes');
+    const notesData = await window.apiCall('notes');
     
-    if (!notes) {
+    if (!notesData) {
         console.log('No notes loaded');
+        notes = [];
         return;
     }
+    
+    // Store globally for selectNote to use
+    notes = notesData;
     
     console.log(`✅ Loaded ${notes.length} notes`);
     
