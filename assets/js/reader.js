@@ -260,6 +260,29 @@ function setupEventListeners() {
 async function loadVerses(append = false) {
     if (loading || (allLoaded && append)) return;
     
+    // Clean duplicate chapter headers BEFORE loading new verses
+    if (append) {
+        const seen = new Set();
+        const duplicates = [];
+        
+        const container = document.getElementById('bibleText');
+        if (container) {
+            container.querySelectorAll('.chapter-header').forEach(header => {
+                const text = header.textContent.trim();
+                if (seen.has(text)) {
+                    duplicates.push(header);
+                } else {
+                    seen.add(text);
+                }
+            });
+            
+            if (duplicates.length > 0) {
+                console.log(`🧹 Removing ${duplicates.length} duplicate headers`);
+                duplicates.forEach(dup => dup.remove());
+            }
+        }
+    }
+    
     loading = true;
     const container = document.getElementById('bibleText');
     
