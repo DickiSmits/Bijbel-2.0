@@ -305,33 +305,68 @@
             </div>
         </div>
         
-        <!-- Images Section -->
-        <div id="section-images" class="admin-section">
-            <h5 class="mb-4">Afbeeldingen Beheren</h5>
+<!-- Images Section - COMPLETE VERSION -->
+        <div id="section-images" class="admin-section d-none">
+            <h4 class="mb-4"><i class="bi bi-image"></i> Afbeeldingen Beheren</h4>
+            
+            <!-- Image Upload Form -->
             <div class="card mb-4">
                 <div class="card-header">Afbeelding Uploaden</div>
                 <div class="card-body">
+                    <input type="hidden" id="imageId">
                     <div class="row g-3">
+                        <!-- Afbeelding + Bijschrift -->
                         <div class="col-md-6">
                             <label class="form-label">Afbeelding</label>
                             <input type="file" id="imageFile" class="form-control" accept="image/*">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Bijschrift</label>
-                            <input type="text" id="imageCaption" class="form-control">
+                            <input type="text" id="imageCaption" class="form-control" placeholder="Omschrijving van de afbeelding">
                         </div>
+                        
+                        <!-- 🔴 NIEUW: Bijbeltekst Selector -->
                         <div class="col-12">
-                            <button class="btn btn-primary" onclick="uploadImage()">
-                                <i class="bi bi-upload"></i> Uploaden
+                            <label class="form-label fw-semibold">Koppel aan Bijbeltekst (optioneel)</label>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <label class="form-label small">Boek</label>
+                            <select id="imageBoek" class="form-select form-select-sm">
+                                <option value="">Kies boek...</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small">Hoofdstuk</label>
+                            <select id="imageHoofdstuk" class="form-select form-select-sm">
+                                <option value="">Hoofdstuk</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small">Vers</label>
+                            <select id="imageVers" class="form-select form-select-sm">
+                                <option value="">Vers</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Buttons -->
+                        <div class="col-12">
+                            <button class="btn btn-primary btn-sm" onclick="saveImage()">
+                                <i class="bi bi-upload"></i> <span id="imageSaveButtonText">Uploaden</span>
+                            </button>
+                            <button class="btn btn-outline-secondary btn-sm ms-2" onclick="clearImageForm()">
+                                <i class="bi bi-x"></i> Formulier Legen
                             </button>
                         </div>
                     </div>
                 </div>
             </div>
+            
+            <!-- Uploaded Images List -->
             <div class="card">
                 <div class="card-header">Geüploade Afbeeldingen</div>
                 <div class="card-body">
-                    <div id="imageList" class="row g-3"></div>
+                    <div id="imageList"></div>
                 </div>
             </div>
         </div>

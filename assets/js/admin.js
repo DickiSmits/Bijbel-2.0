@@ -2524,3 +2524,270 @@ window.initTimelineSection = initTimelineSection;
 window.fillVerseSelector = fillVerseSelector;
 
 console.log('✅ Timeline professional editor functions loaded');
+
+/**
+ * ADMIN-IMAGES.JS - COMPLETE IMAGE MANAGEMENT
+ * Add these functions to your admin.js
+ */
+
+// ============= IMAGE VERSE SELECTOR SETUP =============
+
+/**
+ * Load books into image verse selector
+ */
+async function loadImageVerseBooks() {
+    const books = await window.apiCall('books');
+    if (!books) return;
+    
+    const boekSelect = document.getElementById('imageBoek');
+    if (!boekSelect) return;
+    
+    boekSelect.innerHTML = '<option value="">Kies boek...</option>';
+    books.forEach(book => {
+        const option = document.createElement('option');
+        option.value = book.Bijbelboeknaam;
+        option.textContent = book.Bijbelboeknaam;
+        boekSelect.appendChild(option);
+    });
+    
+    console.log(`✅ Loaded ${books.length} books into image selector`);
+}
+
+/**
+ * Setup image verse selector event listeners
+ */
+function setupImageVerseSelectors() {
+    // Boek change → Load chapters
+    const boekSelect = document.getElementById('imageBoek');
+    if (boekSelect) {
+        boekSelect.addEventListener('change', async (e) => {
+            const boek = e.target.value;
+            const hoofdstukSelect = document.getElementById('imageHoofdstuk');
+            const versSelect = document.getElementById('imageVers');
+            
+            hoofdstukSelect.innerHTML = '<option value="">Hoofdstuk</option>';
+            versSelect.innerHTML = '<option value="">Vers</option>';
+            
+            if (!boek) return;
+            
+            const chapters = await window.apiCall(`chapters&boek=${encodeURIComponent(boek)}`);
+            if (chapters) {
+                hoofdstukSelect.innerHTML = '<option value="">Hoofdstuk</option>' +
+                    chapters.map(ch => `<option value="${ch.Hoofdstuknummer}">${ch.Hoofdstuknummer}</option>`).join('');
+            }
+        });
+    }
+    
+    // Hoofdstuk change → Load verses
+    const hoofdstukSelect = document.getElementById('imageHoofdstuk');
+    if (hoofdstukSelect) {
+        hoofdstukSelect.addEventListener('change', async (e) => {
+            const hoofdstuk = e.target.value;
+            const boek = document.getElementById('imageBoek').value;
+            const versSelect = document.getElementById('imageVers');
+            
+            versSelect.innerHTML = '<option value="">Vers</option>';
+            
+            if (!boek || !hoofdstuk) return;
+            
+            const verses = await window.apiCall(`verses&boek=${encodeURIComponent(boek)}&hoofdstuk=${hoofdstuk}&limit=999`);
+            if (verses) {
+                versSelect.innerHTML = '<option value="">Vers</option>' +
+                    verses.map(v => `<option value="${v.Vers_ID}">${v.Versnummer}</option>`).join('');
+            }
+        });
+    }
+    
+    console.log('✅ Image verse selectors ready');
+}
+
+// ============= IMAGE CRUD FUNCTIONS =============
+
+/**
+ * Save/Upload Image
+ */
+async function saveImage() {
+    const imageId = document.getElementById('imageId')?.value;
+    const file = document.getElementById('imageFile')?.files[0];
+    const caption = document.getElementById('imageCaption')?.value;
+    const versId = document.getElementById('imageVers')?.value || null;
+    
+    // For new uploads, file is required
+    if (!imageId && !file) {
+        window.showNotification('Selecteer een afbeelding', true);
+        return;
+    }
+    
+    // For edits, file is optional (only updating caption/verse)
+    if (imageId && !file && !caption && !versId) {
+        window.showNotification('Vul minimaal caption of vers in', true);
+        return;
+    }
+    
+    const formData = new FormData();
+    if (file) formData.append('image', file);
+    if (caption) formData.append('caption', caption);
+    if (versId) formData.append('vers_id', versId);
+    if (imageId) formData.append('image_id', imageId);
+    
+    try {
+        const response = await fetch('?api=save_image', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (result && result.success) {
+            window.showNotification(imageId ? 'Afbeelding bijgewerkt!' : 'Afbeelding geüpload!');
+            clearImageForm();
+            
+            // Reload image list
+            if (typeof loadImageList === 'function') {
+                loadImageList();
+            }
+        } else {
+            window.showNotification(result?.error || 'Er is een fout opgetreden', true);
+        }
+    } catch (error) {
+        console.error('❌ Upload error:', error);
+        window.showNotification('Upload mislukt', true);
+    }
+}
+
+/**
+ * Edit Image - Load data into form
+ */
+async function editImage(imageId) {
+    console.log('📝 Editing image:', imageId);
+    
+    // Get image data
+    const result = await window.apiCall(`get_image&id=${imageId}`);
+    
+    if (!result) {
+        window.showNotification('Afbeelding niet gevonden', true);
+        return;
+    }
+    
+    // Fill form
+    document.getElementById('imageId').value = result.Afbeelding_ID;
+    document.getElementById('imageCaption').value = result.Caption || '';
+    
+    // Update button text
+    const saveBtn = document.getElementById('imageSaveButtonText');
+    if (saveBtn) {
+        saveBtn.textContent = 'Bijwerken';
+    }
+    
+    // Fill verse selector if verse is linked
+    if (result.Vers_ID) {
+        await fillImageVerseSelector(result.Vers_ID);
+    }
+    
+    // Scroll to form
+    document.getElementById('imageCaption').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    document.getElementById('imageCaption').focus();
+    
+    window.showNotification('Afbeelding geladen - pas aan en klik Bijwerken');
+}
+
+/**
+ * Fill image verse selector with data from vers ID
+ */
+async function fillImageVerseSelector(versId) {
+    const verse = await window.apiCall(`verse_detail&vers_id=${versId}`);
+    if (!verse) return;
+    
+    // Set boek
+    const boekSelect = document.getElementById('imageBoek');
+    if (boekSelect) {
+        boekSelect.value = verse.Bijbelboeknaam;
+        
+        // Load chapters
+        const chapters = await window.apiCall(`chapters&boek=${encodeURIComponent(verse.Bijbelboeknaam)}`);
+        const hoofdstukSelect = document.getElementById('imageHoofdstuk');
+        
+        if (chapters && hoofdstukSelect) {
+            hoofdstukSelect.innerHTML = '<option value="">Hoofdstuk</option>' +
+                chapters.map(ch => `<option value="${ch.Hoofdstuknummer}">${ch.Hoofdstuknummer}</option>`).join('');
+            
+            hoofdstukSelect.value = verse.Hoofdstuknummer;
+            
+            // Load verses
+            const verses = await window.apiCall(`verses&boek=${encodeURIComponent(verse.Bijbelboeknaam)}&hoofdstuk=${verse.Hoofdstuknummer}&limit=999`);
+            const versSelect = document.getElementById('imageVers');
+            
+            if (verses && versSelect) {
+                versSelect.innerHTML = '<option value="">Vers</option>' +
+                    verses.map(v => `<option value="${v.Vers_ID}">${v.Versnummer}</option>`).join('');
+                
+                versSelect.value = versId;
+            }
+        }
+    }
+}
+
+/**
+ * Delete Image
+ */
+async function deleteImage(imageId) {
+    if (!confirm('Weet je zeker dat je deze afbeelding wilt verwijderen?')) return;
+    
+    const result = await window.apiCall(`delete_image&id=${imageId}`);
+    
+    if (result && result.success) {
+        window.showNotification('Afbeelding verwijderd');
+        
+        // Reload image list
+        if (typeof loadImageList === 'function') {
+            loadImageList();
+        }
+    }
+}
+
+/**
+ * Clear Image Form
+ */
+function clearImageForm() {
+    document.getElementById('imageId').value = '';
+    document.getElementById('imageFile').value = '';
+    document.getElementById('imageCaption').value = '';
+    document.getElementById('imageBoek').value = '';
+    document.getElementById('imageHoofdstuk').innerHTML = '<option value="">Hoofdstuk</option>';
+    document.getElementById('imageVers').innerHTML = '<option value="">Vers</option>';
+    
+    // Reset button text
+    const saveBtn = document.getElementById('imageSaveButtonText');
+    if (saveBtn) {
+        saveBtn.textContent = 'Uploaden';
+    }
+    
+    window.showNotification('Formulier geleegd');
+}
+
+// ============= INITIALIZATION =============
+
+/**
+ * Initialize image section when opened
+ */
+async function initImageSection() {
+    await loadImageVerseBooks();
+    setupImageVerseSelectors();
+    
+    if (typeof loadImageList === 'function') {
+        await loadImageList();
+    }
+}
+
+// ============= MAKE GLOBAL =============
+
+window.loadImageVerseBooks = loadImageVerseBooks;
+window.setupImageVerseSelectors = setupImageVerseSelectors;
+window.saveImage = saveImage;
+window.editImage = editImage;
+window.fillImageVerseSelector = fillImageVerseSelector;
+window.deleteImage = deleteImage;
+window.clearImageForm = clearImageForm;
+window.initImageSection = initImageSection;
+
+console.log('✅ Image admin functions loaded (with verse selector)');
