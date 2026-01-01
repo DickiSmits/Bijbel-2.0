@@ -128,14 +128,10 @@
         </div>
         
         <!-- Profiles Section -->
-<!-- Profiles Section - WITH EDIT SUPPORT -->
         <div id="section-profiles" class="admin-section">
             <div class="card mb-4">
-                <div class="card-header">
-                    <span id="profileFormTitle">Nieuw Profiel</span>
-                </div>
+                <div class="card-header">Nieuw Profiel</div>
                 <div class="card-body">
-                    <input type="hidden" id="profileId">
                     <div class="row g-3">
                         <div class="col-md-5">
                             <label class="form-label">Naam</label>
@@ -146,15 +142,8 @@
                             <input type="text" id="newProfileDesc" class="form-control" placeholder="Optionele beschrijving">
                         </div>
                         <div class="col-md-2 d-flex align-items-end">
-                            <button class="btn btn-primary w-100" onclick="saveProfile()">
-                                <i class="bi bi-save"></i> <span id="profileSaveButtonText">Aanmaken</span>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="row g-3 mt-2" id="profileEditActions" style="display: none;">
-                        <div class="col-12">
-                            <button class="btn btn-outline-secondary btn-sm" onclick="cancelEditProfile()">
-                                <i class="bi bi-x"></i> Annuleren
+                            <button class="btn btn-primary w-100" onclick="createProfile()">
+                                <i class="bi bi-plus"></i> Aanmaken
                             </button>
                         </div>
                     </div>

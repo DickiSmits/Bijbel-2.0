@@ -15,20 +15,7 @@ if (isset($_GET['api'])) {
     header('Content-Type: application/json');
     
     $endpoint = $_GET['api'];
-    
-    // Image endpoints router - alle image-gerelateerde endpoints gebruiken images.php
-    $imageEndpoints = ['all_images', 'upload_image', 'get_image', 'save_image', 'update_image', 'delete_image', 'verse_images'];
-    
-    // Notes endpoints router - alle notes-gerelateerde endpoints gebruiken notes.php
-    $notesEndpoints = ['notes', 'get_note', 'save_note', 'delete_note'];
-    
-    if (in_array($endpoint, $imageEndpoints)) {
-        $apiFile = __DIR__ . '/api/images.php';
-    } elseif (in_array($endpoint, $notesEndpoints)) {
-        $apiFile = __DIR__ . '/api/notes.php';
-    } else {
-        $apiFile = __DIR__ . '/api/' . $endpoint . '.php';
-    }
+    $apiFile = __DIR__ . '/api/' . $endpoint . '.php';
     
     if (file_exists($apiFile)) {
         require_once $apiFile;
@@ -39,7 +26,6 @@ if (isset($_GET['api'])) {
     
     exit;
 }
-
 
 // LOGIN/LOGOUT
 if (isset($_POST['login'])) {
@@ -431,7 +417,6 @@ if (!is_dir('images')) {
     <script src="assets/js/admin-extensions.js"></script>
     <script src="assets/js/admin-datatable-loaders.js"></script>
     <script src="assets/js/admin-timeline-groups.js"></script>
-   
 <?php endif; ?>
 </body>
 </html>
