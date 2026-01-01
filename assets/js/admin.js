@@ -1159,13 +1159,15 @@ function showAdminSection(section) {
             break;
             
         case 'images':
-            // Load image list
-            if (typeof loadImageList === 'function') {
-                loadImageList();
-            }
-            // Initialize images section UI
-            if (typeof initImagesSection === 'function') {
-                initImagesSection();
+            // 🔴 UPDATED: Initialize complete image section
+            if (typeof initImageSection === 'function') {
+                initImageSection();
+            } else {
+                // Fallback to old method
+                console.warn('⚠️ initImageSection not found - using fallback');
+                if (typeof loadImageList === 'function') {
+                    loadImageList();
+                }
             }
             break;
             
