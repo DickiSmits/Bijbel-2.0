@@ -1,6 +1,10 @@
 <?php
 /**
- * API/IMAGES.PHP - Working version
+ * API/IMAGES.PHP - PERFECT VERSION
+ * 
+ * Database schema:
+ * - Table: Afbeeldingen (with columns: Afbeelding_ID, Bestandsnaam, etc.)
+ * - Table: De_Bijbel (NOT "Verzen"!)
  */
 
 // Get database connection
@@ -8,14 +12,13 @@ try {
     $db = Database::getInstance()->getConnection();
 } catch (Exception $e) {
     http_response_code(500);
-    echo json_encode(['error' => 'Database connection failed: ' . $e->getMessage()]);
+    echo json_encode(['error' => 'Database error: ' . $e->getMessage()]);
     exit;
 }
 
 $endpoint = $_GET['api'];
 $images_dir = 'images';
 
-// Ensure images directory exists
 if (!is_dir($images_dir)) {
     @mkdir($images_dir, 0755, true);
 }
@@ -25,34 +28,31 @@ switch ($endpoint) {
     // ============= ALL IMAGES =============
     case 'all_images':
         try {
-            // Check if table exists first
-            $tableCheck = $db->query("SELECT name FROM sqlite_master WHERE type='table' AND name='Afbeeldingen'");
-            
-            if (!$tableCheck->fetch()) {
-                // Table doesn't exist - return empty array
-                echo json_encode([]);
-                exit;
-            }
-            
-            // Query images
             $stmt = $db->query("
-                SELECT a.*, 
-                       v.Bijbelboeknaam, 
-                       v.Hoofdstuknummer, 
-                       v.Versnummer
+                SELECT 
+                    a.Afbeelding_ID,
+                    a.Bestandsnaam,
+                    a.Originele_Naam,
+                    a.Bestandspad,
+                    a.Caption,
+                    a.Vers_ID,
+                    a.Geupload_Op,
+                    a.Uitlijning,
+                    a.Breedte,
+                    a.Hoogte,
+                    v.Bijbelboeknaam,
+                    v.Hoofdstuknummer,
+                    v.Versnummer
                 FROM Afbeeldingen a
-                LEFT JOIN Verzen v ON a.Vers_ID = v.Vers_ID
+                LEFT JOIN De_Bijbel v ON a.Vers_ID = v.Vers_ID
                 ORDER BY a.Geupload_Op DESC
             ");
             
             $images = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            
-            // ALWAYS return an array (even if empty)
             echo json_encode($images ?: []);
             
         } catch (Exception $e) {
-            // On error, return empty array to prevent crash
-            error_log("Images API error: " . $e->getMessage());
+            error_log("Images query error: " . $e->getMessage());
             echo json_encode([]);
         }
         break;
@@ -69,12 +69,13 @@ switch ($endpoint) {
         
         try {
             $stmt = $db->prepare("
-                SELECT a.*, 
-                       v.Bijbelboeknaam, 
-                       v.Hoofdstuknummer, 
-                       v.Versnummer
+                SELECT 
+                    a.*,
+                    v.Bijbelboeknaam,
+                    v.Hoofdstuknummer,
+                    v.Versnummer
                 FROM Afbeeldingen a
-                LEFT JOIN Verzen v ON a.Vers_ID = v.Vers_ID
+                LEFT JOIN De_Bijbel v ON a.Vers_ID = v.Vers_ID
                 WHERE a.Afbeelding_ID = ?
             ");
             
@@ -105,7 +106,7 @@ switch ($endpoint) {
         }
         
         $imageId = isset($_POST['image_id']) ? (int)$_POST['image_id'] : 0;
-        $caption = isset($_POST['caption']) ? $_POST['caption'] : null;
+        $caption = isset($_POST['caption']) ? $_POST['caption'] : '';
         $versId = isset($_POST['vers_id']) && $_POST['vers_id'] !== '' ? (int)$_POST['vers_id'] : null;
         $file = isset($_FILES['image']) ? $_FILES['image'] : null;
         
@@ -117,25 +118,27 @@ switch ($endpoint) {
         
         try {
             if ($imageId) {
-                // UPDATE
+                // ===== UPDATE EXISTING IMAGE =====
                 $updates = [];
                 $params = [];
                 
-                if ($caption !== null) {
-                    $updates[] = "Caption = ?";
-                    $params[] = $caption;
-                }
+                $updates[] = "Caption = ?";
+                $params[] = $caption;
                 
                 if ($versId !== null) {
                     $updates[] = "Vers_ID = ?";
                     $params[] = $versId;
-                } else if (isset($_POST['vers_id']) && $_POST['vers_id'] === '') {
+                } else {
                     $updates[] = "Vers_ID = NULL";
                 }
                 
                 if ($file && $file['error'] === UPLOAD_ERR_OK) {
                     $allowed = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-                    if (!in_array($file['type'], $allowed)) {
+                    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                    $mimeType = finfo_file($finfo, $file['tmp_name']);
+                    finfo_close($finfo);
+                    
+                    if (!in_array($mimeType, $allowed)) {
                         http_response_code(400);
                         echo json_encode(['error' => 'Invalid file type']);
                         exit;
@@ -168,10 +171,11 @@ switch ($endpoint) {
                     $stmt->execute($params);
                 }
                 
-                echo json_encode(['success' => true, 'image_id' => $imageId]);
+                echo json_encode(['success' => true, 'image_id' => $imageId, 'action' => 'updated']);
                 
             } else {
-                // INSERT
+                // ===== INSERT NEW IMAGE =====
+                
                 if (!$file || $file['error'] !== UPLOAD_ERR_OK) {
                     http_response_code(400);
                     echo json_encode(['error' => 'File upload failed']);
@@ -179,7 +183,11 @@ switch ($endpoint) {
                 }
                 
                 $allowed = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-                if (!in_array($file['type'], $allowed)) {
+                $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                $mimeType = finfo_file($finfo, $file['tmp_name']);
+                finfo_close($finfo);
+                
+                if (!in_array($mimeType, $allowed)) {
                     http_response_code(400);
                     echo json_encode(['error' => 'Invalid file type']);
                     exit;
@@ -196,8 +204,8 @@ switch ($endpoint) {
                 
                 $stmt = $db->prepare("
                     INSERT INTO Afbeeldingen 
-                    (Bestandspad, Bestandsnaam, Originele_Naam, Caption, Vers_ID, Geupload_Op) 
-                    VALUES (?, ?, ?, ?, ?, datetime('now'))
+                    (Bestandspad, Bestandsnaam, Originele_Naam, Caption, Vers_ID, Geupload_Op, Uitlijning, Breedte) 
+                    VALUES (?, ?, ?, ?, ?, datetime('now'), 'center', 400)
                 ");
                 
                 $stmt->execute([
@@ -208,7 +216,9 @@ switch ($endpoint) {
                     $versId
                 ]);
                 
-                echo json_encode(['success' => true, 'image_id' => $db->lastInsertId()]);
+                $newId = $db->lastInsertId();
+                
+                echo json_encode(['success' => true, 'image_id' => $newId, 'action' => 'created']);
             }
             
         } catch (Exception $e) {
@@ -264,12 +274,13 @@ switch ($endpoint) {
         
         try {
             $stmt = $db->prepare("
-                SELECT a.*, 
-                       v.Bijbelboeknaam, 
-                       v.Hoofdstuknummer, 
-                       v.Versnummer
+                SELECT 
+                    a.*,
+                    v.Bijbelboeknaam,
+                    v.Hoofdstuknummer,
+                    v.Versnummer
                 FROM Afbeeldingen a
-                LEFT JOIN Verzen v ON a.Vers_ID = v.Vers_ID
+                LEFT JOIN De_Bijbel v ON a.Vers_ID = v.Vers_ID
                 WHERE a.Vers_ID = ?
                 ORDER BY a.Geupload_Op DESC
             ");
