@@ -209,24 +209,28 @@ async function loadImageList() {
 async function loadNotes() {
     console.log('📋 Loading notes from database...');
     
-    const notes = await window.apiCall('notes');
+    const notesData = await window.apiCall('notes');
     
-    if (!notes) {
+    if (!notesData) {
         console.log('No notes loaded');
+        window.notes = [];
         return;
     }
     
-    console.log(`✅ Loaded ${notes.length} notes`);
+    // Store globally on window object (NOT local variable!)
+    window.notes = notesData;
+    
+    console.log(`✅ Loaded ${window.notes.length} notes`);
     
     const notesList = document.getElementById('notesList');
     if (!notesList) return;
     
-    if (notes.length === 0) {
+    if (window.notes.length === 0) {
         notesList.innerHTML = '<p class="text-muted text-center py-4">Nog geen notities</p>';
         return;
     }
     
-    notesList.innerHTML = notes.map(note => `
+    notesList.innerHTML = window.notes.map(note => `
         <div class="note-item ${window.currentNoteId === note.Notitie_ID ? 'active' : ''}" 
              onclick="selectNote(${note.Notitie_ID})">
             <div class="note-title">${note.Titel || 'Zonder titel'}</div>

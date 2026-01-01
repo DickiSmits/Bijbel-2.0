@@ -1450,7 +1450,7 @@ async function loadImageList() {
 
 let notesQuill = null;
 let currentNoteId = null;
-let notes = [];
+// NOTE: notes array is on window.notes (set by admin-datatable-loaders.js)
 
 async function initNotesEditor() {
     console.log('📝 Initializing notes editor...');
@@ -1488,83 +1488,18 @@ async function initNotesEditor() {
     await loadNotes();
 }
 
-async function loadNotes() {
-    console.log('📋 Loading notes from database...');
-    
-    const result = await window.apiCall('notes');
-    
-    if (result) {
-        notes = result.map(n => ({
-            id: n.Notitie_ID,
-            title: n.Titel || '',
-            content: n.Inhoud || '',
-            created: n.Aangemaakt,
-            updated: n.Gewijzigd
-        }));
-        console.log(`✅ Loaded ${notes.length} notes`);
-    } else {
-        notes = [];
-        console.log('No notes found');
-    }
-    
-    renderNotesList();
-}
-
-function renderNotesList() {
-    const listContainer = document.getElementById('notesList');
-    if (!listContainer) {
-        console.warn('⚠️ notesList element not found');
-        return;
-    }
-    
-    if (notes.length === 0) {
-        listContainer.innerHTML = `
-            <div class="text-center p-4 text-muted">
-                <p>Nog geen notities</p>
-            </div>
-        `;
-        return;
-    }
-    
-    // Sort by updated date
-    const sortedNotes = [...notes].sort((a, b) => new Date(b.updated) - new Date(a.updated));
-    
-    listContainer.innerHTML = sortedNotes.map(note => {
-        const date = new Date(note.updated);
-        const dateStr = date.toLocaleDateString('nl-NL', { 
-            day: 'numeric', 
-            month: 'short',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-        
-        // Strip HTML for preview
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = note.content || '';
-        const plainText = tempDiv.textContent || '';
-        const preview = plainText.substring(0, 50) + (plainText.length > 50 ? '...' : '');
-        
-        const isActive = note.id === currentNoteId;
-        
-        return `
-            <div class="p-3 mb-2 rounded cursor-pointer ${isActive ? 'bg-primary text-white' : 'bg-light'}" 
-                 onclick="selectNote(${note.id})" style="cursor: pointer;">
-                <div class="fw-bold text-truncate">${note.title || 'Naamloos'}</div>
-                <div class="small opacity-75">${dateStr}</div>
-                ${preview ? `<div class="small opacity-75 text-truncate mt-1">${preview}</div>` : ''}
-            </div>
-        `;
-    }).join('');
-}
+// NOTE: loadNotes (and list rendering) is in admin-datatable-loaders.js
+// It loads notes into window.notes and renders the list
 
 function selectNote(noteId) {
     // Convert to number (onclick passes string)
     noteId = parseInt(noteId);
     currentNoteId = noteId;
-    const note = notes.find(n => n.id === noteId);
+    const note = window.notes?.find(n => n.Notitie_ID === noteId);
     
     if (!note) {
         console.error('Note not found:', noteId);
+        console.log('Available notes:', window.notes);
         return;
     }
     
@@ -1581,19 +1516,19 @@ function selectNote(noteId) {
     // Load note content
     const titleInput = document.getElementById('noteTitleInput');
     if (titleInput) {
-        titleInput.value = note.title || '';
+        titleInput.value = note.Titel || '';
     }
     
     if (notesQuill) {
-        if (note.content) {
-            notesQuill.root.innerHTML = note.content;
+        if (note.Inhoud) {
+            notesQuill.root.innerHTML = note.Inhoud;
         } else {
             notesQuill.setText('');
         }
     }
     
-    // Update list selection
-    renderNotesList();
+    // Reload list to update active state
+    window.loadNotes();
     
     console.log('✅ Note selected:', noteId);
 }
@@ -1649,7 +1584,7 @@ async function createNewNote() {
     });
     
     if (result && result.success) {
-        await loadNotes();
+        await window.loadNotes();
         selectNote(result.notitie_id);
         
         // Focus on title input
@@ -1683,15 +1618,8 @@ async function saveCurrentNote() {
     });
     
     if (result && result.success) {
-        // Update local cache
-        const noteIndex = notes.findIndex(n => n.id === currentNoteId);
-        if (noteIndex !== -1) {
-            notes[noteIndex].title = titel;
-            notes[noteIndex].content = inhoud;
-            notes[noteIndex].updated = new Date().toISOString();
-        }
-        
-        renderNotesList();
+        // Reload notes list from database
+        await window.loadNotes();
         
         const statusEl = document.getElementById('noteSaveStatus');
         if (statusEl) {
@@ -1713,7 +1641,6 @@ async function deleteCurrentNote() {
     const result = await window.apiCall(`delete_note&id=${currentNoteId}`);
     
     if (result && result.success) {
-        notes = notes.filter(n => n.id !== currentNoteId);
         currentNoteId = null;
         
         // Show empty state
@@ -1726,7 +1653,8 @@ async function deleteCurrentNote() {
             editorContent.classList.remove('d-flex');
         }
         
-        renderNotesList();
+        // Reload notes list from database
+        await window.loadNotes();
         showNotification('Notitie verwijderd');
         console.log('✅ Note deleted');
     }
