@@ -1,23 +1,10 @@
 <?php
 /**
  * API/IMAGES.PHP - Image Management API Endpoints
- * 
- * Plaats dit bestand in: /api/images.php
- * 
- * Endpoints:
- * - all_images: Lijst alle afbeeldingen
- * - get_image: Get single image by ID
- * - save_image: Upload nieuwe of update bestaande afbeelding
- * - update_image: Alias voor save_image (backward compatible)
- * - upload_image: Alias voor save_image (backward compatible)
- * - delete_image: Verwijder afbeelding
- * - verse_images: Get afbeeldingen voor een specifiek vers
  */
 
-// Ensure we're being called from index.php
-if (!isset($db)) {
-    die(json_encode(['error' => 'Direct access not allowed']));
-}
+// Get database connection
+$db = Database::getInstance()->getConnection();
 
 $endpoint = $_GET['api'];
 $images_dir = 'images';
