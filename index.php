@@ -22,10 +22,15 @@ if (isset($_GET['api'])) {
     // Notes endpoints router - alle notes-gerelateerde endpoints gebruiken notes.php
     $notesEndpoints = ['notes', 'get_note', 'save_note', 'delete_note'];
     
+    // Profile endpoints router - alle profile-gerelateerde endpoints gebruiken profiles.php
+    $profileEndpoints = ['profiles', 'create_profile', 'update_profile', 'delete_profile'];
+    
     if (in_array($endpoint, $imageEndpoints)) {
         $apiFile = __DIR__ . '/api/images.php';
     } elseif (in_array($endpoint, $notesEndpoints)) {
         $apiFile = __DIR__ . '/api/notes.php';
+    } elseif (in_array($endpoint, $profileEndpoints)) {
+        $apiFile = __DIR__ . '/api/profiles.php';
     } else {
         $apiFile = __DIR__ . '/api/' . $endpoint . '.php';
     }
@@ -195,45 +200,32 @@ if (!is_dir('images')) {
     ?>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/vis-timeline@7.7.3/standalone/umd/vis-timeline-graph2d.min.js"></script>
     
-    <?php if ($mode === 'admin'): ?>
-    <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
-    <?php endif; ?>
- 
-    <script>
-        const mode = '<?php echo $mode; ?>';
-        const isAdmin = <?php echo $is_admin ? 'true' : 'false'; ?>;
-    </script>
-    
-    <?php if (file_exists(__DIR__ . '/assets/js/app.js')): ?>
-    <script src="assets/js/app.js"></script>
-    <?php endif; ?>
-    
+    <!-- Scripts dependent on mode -->
     <?php if ($mode === 'reader'): ?>
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+        <script src="https://unpkg.com/vis-timeline@7.7.3/standalone/umd/vis-timeline-graph2d.min.js"></script>
+        
+        <?php if (file_exists(__DIR__ . '/assets/js/app.js')): ?>
+        <script src="assets/js/app.js"></script>
+        <?php endif; ?>
+        
         <?php if (file_exists(__DIR__ . '/assets/js/reader.js')): ?>
         <script src="assets/js/reader.js"></script>
         <?php endif; ?>
+        
         <?php if (file_exists(__DIR__ . '/assets/js/map.js')): ?>
         <script src="assets/js/map.js"></script>
         <?php endif; ?>
+        
         <?php if (file_exists(__DIR__ . '/assets/js/timeline.js')): ?>
         <script src="assets/js/timeline.js"></script>
         <?php endif; ?>
         
-        <!-- ==============================================================
-             MULTI-PROFIEL INDICATOR V3
-             - Auto-detect nieuwe hoofdstukken bij scrollen
-             - Werkt ZONDER reader.js aanpassingen
-             - Onbeperkt scrollen door alle boeken
-             ============================================================== -->
         <script>
         (function() {
-            'use strict';
-            
-            const profileCache = new Map();
             const processedChapters = new Set();
+            const profileCache = new Map();
             
             async function loadProfilesForChapter(boek, hoofdstuk) {
                 const cacheKey = `${boek}_${hoofdstuk}`;
