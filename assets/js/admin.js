@@ -1674,15 +1674,27 @@ window.createNewNote = createNewNote;
 window.saveCurrentNote = saveCurrentNote;
 window.deleteCurrentNote = deleteCurrentNote;
 
-// ============= TIMELINE CRUD FUNCTIES =============
+/**
+ * ADMIN.JS - TIMELINE VERSE LINKING PATCH
+ * 
+ * Vervang de saveTimeline en editTimeline functies met deze versies
+ * Of voeg deze regels toe aan je bestaande functies
+ */
+
+// ============= UPDATED saveTimeline FUNCTION =============
 
 async function saveTimeline() {
     const eventId = document.getElementById('timelineEventId')?.value;
     const titel = document.getElementById('timelineTitel')?.value;
+    const beschrijving = document.getElementById('timelineBeschrijving')?.value || null;
     const groupId = document.getElementById('timelineGroup')?.value || null;
     const startDatum = document.getElementById('timelineStartDatum')?.value;
     const endDatum = document.getElementById('timelineEndDatum')?.value || null;
     const kleur = document.getElementById('timelineKleur')?.value || '#3498db';
+    
+    // ✨ NIEUW: Verse linking velden
+    const versStart = document.getElementById('timelineVersStart')?.value || null;
+    const versEnd = document.getElementById('timelineVersEnd')?.value || null;
     
     if (!titel || !startDatum) {
         window.showNotification('Vul titel en start datum in', true);
@@ -1691,10 +1703,13 @@ async function saveTimeline() {
     
     const data = {
         titel,
+        beschrijving, // ✨ NIEUW
         group_id: groupId,
         start_datum: startDatum,
         end_datum: endDatum,
-        kleur
+        kleur,
+        vers_id_start: versStart, // ✨ NIEUW
+        vers_id_end: versEnd      // ✨ NIEUW
     };
     
     if (eventId) {
@@ -1712,12 +1727,51 @@ async function saveTimeline() {
         // Clear form
         document.getElementById('timelineEventId').value = '';
         document.getElementById('timelineTitel').value = '';
+        document.getElementById('timelineBeschrijving').value = ''; // ✨ NIEUW
         document.getElementById('timelineStartDatum').value = '';
         document.getElementById('timelineEndDatum').value = '';
+        document.getElementById('timelineVersStart').value = ''; // ✨ NIEUW
+        document.getElementById('timelineVersEnd').value = '';   // ✨ NIEUW
         // Reload list
         loadTimelineList();
     }
 }
+
+// ============= UPDATED editTimeline FUNCTION =============
+
+async function editTimeline(eventId) {
+    // Load event data
+    const result = await window.apiCall(`get_timeline&id=${eventId}`);
+    
+    if (!result) {
+        window.showNotification('Event niet gevonden', true);
+        return;
+    }
+    
+    // Fill form
+    document.getElementById('timelineEventId').value = result.Event_ID || '';
+    document.getElementById('timelineTitel').value = result.Titel || '';
+    document.getElementById('timelineBeschrijving').value = result.Beschrijving || ''; // ✨ NIEUW
+    document.getElementById('timelineGroup').value = result.Group_ID || '';
+    document.getElementById('timelineStartDatum').value = result.Start_Datum || '';
+    document.getElementById('timelineEndDatum').value = result.End_Datum || '';
+    document.getElementById('timelineKleur').value = result.Kleur || '#3498db';
+    document.getElementById('timelineVersStart').value = result.Vers_ID_Start || ''; // ✨ NIEUW
+    document.getElementById('timelineVersEnd').value = result.Vers_ID_End || '';     // ✨ NIEUW
+    
+    // Scroll to form
+    document.querySelector('#section-timeline .card').scrollIntoView({ behavior: 'smooth' });
+    
+    window.showNotification('Event geladen voor bewerking');
+}
+
+// ============= MAKE GLOBAL =============
+
+window.saveTimeline = saveTimeline;
+window.editTimeline = editTimeline;
+
+console.log('✅ Timeline verse linking functions updated');
+
 
 async function editTimeline(eventId) {
     // Voor nu simpel - later kunnen we de data laden en invullen

@@ -36,6 +36,19 @@ async function loadTimelineList() {
                 format: (val) => val ? val.substring(0, 10) : '-'
             },
             { 
+                label: 'Bijbelvers', 
+                field: 'Vers_ID_Start',
+                format: (val, row) => {
+                    if (!val && !row.Vers_ID_End) return '-';
+                    let result = '';
+                    if (val) result += `<span class="badge bg-info">${val}</span>`;
+                    if (row.Vers_ID_End && row.Vers_ID_End !== val) {
+                        result += ` - <span class="badge bg-info">${row.Vers_ID_End}</span>`;
+                    }
+                    return result || '-';
+                }
+            },
+            { 
                 label: 'Type', 
                 field: 'Type' 
             },

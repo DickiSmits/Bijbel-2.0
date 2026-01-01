@@ -447,6 +447,11 @@ function selectVerse(versId) {
                 window.highlightLocationFromVerse(verseText);
             }
         }
+        
+        // Sync timeline to this verse
+        if (typeof window.syncTimelineToVerse === 'function') {
+            window.syncTimelineToVerse(versId);
+        }
     }
     currentVerse = versId;
 }

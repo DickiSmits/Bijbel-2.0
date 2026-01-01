@@ -175,6 +175,10 @@
                                 <option value="">Geen groep</option>
                             </select>
                         </div>
+                        <div class="col-12">
+                            <label class="form-label">Beschrijving</label>
+                            <textarea id="timelineBeschrijving" class="form-control" rows="3" placeholder="Optionele beschrijving van het event"></textarea>
+                        </div>
                         <div class="col-md-4">
                             <label class="form-label">Start Datum</label>
                             <input type="text" id="timelineStartDatum" class="form-control" placeholder="-1000 of 2024-01-15">
@@ -186,6 +190,20 @@
                         <div class="col-md-4">
                             <label class="form-label">Kleur</label>
                             <input type="color" id="timelineKleur" class="form-control form-control-color w-100" value="#3498db">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                <i class="bi bi-book"></i> Start Bijbelvers (optioneel)
+                            </label>
+                            <input type="text" id="timelineVersStart" class="form-control" placeholder="Bijv: Genesis 1:1 of ID nummer">
+                            <small class="text-muted">Geef vers referentie of ID nummer</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                <i class="bi bi-book"></i> Eind Bijbelvers (optioneel)
+                            </label>
+                            <input type="text" id="timelineVersEnd" class="form-control" placeholder="Bijv: Genesis 1:31 of ID nummer">
+                            <small class="text-muted">Geef vers referentie of ID nummer</small>
                         </div>
                         <div class="col-12">
                             <button class="btn btn-primary" onclick="saveTimeline()">
