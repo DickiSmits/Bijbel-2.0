@@ -110,16 +110,6 @@ switch ($endpoint) {
         $versId = isset($_POST['vers_id']) && $_POST['vers_id'] !== '' ? (int)$_POST['vers_id'] : null;
         $file = isset($_FILES['image']) ? $_FILES['image'] : null;
         
-        // NEW: Get layout & dimensions
-        $uitlijning = isset($_POST['uitlijning']) ? $_POST['uitlijning'] : 'center';
-        $breedte = isset($_POST['breedte']) && $_POST['breedte'] !== '' ? (int)$_POST['breedte'] : 400;
-        $hoogte = isset($_POST['hoogte']) && $_POST['hoogte'] !== '' ? (int)$_POST['hoogte'] : null;
-        
-        // Validate uitlijning
-        if (!in_array($uitlijning, ['left', 'center', 'right'])) {
-            $uitlijning = 'center';
-        }
-        
         if (!$imageId && !$file) {
             http_response_code(400);
             echo json_encode(['error' => 'Image file required for new uploads']);
@@ -140,20 +130,6 @@ switch ($endpoint) {
                     $params[] = $versId;
                 } else {
                     $updates[] = "Vers_ID = NULL";
-                }
-                
-                // NEW: Update layout & dimensions
-                $updates[] = "Uitlijning = ?";
-                $params[] = $uitlijning;
-                
-                $updates[] = "Breedte = ?";
-                $params[] = $breedte;
-                
-                if ($hoogte !== null) {
-                    $updates[] = "Hoogte = ?";
-                    $params[] = $hoogte;
-                } else {
-                    $updates[] = "Hoogte = NULL";
                 }
                 
                 if ($file && $file['error'] === UPLOAD_ERR_OK) {
@@ -226,11 +202,10 @@ switch ($endpoint) {
                     exit;
                 }
                 
-                // NEW: Insert with layout & dimensions
                 $stmt = $db->prepare("
                     INSERT INTO Afbeeldingen 
-                    (Bestandspad, Bestandsnaam, Originele_Naam, Caption, Vers_ID, Geupload_Op, Uitlijning, Breedte, Hoogte) 
-                    VALUES (?, ?, ?, ?, ?, datetime('now'), ?, ?, ?)
+                    (Bestandspad, Bestandsnaam, Originele_Naam, Caption, Vers_ID, Geupload_Op, Uitlijning, Breedte) 
+                    VALUES (?, ?, ?, ?, ?, datetime('now'), 'center', 400)
                 ");
                 
                 $stmt->execute([
@@ -238,10 +213,7 @@ switch ($endpoint) {
                     $filename,
                     basename($file['name']),
                     $caption,
-                    $versId,
-                    $uitlijning,
-                    $breedte,
-                    $hoogte
+                    $versId
                 ]);
                 
                 $newId = $db->lastInsertId();

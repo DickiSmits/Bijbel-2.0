@@ -360,44 +360,8 @@
                             </select>
                         </div>
                         
-                        <!-- Layout & Dimensions -->
-                        <div class="col-12 mt-3">
-                            <label class="form-label fw-semibold text-primary">
-                                <i class="bi bi-layout-three-columns"></i> Layout & Afmetingen
-                            </label>
-                        </div>
-                        
-                        <div class="col-md-4">
-                            <label class="form-label small">
-                                <i class="bi bi-align-center"></i> Uitlijning
-                            </label>
-                            <select id="imageUitlijning" class="form-select form-select-sm">
-                                <option value="left">Links</option>
-                                <option value="center" selected>Gecentreerd</option>
-                                <option value="right">Rechts</option>
-                            </select>
-                        </div>
-                        
-                        <div class="col-md-4">
-                            <label class="form-label small">
-                                <i class="bi bi-arrows-expand"></i> Breedte (px)
-                            </label>
-                            <input type="number" id="imageBreedte" class="form-control form-control-sm" 
-                                   value="400" min="100" max="1200" step="50">
-                            <small class="text-muted">100-1200px</small>
-                        </div>
-                        
-                        <div class="col-md-4">
-                            <label class="form-label small">
-                                <i class="bi bi-arrows-vertical"></i> Hoogte (px)
-                            </label>
-                            <input type="number" id="imageHoogte" class="form-control form-control-sm" 
-                                   placeholder="Auto" min="0" max="1200" step="50">
-                            <small class="text-muted">Leeg = automatisch</small>
-                        </div>
-                        
                         <!-- Buttons -->
-                        <div class="col-12 mt-3">
+                        <div class="col-12">
                             <button class="btn btn-primary btn-sm" onclick="saveImage()">
                                 <i class="bi bi-upload"></i> <span id="imageSaveButtonText">Uploaden</span>
                             </button>
