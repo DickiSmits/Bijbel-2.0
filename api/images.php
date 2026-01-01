@@ -1,270 +1,317 @@
 <?php
 /**
- * Images API
+ * API/IMAGES.PHP - Image Management API Endpoints
  * 
- * Handelt alle afbeelding-gerelateerde API calls af
+ * Plaats dit bestand in: /api/images.php
+ * 
+ * Endpoints:
+ * - all_images: Lijst alle afbeeldingen
+ * - get_image: Get single image by ID
+ * - save_image: Upload nieuwe of update bestaande afbeelding
+ * - update_image: Alias voor save_image (backward compatible)
+ * - upload_image: Alias voor save_image (backward compatible)
+ * - delete_image: Verwijder afbeelding
+ * - verse_images: Get afbeeldingen voor een specifiek vers
  */
 
-// Include dependencies
-require_once __DIR__ . '/../config.php';
-require_once __DIR__ . '/../includes/Database.php';
-require_once __DIR__ . '/../includes/helpers.php';
+// Ensure we're being called from index.php
+if (!isset($db)) {
+    die(json_encode(['error' => 'Direct access not allowed']));
+}
 
-$db = Database::getInstance();
 $endpoint = $_GET['api'];
+$images_dir = 'images';
+
+// Ensure images directory exists
+if (!is_dir($images_dir)) {
+    mkdir($images_dir, 0755, true);
+}
 
 switch ($endpoint) {
-    case 'upload_image':
-        uploadImage($db);
-        break;
-        
+    
+    // ============= ALL IMAGES =============
     case 'all_images':
-        getAllImages($db);
+        try {
+            $stmt = $db->query("
+                SELECT a.*, 
+                       v.Bijbelboeknaam, 
+                       v.Hoofdstuknummer, 
+                       v.Versnummer
+                FROM Afbeeldingen a
+                LEFT JOIN Verzen v ON a.Vers_ID = v.Vers_ID
+                ORDER BY a.Geupload_Op DESC
+            ");
+            
+            $images = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            echo json_encode($images);
+            
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => $e->getMessage()]);
+        }
         break;
-        
+    
+    // ============= GET IMAGE =============
     case 'get_image':
-        getImage($db);
-        break;
+        $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
         
+        if (!$id) {
+            http_response_code(400);
+            echo json_encode(['error' => 'ID required']);
+            exit;
+        }
+        
+        try {
+            $stmt = $db->prepare("
+                SELECT a.*, 
+                       v.Bijbelboeknaam, 
+                       v.Hoofdstuknummer, 
+                       v.Versnummer
+                FROM Afbeeldingen a
+                LEFT JOIN Verzen v ON a.Vers_ID = v.Vers_ID
+                WHERE a.Afbeelding_ID = ?
+            ");
+            
+            $stmt->execute([$id]);
+            $image = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($image) {
+                echo json_encode($image);
+            } else {
+                http_response_code(404);
+                echo json_encode(['error' => 'Image not found']);
+            }
+            
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => $e->getMessage()]);
+        }
+        break;
+    
+    // ============= SAVE IMAGE (Upload NEW or UPDATE existing) =============
+    case 'save_image':
+    case 'upload_image':
     case 'update_image':
-        updateImage($db);
-        break;
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['error' => 'POST required']);
+            exit;
+        }
         
+        $imageId = isset($_POST['image_id']) ? (int)$_POST['image_id'] : 0;
+        $caption = isset($_POST['caption']) ? $_POST['caption'] : null;
+        $versId = isset($_POST['vers_id']) && $_POST['vers_id'] !== '' ? (int)$_POST['vers_id'] : null;
+        $file = isset($_FILES['image']) ? $_FILES['image'] : null;
+        
+        // For new uploads, file is required
+        if (!$imageId && !$file) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Image file required for new uploads']);
+            exit;
+        }
+        
+        try {
+            if ($imageId) {
+                // ===== UPDATE EXISTING IMAGE =====
+                $updates = [];
+                $params = [];
+                
+                // Update caption if provided
+                if ($caption !== null) {
+                    $updates[] = "Caption = ?";
+                    $params[] = $caption;
+                }
+                
+                // Update verse link
+                if ($versId !== null) {
+                    $updates[] = "Vers_ID = ?";
+                    $params[] = $versId;
+                } else if (isset($_POST['vers_id']) && $_POST['vers_id'] === '') {
+                    // Explicitly remove verse link
+                    $updates[] = "Vers_ID = NULL";
+                }
+                
+                // If new file uploaded, update file info
+                if ($file && $file['error'] === UPLOAD_ERR_OK) {
+                    // Validate file type
+                    $allowed = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+                    if (!in_array($file['type'], $allowed)) {
+                        http_response_code(400);
+                        echo json_encode(['error' => 'Invalid file type. Only JPG, PNG, GIF, WEBP allowed']);
+                        exit;
+                    }
+                    
+                    // Generate filename
+                    $filename = time() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '', basename($file['name']));
+                    $filepath = $images_dir . '/' . $filename;
+                    
+                    // Move uploaded file
+                    if (move_uploaded_file($file['tmp_name'], $filepath)) {
+                        $updates[] = "Bestandspad = ?";
+                        $updates[] = "Bestandsnaam = ?";
+                        $updates[] = "Originele_Naam = ?";
+                        $params[] = $filepath;
+                        $params[] = $filename;
+                        $params[] = basename($file['name']);
+                        
+                        // Delete old file (optional)
+                        $stmt = $db->prepare("SELECT Bestandspad FROM Afbeeldingen WHERE Afbeelding_ID = ?");
+                        $stmt->execute([$imageId]);
+                        $old = $stmt->fetch(PDO::FETCH_ASSOC);
+                        if ($old && file_exists($old['Bestandspad'])) {
+                            @unlink($old['Bestandspad']);
+                        }
+                    } else {
+                        http_response_code(500);
+                        echo json_encode(['error' => 'Failed to save file']);
+                        exit;
+                    }
+                }
+                
+                // Execute update if there are changes
+                if (!empty($updates)) {
+                    $params[] = $imageId;
+                    $sql = "UPDATE Afbeeldingen SET " . implode(', ', $updates) . " WHERE Afbeelding_ID = ?";
+                    $stmt = $db->prepare($sql);
+                    $stmt->execute($params);
+                }
+                
+                echo json_encode([
+                    'success' => true, 
+                    'image_id' => $imageId, 
+                    'action' => 'updated'
+                ]);
+                
+            } else {
+                // ===== INSERT NEW IMAGE =====
+                
+                if (!$file || $file['error'] !== UPLOAD_ERR_OK) {
+                    http_response_code(400);
+                    echo json_encode(['error' => 'File upload failed']);
+                    exit;
+                }
+                
+                // Validate file type
+                $allowed = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+                if (!in_array($file['type'], $allowed)) {
+                    http_response_code(400);
+                    echo json_encode(['error' => 'Invalid file type']);
+                    exit;
+                }
+                
+                // Generate filename
+                $filename = time() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '', basename($file['name']));
+                $filepath = $images_dir . '/' . $filename;
+                
+                // Move uploaded file
+                if (!move_uploaded_file($file['tmp_name'], $filepath)) {
+                    http_response_code(500);
+                    echo json_encode(['error' => 'Failed to save file']);
+                    exit;
+                }
+                
+                // Insert into database
+                $stmt = $db->prepare("
+                    INSERT INTO Afbeeldingen 
+                    (Bestandspad, Bestandsnaam, Originele_Naam, Caption, Vers_ID, Geupload_Op) 
+                    VALUES (?, ?, ?, ?, ?, datetime('now'))
+                ");
+                
+                $stmt->execute([
+                    $filepath,
+                    $filename,
+                    basename($file['name']),
+                    $caption,
+                    $versId
+                ]);
+                
+                $newId = $db->lastInsertId();
+                
+                echo json_encode([
+                    'success' => true, 
+                    'image_id' => $newId, 
+                    'action' => 'created'
+                ]);
+            }
+            
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => $e->getMessage()]);
+        }
+        break;
+    
+    // ============= DELETE IMAGE =============
     case 'delete_image':
-        deleteImage($db);
+        $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+        
+        if (!$id) {
+            http_response_code(400);
+            echo json_encode(['error' => 'ID required']);
+            exit;
+        }
+        
+        try {
+            // Get file path before deleting
+            $stmt = $db->prepare("SELECT Bestandspad FROM Afbeeldingen WHERE Afbeelding_ID = ?");
+            $stmt->execute([$id]);
+            $image = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($image) {
+                // Delete from database
+                $stmt = $db->prepare("DELETE FROM Afbeeldingen WHERE Afbeelding_ID = ?");
+                $stmt->execute([$id]);
+                
+                // Delete file from disk (with error suppression in case file doesn't exist)
+                if (file_exists($image['Bestandspad'])) {
+                    @unlink($image['Bestandspad']);
+                }
+                
+                echo json_encode(['success' => true]);
+            } else {
+                http_response_code(404);
+                echo json_encode(['error' => 'Image not found']);
+            }
+            
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => $e->getMessage()]);
+        }
         break;
     
+    // ============= VERSE IMAGES =============
     case 'verse_images':
-        getVerseImages($db);
+        $versId = isset($_GET['vers_id']) ? (int)$_GET['vers_id'] : 0;
+        
+        if (!$versId) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Vers ID required']);
+            exit;
+        }
+        
+        try {
+            $stmt = $db->prepare("
+                SELECT a.*, 
+                       v.Bijbelboeknaam, 
+                       v.Hoofdstuknummer, 
+                       v.Versnummer
+                FROM Afbeeldingen a
+                LEFT JOIN Verzen v ON a.Vers_ID = v.Vers_ID
+                WHERE a.Vers_ID = ?
+                ORDER BY a.Geupload_Op DESC
+            ");
+            
+            $stmt->execute([$versId]);
+            $images = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            echo json_encode($images);
+            
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => $e->getMessage()]);
+        }
         break;
-        
+    
     default:
-        jsonError('Onbekende images endpoint');
-}
-
-/**
- * Upload nieuwe afbeelding
- */
-function uploadImage($db) {
-    if (!isset($_FILES['image'])) {
-        jsonError('Geen afbeelding ontvangen');
-    }
-    
-    $file = $_FILES['image'];
-    
-    // Valideer afbeelding
-    if (!isValidImage($file)) {
-        jsonError('Ongeldige afbeelding of bestand te groot (max ' . (MAX_UPLOAD_SIZE / 1024 / 1024) . 'MB)');
-    }
-    
-    // Genereer veilige bestandsnaam
-    $filename = generateSafeFilename($file['name']);
-    $serverPath = IMAGES_DIR . '/' . $filename;     // Absolute path for file operations
-    $relativePath = 'images/' . $filename;          // Relative path for database/display
-    
-    // Verplaats bestand
-    if (!move_uploaded_file($file['tmp_name'], $serverPath)) {
-        jsonError('Upload mislukt');
-    }
-    
-    // Opslaan in database
-    $versId = isset($_POST['vers_id']) && $_POST['vers_id'] !== '' ? (int)$_POST['vers_id'] : null;
-    $caption = $_POST['caption'] ?? '';
-    $uitlijning = $_POST['uitlijning'] ?? 'center';
-    $breedte = isset($_POST['breedte']) ? (int)$_POST['breedte'] : 400;
-    $hoogte = isset($_POST['hoogte']) && $_POST['hoogte'] !== '' ? (int)$_POST['hoogte'] : null;
-    
-    $sql = "INSERT INTO Afbeeldingen 
-            (Bestandsnaam, Originele_Naam, Bestandspad, Vers_ID, Caption, 
-             Uitlijning, Breedte, Hoogte) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-    
-    $db->execute($sql, [
-        $filename,
-        $file['name'],
-        $relativePath,  // Use relative path for database
-        $versId,
-        $caption,
-        $uitlijning,
-        $breedte,
-        $hoogte
-    ]);
-    
-    jsonSuccess([
-        'id' => $db->lastInsertId(),
-        'url' => $relativePath  // Return relative path
-    ], 'Afbeelding geüpload');
-}
-
-/**
- * Haal alle afbeeldingen op
- */
-function getAllImages($db) {
-    $sql = "SELECT a.*, v.Bijbelboeknaam, v.Hoofdstuknummer, v.Versnummer 
-            FROM Afbeeldingen a 
-            LEFT JOIN De_Bijbel v ON a.Vers_ID = v.Vers_ID 
-            ORDER BY a.Geupload_Op DESC";
-    
-    $images = $db->query($sql);
-    jsonResponse($images);
-}
-
-/**
- * Haal enkele afbeelding op
- */
-function getImage($db) {
-    $afbeeldingId = (int)$_GET['id'];
-    
-    $sql = "SELECT a.*, v.Bijbelboeknaam, v.Hoofdstuknummer, v.Versnummer 
-            FROM Afbeeldingen a 
-            LEFT JOIN De_Bijbel v ON a.Vers_ID = v.Vers_ID 
-            WHERE a.Afbeelding_ID = ?";
-    
-    $image = $db->queryOne($sql, [$afbeeldingId]);
-    
-    if (!$image) {
-        jsonError('Afbeelding niet gevonden', 404);
-    }
-    
-    jsonResponse($image);
-}
-
-/**
- * Update afbeelding metadata
- */
-function updateImage($db) {
-    $data = getJsonInput();
-    validateRequired($data, ['afbeelding_id']);
-    
-    $sql = "UPDATE Afbeeldingen SET 
-            Vers_ID=?, Caption=?, Uitlijning=?, Breedte=?, Hoogte=? 
-            WHERE Afbeelding_ID=?";
-    
-    $db->execute($sql, [
-        $data['vers_id'] ?? null,
-        $data['caption'] ?? '',
-        $data['uitlijning'] ?? 'center',
-        $data['breedte'] ?? 400,
-        $data['hoogte'] ?? null,
-        $data['afbeelding_id']
-    ]);
-    
-    jsonSuccess([], 'Afbeelding bijgewerkt');
-}
-
-/**
- * Verwijder afbeelding
- */
-function deleteImage($db) {
-    $afbeeldingId = (int)$_GET['id'];
-    
-    // Haal bestandspad op
-    $sql = "SELECT Bestandspad FROM Afbeeldingen WHERE Afbeelding_ID = ?";
-    $image = $db->queryOne($sql, [$afbeeldingId]);
-    
-    if ($image) {
-        $path = $image['Bestandspad'];
-        
-        // Handle both absolute and relative paths
-        if (strpos($path, '/') === 0) {
-            // Absolute path (old format)
-            $filePath = $path;
-        } else {
-            // Relative path (new format)
-            $filePath = __DIR__ . '/../' . $path;
-        }
-        
-        if (file_exists($filePath)) {
-            unlink($filePath);
-        }
-    }
-    
-    // Verwijder uit database
-    $db->execute("DELETE FROM Afbeeldingen WHERE Afbeelding_ID = ?", [$afbeeldingId]);
-    
-    jsonSuccess([], 'Afbeelding verwijderd');
-}
-
-/**
- * Haal afbeeldingen voor specifiek vers op
- */
-function getVerseImages($db) {
-    $versId = isset($_GET['vers_id']) ? (int)$_GET['vers_id'] : 0;
-    $debug = isset($_GET['debug']) && $_GET['debug'] == '1';
-    
-    if (!$versId) {
-        jsonError('Vers_ID vereist');
-    }
-    
-    // Debug mode: return extensive info
-    if ($debug) {
-        $debugInfo = [
-            'vers_id_parameter' => $versId,
-            'tests' => []
-        ];
-        
-        // Test 1: Table exists
-        try {
-            $tableCheck = $db->query("SHOW TABLES LIKE 'Afbeeldingen'");
-            $debugInfo['tests']['table_exists'] = count($tableCheck) > 0;
-        } catch (Exception $e) {
-            $debugInfo['tests']['table_exists'] = 'ERROR: ' . $e->getMessage();
-        }
-        
-        // Test 2: Total count
-        try {
-            $total = $db->queryOne("SELECT COUNT(*) as cnt FROM Afbeeldingen");
-            $debugInfo['tests']['total_images'] = (int)$total['cnt'];
-        } catch (Exception $e) {
-            $debugInfo['tests']['total_images'] = 'ERROR: ' . $e->getMessage();
-        }
-        
-        // Test 3: Count for this Vers_ID
-        try {
-            $count = $db->queryOne("SELECT COUNT(*) as cnt FROM Afbeeldingen WHERE Vers_ID = ?", [$versId]);
-            $debugInfo['tests']['images_for_vers'] = (int)$count['cnt'];
-        } catch (Exception $e) {
-            $debugInfo['tests']['images_for_vers'] = 'ERROR: ' . $e->getMessage();
-        }
-        
-        // Test 4: All images with Vers_ID (any)
-        try {
-            $withVers = $db->query("SELECT Afbeelding_ID, Bestandsnaam, Vers_ID FROM Afbeeldingen WHERE Vers_ID IS NOT NULL LIMIT 5");
-            $debugInfo['tests']['sample_linked_images'] = $withVers;
-        } catch (Exception $e) {
-            $debugInfo['tests']['sample_linked_images'] = 'ERROR: ' . $e->getMessage();
-        }
-        
-        // Test 5: Try the actual query
-        $sql = "SELECT a.* FROM Afbeeldingen a WHERE a.Vers_ID = ? ORDER BY a.Geupload_Op ASC";
-        try {
-            $images = $db->query($sql, [$versId]);
-            $debugInfo['tests']['query_result_count'] = count($images);
-            $debugInfo['tests']['query_result_data'] = $images;
-        } catch (Exception $e) {
-            $debugInfo['tests']['query_result_count'] = 'ERROR: ' . $e->getMessage();
-        }
-        
-        // Test 6: Table structure
-        try {
-            $columns = $db->query("SHOW COLUMNS FROM Afbeeldingen");
-            $debugInfo['tests']['table_columns'] = array_map(function($col) {
-                return $col['Field'];
-            }, $columns);
-        } catch (Exception $e) {
-            $debugInfo['tests']['table_columns'] = 'ERROR: ' . $e->getMessage();
-        }
-        
-        jsonResponse($debugInfo);
-        return;
-    }
-    
-    // Normal mode: return images
-    $sql = "SELECT a.* 
-            FROM Afbeeldingen a 
-            WHERE a.Vers_ID = ?
-            ORDER BY a.Geupload_Op ASC";
-    
-    $images = $db->query($sql, [$versId]);
-    jsonResponse($images);
+        http_response_code(404);
+        echo json_encode(['error' => 'Unknown image endpoint: ' . $endpoint]);
 }
