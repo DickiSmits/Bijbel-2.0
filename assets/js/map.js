@@ -20,7 +20,7 @@ const defaultIcon = L.icon({
 const highlightIcon = L.icon({
     iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
     shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-    iconSize: [35, 57], // Larger
+    iconSize: [30, 49], // Larger
     iconAnchor: [17, 57],
     popupAnchor: [1, -47],
     shadowSize: [57, 57],
