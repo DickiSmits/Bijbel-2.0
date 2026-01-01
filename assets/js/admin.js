@@ -2173,7 +2173,7 @@ window.showAdminSection = function(section) {
 
 // ============= TIMELINE QUILL EDITOR =============
 
-let timelineDescQuill = null;
+// let timelineDescQuill = null;
 
 /**
  * Initialize Timeline Beschrijving Quill Editor
