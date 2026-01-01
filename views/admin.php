@@ -157,17 +157,21 @@
             </div>
         </div>
         
-        <!-- Timeline Section -->
-        <div id="section-timeline" class="admin-section">
-            <h5 class="mb-4">Timeline Beheren</h5>
+        <!-- Timeline Section - PROFESSIONAL VERSION -->
+        <div id="section-timeline" class="admin-section d-none">
+            <h4 class="mb-4"><i class="bi bi-calendar-event"></i> Timeline Beheren</h4>
+            
+            <!-- Timeline Event Editor -->
             <div class="card mb-4">
-                <div class="card-header">Timeline Event</div>
+                <div class="card-header">Nieuw Event</div>
                 <div class="card-body">
                     <input type="hidden" id="timelineEventId">
+                    
                     <div class="row g-3">
+                        <!-- Titel en Groep -->
                         <div class="col-md-6">
                             <label class="form-label">Titel</label>
-                            <input type="text" id="timelineTitel" class="form-control">
+                            <input type="text" id="timelineTitel" class="form-control" placeholder="Event titel">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Groep</label>
@@ -175,10 +179,14 @@
                                 <option value="">Geen groep</option>
                             </select>
                         </div>
+                        
+                        <!-- Beschrijving met Quill Editor -->
                         <div class="col-12">
                             <label class="form-label">Beschrijving</label>
-                            <textarea id="timelineBeschrijving" class="form-control" rows="3" placeholder="Optionele beschrijving van het event"></textarea>
+                            <div id="timelineBeschrijvingEditor" style="height: 150px;"></div>
                         </div>
+                        
+                        <!-- Start Datum, Eind Datum, Achtergrond Kleur -->
                         <div class="col-md-4">
                             <label class="form-label">Start Datum</label>
                             <input type="text" id="timelineStartDatum" class="form-control" placeholder="-1000 of 2024-01-15">
@@ -188,31 +196,76 @@
                             <input type="text" id="timelineEndDatum" class="form-control" placeholder="Optioneel">
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Kleur</label>
-                            <input type="color" id="timelineKleur" class="form-control form-control-color w-100" value="#3498db">
+                            <label class="form-label">Achtergrond Kleur</label>
+                            <input type="color" id="timelineKleur" class="form-control form-control-color w-100" value="#cd8989">
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label">
-                                <i class="bi bi-book"></i> Start Bijbelvers (optioneel)
-                            </label>
-                            <input type="text" id="timelineVersStart" class="form-control" placeholder="Bijv: Genesis 1:1 of ID nummer">
-                            <small class="text-muted">Geef vers referentie of ID nummer</small>
+                        
+                        <!-- Tekst Kleur (optioneel) -->
+                        <div class="col-12">
+                            <label class="form-label">Tekst Kleur (optioneel)</label>
+                            <input type="color" id="timelineTekstKleur" class="form-control form-control-color" value="#ffffff" style="width: 100px;">
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label">
-                                <i class="bi bi-book"></i> Eind Bijbelvers (optioneel)
-                            </label>
-                            <input type="text" id="timelineVersEnd" class="form-control" placeholder="Bijv: Genesis 1:31 of ID nummer">
-                            <small class="text-muted">Geef vers referentie of ID nummer</small>
+                        
+                        <!-- Start Vers - Boek, Hoofdstuk, Vers -->
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Start Vers</label>
                         </div>
+                        <div class="col-md-4">
+                            <label class="form-label small text-muted">Boek</label>
+                            <select id="timelineStartBoek" class="form-select">
+                                <option value="">Kies boek...</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small text-muted">Hoofdstuk</label>
+                            <select id="timelineStartHoofdstuk" class="form-select">
+                                <option value="">Hoofdstuk</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small text-muted">Vers</label>
+                            <select id="timelineStartVers" class="form-select">
+                                <option value="">Vers</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Eind Vers - Boek, Hoofdstuk, Vers -->
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Eind Vers</label>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small text-muted">Boek</label>
+                            <select id="timelineEndBoek" class="form-select">
+                                <option value="">Kies boek...</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small text-muted">Hoofdstuk</label>
+                            <select id="timelineEndHoofdstuk" class="form-select">
+                                <option value="">Hoofdstuk</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small text-muted">Vers</label>
+                            <select id="timelineEndVers" class="form-select">
+                                <option value="">Vers</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Buttons -->
                         <div class="col-12">
                             <button class="btn btn-primary" onclick="saveTimeline()">
-                                <i class="bi bi-save"></i> Opslaan
+                                <i class="bi bi-plus"></i> Event Opslaan
+                            </button>
+                            <button class="btn btn-outline-secondary ms-2" onclick="clearTimelineForm()">
+                                <i class="bi bi-x"></i> Formulier Legen
                             </button>
                         </div>
                     </div>
                 </div>
             </div>
+            
+            <!-- Timeline Events List -->
             <div class="card">
                 <div class="card-header">Timeline Events</div>
                 <div class="card-body">
@@ -220,6 +273,7 @@
                 </div>
             </div>
         </div>
+
         
         <!-- Locations Section -->
         <div id="section-locations" class="admin-section">

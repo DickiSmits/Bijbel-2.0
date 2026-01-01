@@ -5,6 +5,11 @@
 
 // ============= TIMELINE LIST MET DATATABLE =============
 
+/**
+ * ADMIN-DATATABLE-LOADERS.JS - TIMELINE WITH VERSE REFERENCES
+ * Update the loadTimelineList function with this version
+ */
+
 async function loadTimelineList() {
     console.log('📅 Loading timeline events...');
     
@@ -16,6 +21,26 @@ async function loadTimelineList() {
     }
     
     console.log(`✅ Loaded ${events.length} timeline events`);
+    
+    // Load verse data for better display
+    const verseCache = {};
+    
+    // Pre-load verse data for events that have verse IDs
+    for (const event of events) {
+        if (event.Vers_ID_Start && !verseCache[event.Vers_ID_Start]) {
+            const verse = await window.apiCall(`verse_detail&vers_id=${event.Vers_ID_Start}`);
+            if (verse) {
+                verseCache[event.Vers_ID_Start] = `${verse.Bijbelboeknaam} ${verse.Hoofdstuknummer}:${verse.Versnummer}`;
+            }
+        }
+        
+        if (event.Vers_ID_End && !verseCache[event.Vers_ID_End]) {
+            const verse = await window.apiCall(`verse_detail&vers_id=${event.Vers_ID_End}`);
+            if (verse) {
+                verseCache[event.Vers_ID_End] = `${verse.Bijbelboeknaam} ${verse.Hoofdstuknummer}:${verse.Versnummer}`;
+            }
+        }
+    }
     
     // Create DataTable
     new window.DataTable('timelineList', events, {
@@ -36,15 +61,23 @@ async function loadTimelineList() {
                 format: (val) => val ? val.substring(0, 10) : '-'
             },
             { 
-                label: 'Bijbelvers', 
+                label: 'Bijbel Referentie', 
                 field: 'Vers_ID_Start',
                 format: (val, row) => {
                     if (!val && !row.Vers_ID_End) return '-';
+                    
                     let result = '';
-                    if (val) result += `<span class="badge bg-info">${val}</span>`;
-                    if (row.Vers_ID_End && row.Vers_ID_End !== val) {
-                        result += ` - <span class="badge bg-info">${row.Vers_ID_End}</span>`;
+                    
+                    if (val) {
+                        const ref = verseCache[val] || `ID: ${val}`;
+                        result += `<span class="badge bg-info text-white">${ref}</span>`;
                     }
+                    
+                    if (row.Vers_ID_End && row.Vers_ID_End !== val) {
+                        const ref = verseCache[row.Vers_ID_End] || `ID: ${row.Vers_ID_End}`;
+                        result += ` - <span class="badge bg-info text-white">${ref}</span>`;
+                    }
+                    
                     return result || '-';
                 }
             },
@@ -62,6 +95,12 @@ async function loadTimelineList() {
         onDelete: 'deleteTimeline'
     });
 }
+
+// Make global
+window.loadTimelineList = loadTimelineList;
+
+console.log('✅ Timeline DataTable loader updated with verse references');
+
 
 // ============= TIMELINE GROUPS MET DATATABLE =============
 
