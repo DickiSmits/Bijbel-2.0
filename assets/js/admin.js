@@ -2614,6 +2614,11 @@ async function saveImage() {
     const caption = document.getElementById('imageCaption')?.value;
     const versId = document.getElementById('imageVers')?.value || null;
     
+    // NEW: Get layout & dimensions
+    const uitlijning = document.getElementById('imageUitlijning')?.value || 'center';
+    const breedte = document.getElementById('imageBreedte')?.value || 400;
+    const hoogte = document.getElementById('imageHoogte')?.value || '';
+    
     // For new uploads, file is required
     if (!imageId && !file) {
         window.showNotification('Selecteer een afbeelding', true);
@@ -2631,6 +2636,13 @@ async function saveImage() {
     if (caption) formData.append('caption', caption);
     if (versId) formData.append('vers_id', versId);
     if (imageId) formData.append('image_id', imageId);
+    
+    // NEW: Append layout & dimensions
+    formData.append('uitlijning', uitlijning);
+    formData.append('breedte', breedte);
+    formData.append('hoogte', hoogte);
+    
+    console.log('📤 Uploading image with layout:', { uitlijning, breedte, hoogte });
     
     try {
         const response = await fetch('?api=save_image', {
@@ -2674,6 +2686,11 @@ async function editImage(imageId) {
     // Fill form
     document.getElementById('imageId').value = result.Afbeelding_ID;
     document.getElementById('imageCaption').value = result.Caption || '';
+    
+    // NEW: Fill layout & dimensions
+    document.getElementById('imageUitlijning').value = result.Uitlijning || 'center';
+    document.getElementById('imageBreedte').value = result.Breedte || 400;
+    document.getElementById('imageHoogte').value = result.Hoogte || '';
     
     // Update button text
     const saveBtn = document.getElementById('imageSaveButtonText');
@@ -2757,6 +2774,11 @@ function clearImageForm() {
     document.getElementById('imageBoek').value = '';
     document.getElementById('imageHoofdstuk').innerHTML = '<option value="">Hoofdstuk</option>';
     document.getElementById('imageVers').innerHTML = '<option value="">Vers</option>';
+    
+    // NEW: Reset layout & dimensions to defaults
+    document.getElementById('imageUitlijning').value = 'center';
+    document.getElementById('imageBreedte').value = 400;
+    document.getElementById('imageHoogte').value = '';
     
     // Reset button text
     const saveBtn = document.getElementById('imageSaveButtonText');
