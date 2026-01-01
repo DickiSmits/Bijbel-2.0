@@ -107,6 +107,7 @@ window.clearLocationForm = clearLocationForm;
  * @param {Array} data - Array of objects
  * @param {Object} config - Configuration
  * @param {Array} config.columns - Column definitions
+ * @param {string} config.actionColumnWidth - Width for action column (default: '80px')
  * @param {Function} config.onEdit - Edit callback
  * @param {Function} config.onDelete - Delete callback
  */
@@ -147,17 +148,7 @@ class DataTable {
                 
                 <div class="table-responsive">
                     <table class="table table-hover datatable" id="${tableId}">
-                        <thead>
-                            <tr>
-                                ${this.config.columns.map((col, index) => `
-                                    <th class="sortable" data-column="${index}">
-                                        ${col.label}
-                                        <i class="bi bi-chevron-expand sort-icon"></i>
-                                    </th>
-                                `).join('')}
-                                ${this.config.onEdit || this.config.onDelete ? '<th class="text-end">Acties</th>' : ''}
-                            </tr>
-                        </thead>
+                        ${this.renderHeader()}
                         <tbody id="${tableId}-body">
                             ${this.renderRows()}
                         </tbody>
@@ -168,6 +159,30 @@ class DataTable {
         
         // Attach event listeners
         this.attachListeners(tableId);
+    }
+    
+    renderHeader() {
+        let html = '<thead><tr>';
+        
+        // 🔴 UPDATED: Add width support for columns
+        this.config.columns.forEach((col, index) => {
+            const widthStyle = col.width ? ` style="width: ${col.width}"` : '';
+            html += `
+                <th class="sortable" data-column="${index}"${widthStyle}>
+                    ${col.label}
+                    <i class="bi bi-chevron-expand sort-icon"></i>
+                </th>
+            `;
+        });
+        
+        // 🔴 UPDATED: Add width support for action column
+        if (this.config.onEdit || this.config.onDelete) {
+            const actionWidth = this.config.actionColumnWidth || '80px';
+            html += `<th class="text-end" style="width: ${actionWidth}">Acties</th>`;
+        }
+        
+        html += '</tr></thead>';
+        return html;
     }
     
     renderRows() {
@@ -195,22 +210,24 @@ class DataTable {
                 const idField = this.config.idField || 'id';
                 const id = row[idField];
                 
-                actions = '<td class="text-end">';
+                // 🔴 UPDATED: Horizontal button group (not vertical!)
+                actions = '<td class="text-end"><div class="btn-group btn-group-sm" role="group">';
+                
                 if (this.config.onEdit) {
-                    actions += `<button class="btn btn-sm btn-outline-primary me-1" 
+                    actions += `<button class="btn btn-outline-primary" 
                                        onclick="${this.config.onEdit}(${id})" 
                                        title="Bewerken">
                                    <i class="bi bi-pencil"></i>
                                </button>`;
                 }
                 if (this.config.onDelete) {
-                    actions += `<button class="btn btn-sm btn-outline-danger" 
+                    actions += `<button class="btn btn-outline-danger" 
                                        onclick="${this.config.onDelete}(${id})" 
                                        title="Verwijderen">
                                    <i class="bi bi-trash"></i>
                                </button>`;
                 }
-                actions += '</td>';
+                actions += '</div></td>';
             }
             
             return `<tr>${cells}${actions}</tr>`;
@@ -321,4 +338,4 @@ class DataTable {
 // Make DataTable global
 window.DataTable = DataTable;
 
-console.log('✅ Admin extensions loaded: Edit + DataTable');
+console.log('✅ Admin extensions loaded: Edit + DataTable (with horizontal buttons + width support)');

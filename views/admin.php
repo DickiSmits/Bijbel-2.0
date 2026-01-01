@@ -158,13 +158,14 @@
         </div>
         
         <!-- Timeline Section - PROFESSIONAL VERSION -->
+        <!-- Timeline Section - COMPACT VERSION -->
         <div id="section-timeline" class="admin-section d-none">
             <h4 class="mb-4"><i class="bi bi-calendar-event"></i> Timeline Beheren</h4>
             
             <!-- Timeline Event Editor -->
             <div class="card mb-4">
                 <div class="card-header">Nieuw Event</div>
-                <div class="card-body">
+<div class="card-body">
                     <input type="hidden" id="timelineEventId">
                     
                     <div class="row g-3">
@@ -186,78 +187,70 @@
                             <div id="timelineBeschrijvingEditor" style="height: 150px;"></div>
                         </div>
                         
-                        <!-- Start Datum, Eind Datum, Achtergrond Kleur -->
-                        <div class="col-md-4">
+                        <!-- 🔴 COMPACT: Start Datum, Eind Datum, Kleuren op 1 rij -->
+                        <div class="col-md-3">
                             <label class="form-label">Start Datum</label>
-                            <input type="text" id="timelineStartDatum" class="form-control" placeholder="-1000 of 2024-01-15">
+                            <input type="text" id="timelineStartDatum" class="form-control form-control-sm" placeholder="-1000 of 2024-01-15">
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <label class="form-label">Eind Datum</label>
-                            <input type="text" id="timelineEndDatum" class="form-control" placeholder="Optioneel">
+                            <input type="text" id="timelineEndDatum" class="form-control form-control-sm" placeholder="Optioneel">
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <label class="form-label">Achtergrond Kleur</label>
-                            <input type="color" id="timelineKleur" class="form-control form-control-color w-100" value="#cd8989">
+                            <input type="color" id="timelineKleur" class="form-control form-control-color form-control-sm w-100" value="#cd8989">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Tekst Kleur</label>
+                            <input type="color" id="timelineTekstKleur" class="form-control form-control-color form-control-sm w-100" value="#ffffff">
                         </div>
                         
-                        <!-- Tekst Kleur (optioneel) -->
-                        <div class="col-12">
-                            <label class="form-label">Tekst Kleur (optioneel)</label>
-                            <input type="color" id="timelineTekstKleur" class="form-control form-control-color" value="#ffffff" style="width: 100px;">
-                        </div>
-                        
-                        <!-- Start Vers - Boek, Hoofdstuk, Vers -->
-                        <div class="col-12">
-                            <label class="form-label fw-semibold">Start Vers</label>
-                        </div>
+                        <!-- 🔴 COMPACT: Start Vers met inline labels -->
                         <div class="col-md-4">
-                            <label class="form-label small text-muted">Boek</label>
-                            <select id="timelineStartBoek" class="form-select">
+                            <label class="form-label small fw-semibold mb-1">Boek <span class="text-muted">(Start Vers)</span></label>
+                            <select id="timelineStartBoek" class="form-select form-select-sm">
                                 <option value="">Kies boek...</option>
                             </select>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label small text-muted">Hoofdstuk</label>
-                            <select id="timelineStartHoofdstuk" class="form-select">
+                            <label class="form-label small fw-semibold mb-1">Hoofdstuk</label>
+                            <select id="timelineStartHoofdstuk" class="form-select form-select-sm">
                                 <option value="">Hoofdstuk</option>
                             </select>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label small text-muted">Vers</label>
-                            <select id="timelineStartVers" class="form-select">
+                            <label class="form-label small fw-semibold mb-1">Vers</label>
+                            <select id="timelineStartVers" class="form-select form-select-sm">
                                 <option value="">Vers</option>
                             </select>
                         </div>
                         
-                        <!-- Eind Vers - Boek, Hoofdstuk, Vers -->
-                        <div class="col-12">
-                            <label class="form-label fw-semibold">Eind Vers</label>
-                        </div>
+                        <!-- 🔴 COMPACT: Eind Vers met inline labels -->
                         <div class="col-md-4">
-                            <label class="form-label small text-muted">Boek</label>
-                            <select id="timelineEndBoek" class="form-select">
+                            <label class="form-label small fw-semibold mb-1">Boek <span class="text-muted">(Eind Vers)</span></label>
+                            <select id="timelineEndBoek" class="form-select form-select-sm">
                                 <option value="">Kies boek...</option>
                             </select>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label small text-muted">Hoofdstuk</label>
-                            <select id="timelineEndHoofdstuk" class="form-select">
+                            <label class="form-label small fw-semibold mb-1">Hoofdstuk</label>
+                            <select id="timelineEndHoofdstuk" class="form-select form-select-sm">
                                 <option value="">Hoofdstuk</option>
                             </select>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label small text-muted">Vers</label>
-                            <select id="timelineEndVers" class="form-select">
+                            <label class="form-label small fw-semibold mb-1">Vers</label>
+                            <select id="timelineEndVers" class="form-select form-select-sm">
                                 <option value="">Vers</option>
                             </select>
                         </div>
                         
                         <!-- Buttons -->
                         <div class="col-12">
-                            <button class="btn btn-primary" onclick="saveTimeline()">
+                            <button class="btn btn-primary btn-sm" onclick="saveTimeline()">
                                 <i class="bi bi-plus"></i> Event Opslaan
                             </button>
-                            <button class="btn btn-outline-secondary ms-2" onclick="clearTimelineForm()">
+                            <button class="btn btn-outline-secondary btn-sm ms-2" onclick="clearTimelineForm()">
                                 <i class="bi bi-x"></i> Formulier Legen
                             </button>
                         </div>
@@ -273,6 +266,7 @@
                 </div>
             </div>
         </div>
+
 
         
         <!-- Locations Section -->

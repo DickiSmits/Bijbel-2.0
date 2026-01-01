@@ -7,7 +7,8 @@
 
 /**
  * ADMIN-DATATABLE-LOADERS.JS - TIMELINE WITH VERSE REFERENCES
- * Update the loadTimelineList function with this version
+ * FIXED: Handles both verse IDs (numbers) and text references
+ * UPDATED: Column widths for compact layout
  */
 
 async function loadTimelineList() {
@@ -25,40 +26,61 @@ async function loadTimelineList() {
     // Load verse data for better display
     const verseCache = {};
     
-    // Pre-load verse data for events that have verse IDs
+    // 🔴 FIXED: Pre-load verse data (only if it's a valid number!)
     for (const event of events) {
+        // Start verse
         if (event.Vers_ID_Start && !verseCache[event.Vers_ID_Start]) {
-            const verse = await window.apiCall(`verse_detail&vers_id=${event.Vers_ID_Start}`);
-            if (verse) {
-                verseCache[event.Vers_ID_Start] = `${verse.Bijbelboeknaam} ${verse.Hoofdstuknummer}:${verse.Versnummer}`;
+            // Check if it's actually a number before calling API
+            const isNumber = !isNaN(parseInt(event.Vers_ID_Start));
+            
+            if (isNumber) {
+                const verse = await window.apiCall(`verse_detail&vers_id=${event.Vers_ID_Start}`);
+                if (verse) {
+                    verseCache[event.Vers_ID_Start] = `${verse.Bijbelboeknaam} ${verse.Hoofdstuknummer}:${verse.Versnummer}`;
+                }
+            } else {
+                // It's already a text reference like "Exodus 1:1", use as-is
+                verseCache[event.Vers_ID_Start] = event.Vers_ID_Start;
             }
         }
         
+        // End verse
         if (event.Vers_ID_End && !verseCache[event.Vers_ID_End]) {
-            const verse = await window.apiCall(`verse_detail&vers_id=${event.Vers_ID_End}`);
-            if (verse) {
-                verseCache[event.Vers_ID_End] = `${verse.Bijbelboeknaam} ${verse.Hoofdstuknummer}:${verse.Versnummer}`;
+            // Check if it's actually a number before calling API
+            const isNumber = !isNaN(parseInt(event.Vers_ID_End));
+            
+            if (isNumber) {
+                const verse = await window.apiCall(`verse_detail&vers_id=${event.Vers_ID_End}`);
+                if (verse) {
+                    verseCache[event.Vers_ID_End] = `${verse.Bijbelboeknaam} ${verse.Hoofdstuknummer}:${verse.Versnummer}`;
+                }
+            } else {
+                // It's already a text reference, use as-is
+                verseCache[event.Vers_ID_End] = event.Vers_ID_End;
             }
         }
     }
     
-    // Create DataTable
+    // 🔴 UPDATED: Create DataTable with column widths for compact layout
     new window.DataTable('timelineList', events, {
         idField: 'Event_ID',
         columns: [
             { 
                 label: 'Titel', 
-                field: 'Titel' 
+                field: 'Titel',
+                width: '20%'  // 🔴 COMPACT: Smaller title column
             },
             { 
                 label: 'Start', 
                 field: 'Start_Datum',
-                format: (val) => val ? val.substring(0, 10) : '-'
+                format: (val) => val ? val.substring(0, 10) : '-',
+                width: '10%'
             },
             { 
                 label: 'Eind', 
                 field: 'End_Datum',
-                format: (val) => val ? val.substring(0, 10) : '-'
+                format: (val) => val ? val.substring(0, 10) : '-',
+                width: '10%'
             },
             { 
                 label: 'Bijbel Referentie', 
@@ -79,18 +101,22 @@ async function loadTimelineList() {
                     }
                     
                     return result || '-';
-                }
+                },
+                width: '25%'
             },
             { 
                 label: 'Type', 
-                field: 'Type' 
+                field: 'Type',
+                width: '10%'
             },
             { 
                 label: 'Kleur', 
                 field: 'Kleur',
-                format: (val) => `<span class="color-badge" style="background-color: ${val}"></span> ${val}`
+                format: (val) => `<span class="color-badge" style="background-color: ${val}"></span> ${val}`,
+                width: '15%'
             }
         ],
+        actionColumnWidth: '10%',  // 🔴 COMPACT: Wider for horizontal buttons
         onEdit: 'editTimeline',
         onDelete: 'deleteTimeline'
     });
@@ -99,7 +125,7 @@ async function loadTimelineList() {
 // Make global
 window.loadTimelineList = loadTimelineList;
 
-console.log('✅ Timeline DataTable loader updated with verse references');
+console.log('✅ Timeline DataTable loader updated (verse fix + compact columns)');
 
 
 // ============= TIMELINE GROUPS MET DATATABLE =============
@@ -298,4 +324,4 @@ window.loadLocationList = loadLocationList;
 window.loadImageList = loadImageList;
 window.loadNotes = loadNotes;
 
-console.log('✅ DataTable loading functions registered');
+console.log('✅ DataTable loading functions registered (with fixes)');
