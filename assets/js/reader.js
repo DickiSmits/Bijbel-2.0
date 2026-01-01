@@ -429,11 +429,24 @@ async function loadVerses(append = false) {
 }
 
 // Select verse
+// Select verse
 function selectVerse(versId) {
     document.querySelectorAll('.verse').forEach(v => v.classList.remove('active'));
     const verseElement = document.querySelector(`[data-vers-id="${versId}"]`);
     if (verseElement) {
         verseElement.classList.add('active');
+        
+        // Get verse text for location matching
+        const verseTextElement = verseElement.querySelector('.verse-text');
+        if (verseTextElement) {
+            // Get plain text (strip HTML if any)
+            const verseText = verseTextElement.textContent || verseTextElement.innerText;
+            
+            // Check for locations in verse text and highlight on map
+            if (typeof window.highlightLocationFromVerse === 'function') {
+                window.highlightLocationFromVerse(verseText);
+            }
+        }
     }
     currentVerse = versId;
 }
