@@ -22,10 +22,16 @@ if (isset($_GET['api'])) {
     // Notes endpoints router - alle notes-gerelateerde endpoints gebruiken notes.php
     $notesEndpoints = ['notes', 'get_note', 'save_note', 'delete_note'];
     
+    // ✅ NIEUWE REGEL: Profile endpoints router
+    $profileEndpoints = ['profiles', 'create_profile', 'update_profile', 'delete_profile'];
+    
     if (in_array($endpoint, $imageEndpoints)) {
         $apiFile = __DIR__ . '/api/images.php';
     } elseif (in_array($endpoint, $notesEndpoints)) {
         $apiFile = __DIR__ . '/api/notes.php';
+    } elseif (in_array($endpoint, $profileEndpoints)) {
+        // ✅ NIEUWE REGEL: Route naar profiles.php
+        $apiFile = __DIR__ . '/api/profiles.php';
     } else {
         $apiFile = __DIR__ . '/api/' . $endpoint . '.php';
     }
@@ -215,25 +221,19 @@ if (!is_dir('images')) {
         <?php if (file_exists(__DIR__ . '/assets/js/reader.js')): ?>
         <script src="assets/js/reader.js"></script>
         <?php endif; ?>
+        
         <?php if (file_exists(__DIR__ . '/assets/js/map.js')): ?>
         <script src="assets/js/map.js"></script>
         <?php endif; ?>
+        
         <?php if (file_exists(__DIR__ . '/assets/js/timeline.js')): ?>
         <script src="assets/js/timeline.js"></script>
         <?php endif; ?>
         
-        <!-- ==============================================================
-             MULTI-PROFIEL INDICATOR V3
-             - Auto-detect nieuwe hoofdstukken bij scrollen
-             - Werkt ZONDER reader.js aanpassingen
-             - Onbeperkt scrollen door alle boeken
-             ============================================================== -->
         <script>
         (function() {
-            'use strict';
-            
-            const profileCache = new Map();
             const processedChapters = new Set();
+            const profileCache = new Map();
             
             async function loadProfilesForChapter(boek, hoofdstuk) {
                 const cacheKey = `${boek}_${hoofdstuk}`;
