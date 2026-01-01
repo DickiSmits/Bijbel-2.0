@@ -87,6 +87,15 @@ async function loadLocations() {
 }
 
 /**
+ * Escape special regex characters in a string
+ * @param {string} str - String to escape
+ * @returns {string} - Escaped string safe for regex
+ */
+function escapeRegex(str) {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
  * Find location name in verse text
  * @param {string} verseText - The verse text to search
  * @returns {object|null} - Location object if found, null otherwise
@@ -106,9 +115,12 @@ function findLocationInVerse(verseText) {
     for (const location of sortedLocations) {
         const locationName = location.Naam.toLowerCase();
         
+        // Escape special regex characters (like [ ] in "Filadelfia [Klein-Azië]")
+        const escapedName = escapeRegex(locationName);
+        
         // Check if location name appears in verse
         // Use word boundaries to avoid partial matches
-        const regex = new RegExp(`\\b${locationName}\\b`, 'i');
+        const regex = new RegExp(`\\b${escapedName}\\b`, 'i');
         
         if (regex.test(normalizedVerse)) {
             console.log(`📍 Found location in verse: ${location.Naam}`);
