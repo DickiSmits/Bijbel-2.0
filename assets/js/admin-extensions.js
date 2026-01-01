@@ -62,11 +62,39 @@ async function editLocation(locationId) {
 }
 
 /**
- * Edit Image - Load data (simplified - just show current caption)
+ * Edit Image - Load data into form
  */
 async function editImage(imageId) {
-    window.showNotification('Image edit: Toon modal met caption edit (TODO)');
-    // TODO: Create modal popup with caption, alignment, size fields
+    console.log('📝 Editing image:', imageId);
+    
+    // Get image data
+    const result = await window.apiCall(`get_image&id=${imageId}`);
+    
+    if (!result) {
+        window.showNotification('Afbeelding niet gevonden', true);
+        return;
+    }
+    
+    // Fill form
+    document.getElementById('imageId').value = result.Afbeelding_ID;
+    document.getElementById('imageCaption').value = result.Caption || '';
+    
+    // Update button text
+    const saveBtn = document.getElementById('imageSaveButtonText');
+    if (saveBtn) {
+        saveBtn.textContent = 'Bijwerken';
+    }
+    
+    // Fill verse selector if verse is linked
+    if (result.Vers_ID && typeof window.fillImageVerseSelector === 'function') {
+        await window.fillImageVerseSelector(result.Vers_ID);
+    }
+    
+    // Scroll to form
+    document.getElementById('imageCaption').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    document.getElementById('imageCaption').focus();
+    
+    window.showNotification('Afbeelding geladen - pas aan en klik Bijwerken');
 }
 
 /**
