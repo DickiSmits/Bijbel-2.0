@@ -2099,7 +2099,7 @@ async function silentApiCall(endpoint) {
 }
 
 // Load image list (tries multiple endpoints)
-window.loadImageList = async function() {
+/* window.loadImageList = async function() {
     console.log('🖼️ Loading images...');
     
     const imgList = document.getElementById('imageList');
@@ -2179,7 +2179,7 @@ window.loadImageList = async function() {
         
         imgList.appendChild(col);
     });
-};
+}; */
 
 // Upload image function
 window.uploadImage = async function() {
