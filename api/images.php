@@ -1,9 +1,9 @@
 <?php
 /**
- * API/IMAGES.PHP - PERFECT VERSION
+ * API/IMAGES.PHP - FIXED VERSION WITH LAYOUT SUPPORT
  * 
  * Database schema:
- * - Table: Afbeeldingen (with columns: Afbeelding_ID, Bestandsnaam, etc.)
+ * - Table: Afbeeldingen (with columns: Afbeelding_ID, Bestandsnaam, Uitlijning, Breedte, Hoogte, etc.)
  * - Table: De_Bijbel (NOT "Verzen"!)
  */
 
@@ -95,7 +95,7 @@ switch ($endpoint) {
         }
         break;
     
-    // ============= SAVE IMAGE =============
+    // ============= SAVE IMAGE - ✅ FIXED WITH LAYOUT SUPPORT =============
     case 'save_image':
     case 'upload_image':
     case 'update_image':
@@ -109,6 +109,26 @@ switch ($endpoint) {
         $caption = isset($_POST['caption']) ? $_POST['caption'] : '';
         $versId = isset($_POST['vers_id']) && $_POST['vers_id'] !== '' ? (int)$_POST['vers_id'] : null;
         $file = isset($_FILES['image']) ? $_FILES['image'] : null;
+        
+        // ✅ NIEUW: Lees layout velden uit POST (NIET HARDCODED!)
+        $uitlijning = isset($_POST['uitlijning']) ? $_POST['uitlijning'] : 'center';
+        $breedte = isset($_POST['breedte']) && $_POST['breedte'] !== '' ? (int)$_POST['breedte'] : 400;
+        $hoogte = isset($_POST['hoogte']) && $_POST['hoogte'] !== '' ? (int)$_POST['hoogte'] : null;
+        
+        // Validate uitlijning
+        if (!in_array($uitlijning, ['left', 'center', 'right'])) {
+            $uitlijning = 'center';
+        }
+        
+        // Validate breedte (100-1200px)
+        if ($breedte < 100 || $breedte > 1200) {
+            $breedte = 400;
+        }
+        
+        // Validate hoogte (100-1200px or null)
+        if ($hoogte !== null && ($hoogte < 100 || $hoogte > 1200)) {
+            $hoogte = null;
+        }
         
         if (!$imageId && !$file) {
             http_response_code(400);
@@ -125,6 +145,16 @@ switch ($endpoint) {
                 $updates[] = "Caption = ?";
                 $params[] = $caption;
                 
+                // ✅ NIEUW: Update layout velden
+                $updates[] = "Uitlijning = ?";
+                $params[] = $uitlijning;
+                
+                $updates[] = "Breedte = ?";
+                $params[] = $breedte;
+                
+                $updates[] = "Hoogte = ?";
+                $params[] = $hoogte;
+                
                 if ($versId !== null) {
                     $updates[] = "Vers_ID = ?";
                     $params[] = $versId;
@@ -132,6 +162,7 @@ switch ($endpoint) {
                     $updates[] = "Vers_ID = NULL";
                 }
                 
+                // Handle file upload for update
                 if ($file && $file['error'] === UPLOAD_ERR_OK) {
                     $allowed = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
                     $finfo = finfo_open(FILEINFO_MIME_TYPE);
@@ -155,6 +186,7 @@ switch ($endpoint) {
                         $params[] = $filename;
                         $params[] = basename($file['name']);
                         
+                        // Delete old file
                         $stmt = $db->prepare("SELECT Bestandspad FROM Afbeeldingen WHERE Afbeelding_ID = ?");
                         $stmt->execute([$imageId]);
                         $old = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -202,10 +234,11 @@ switch ($endpoint) {
                     exit;
                 }
                 
+                // ✅ FIXED: Gebruik ECHTE waardes, niet hardcoded!
                 $stmt = $db->prepare("
                     INSERT INTO Afbeeldingen 
-                    (Bestandspad, Bestandsnaam, Originele_Naam, Caption, Vers_ID, Geupload_Op, Uitlijning, Breedte) 
-                    VALUES (?, ?, ?, ?, ?, datetime('now'), 'center', 400)
+                    (Bestandspad, Bestandsnaam, Originele_Naam, Caption, Vers_ID, Geupload_Op, Uitlijning, Breedte, Hoogte) 
+                    VALUES (?, ?, ?, ?, ?, datetime('now'), ?, ?, ?)
                 ");
                 
                 $stmt->execute([
@@ -213,7 +246,10 @@ switch ($endpoint) {
                     $filename,
                     basename($file['name']),
                     $caption,
-                    $versId
+                    $versId,
+                    $uitlijning,  // ✅ Niet hardcoded 'center'!
+                    $breedte,     // ✅ Niet hardcoded 400!
+                    $hoogte       // ✅ Niet NULL, maar echte waarde!
                 ]);
                 
                 $newId = $db->lastInsertId();
