@@ -1412,58 +1412,158 @@ async function loadLocationList() {
 
 // ============= IMAGES DATA LOADING =============
 
-async function loadImageList() {
-    console.log('🖼️ Loading images...');
+// ════════════════════════════════════════════════════════════════════════════
+// 🔧 UPDATED loadImages() FUNCTIE - MET UITLIJNING KOLOM
+// Vervang de loadImages() functie in admin.js met deze versie
+// ════════════════════════════════════════════════════════════════════════════
+
+async function loadImages() {
+    console.log('📸 Loading images...');
     
-    const images = await window.apiCall('all_images');
-    const list = document.getElementById('imageList');
-    
-    if (!list) {
-        console.warn('⚠️ imageList element not found');
+    const container = document.getElementById('imageList');
+    if (!container) {
+        console.error('Image list container not found');
         return;
     }
+    
+    // Show loading
+    container.innerHTML = '<div class="col-12 text-center py-4"><div class="spinner-border spinner-border-sm"></div> Laden...</div>';
+    
+    // Fetch images
+    const images = await window.apiCall('all_images');
     
     if (!images || images.length === 0) {
-        list.innerHTML = '<div class="col-12"><p class="text-muted fst-italic">Nog geen afbeeldingen geüpload</p></div>';
+        container.innerHTML = '<div class="col-12 text-center py-4 text-muted">Nog geen afbeeldingen</div>';
         return;
     }
     
-    list.innerHTML = '';
+    console.log(`✅ Loaded ${images.length} images`);
+    
+    // Create table
+    let html = `
+        <div class="col-12">
+            <div class="table-responsive">
+                <table class="table table-hover table-sm">
+                    <thead>
+                        <tr>
+                            <th style="width: 80px;">Voorbeeld</th>
+                            <th>Bijschrift</th>
+                            <th style="width: 100px;">Uitlijning</th>
+                            <th style="width: 80px;">Breedte</th>
+                            <th style="width: 80px;">Hoogte</th>
+                            <th>Gekoppeld aan</th>
+                            <th style="width: 120px;">Datum</th>
+                            <th style="width: 120px;">Acties</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+    `;
     
     images.forEach(img => {
-        const versInfo = img.Bijbelboeknaam ? 
-            `<span class="text-primary fw-semibold"><i class="bi bi-book"></i> ${img.Bijbelboeknaam} ${img.Hoofdstuknummer}:${img.Versnummer}</span>` : 
-            '<span class="text-muted"><i class="bi bi-exclamation-triangle"></i> Geen vers gekoppeld</span>';
+        // Uitlijning icon en text
+        let alignmentIcon = '';
+        let alignmentText = '';
+        let alignmentColor = '';
         
-        const col = document.createElement('div');
-        col.className = 'col-md-6 col-lg-4';
-        col.innerHTML = `
-            <div class="card h-100">
-                <img src="${img.Bestandspad}" class="card-img-top" style="height: 150px; object-fit: cover;">
-                <div class="card-body">
-                    <h6 class="card-title text-truncate">${img.Originele_Naam}</h6>
-                    <p class="card-text small text-muted mb-2">
-                        ${versInfo}<br>
-                        <i class="bi bi-arrows-angle-expand"></i> ${img.Breedte}px ${img.Hoogte ? '× ' + img.Hoogte + 'px' : '(auto)'}
-                        ${img.Caption ? '<br><i class="bi bi-chat-quote"></i> ' + img.Caption : ''}
-                    </p>
-                </div>
-                <div class="card-footer bg-transparent">
-                    <button class="btn btn-sm btn-outline-primary" onclick="editImage(${img.Afbeelding_ID})">
-                        <i class="bi bi-pencil"></i> Bewerk
-                    </button>
-                    <button class="btn btn-sm btn-outline-danger" onclick="deleteImage(${img.Afbeelding_ID})">
-                        <i class="bi bi-trash"></i>
-                    </button>
-                </div>
-            </div>
+        switch(img.Uitlijning) {
+            case 'left':
+                alignmentIcon = '⬅️';
+                alignmentText = 'Links';
+                alignmentColor = 'text-primary';
+                break;
+            case 'right':
+                alignmentIcon = '➡️';
+                alignmentText = 'Rechts';
+                alignmentColor = 'text-success';
+                break;
+            case 'center':
+            default:
+                alignmentIcon = '⬌';
+                alignmentText = 'Midden';
+                alignmentColor = 'text-secondary';
+                break;
+        }
+        
+        // Verse info
+        let verseInfo = '-';
+        if (img.Bijbelboeknaam && img.Hoofdstuknummer && img.Versnummer) {
+            verseInfo = `${img.Bijbelboeknaam} ${img.Hoofdstuknummer}:${img.Versnummer}`;
+        }
+        
+        // Format date
+        const date = img.Geupload_Op ? new Date(img.Geupload_Op).toLocaleDateString('nl-NL') : '-';
+        
+        // Dimensions
+        const width = img.Breedte || 400;
+        const height = img.Hoogte || 'Auto';
+        
+        html += `
+            <tr>
+                <td>
+                    <img src="${img.Bestandspad}" 
+                         alt="${img.Caption || ''}" 
+                         style="max-width: 60px; max-height: 60px; object-fit: cover; border-radius: 4px; cursor: pointer;"
+                         onclick="window.open('${img.Bestandspad}', '_blank')"
+                         title="Klik om volledig te openen">
+                </td>
+                <td>
+                    <div style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;" 
+                         title="${img.Caption || '(Geen bijschrift)'}">
+                        ${img.Caption || '<span class="text-muted">(Geen bijschrift)</span>'}
+                    </div>
+                </td>
+                <td>
+                    <span class="${alignmentColor}" style="font-size: 1.2em;" title="${alignmentText}">
+                        ${alignmentIcon}
+                    </span>
+                    <small class="d-block ${alignmentColor}">${alignmentText}</small>
+                </td>
+                <td>
+                    <small class="text-muted">${width}px</small>
+                </td>
+                <td>
+                    <small class="text-muted">${height === 'Auto' ? height : height + 'px'}</small>
+                </td>
+                <td>
+                    <small>${verseInfo}</small>
+                </td>
+                <td>
+                    <small class="text-muted">${date}</small>
+                </td>
+                <td>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button class="btn btn-outline-primary" 
+                                onclick="editImage(${img.Afbeelding_ID})"
+                                title="Bewerken">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn btn-outline-danger" 
+                                onclick="deleteImage(${img.Afbeelding_ID})"
+                                title="Verwijderen">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
         `;
-        
-        list.appendChild(col);
     });
     
-    console.log(`✅ Loaded ${images.length} images`);
+    html += `
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    `;
+    
+    container.innerHTML = html;
 }
+
+// Maak functie global beschikbaar
+window.loadImages = loadImages;
+
+// ════════════════════════════════════════════════════════════════════════════
+// KLAAR! Save admin.js en upload
+// ════════════════════════════════════════════════════════════════════════════
 
 // ============= NOTES DATA LOADING =============
 
