@@ -335,6 +335,32 @@
                             <label class="form-label">Bijschrift</label>
                             <input type="text" id="imageCaption" class="form-control" placeholder="Omschrijving van de afbeelding">
                         </div>
+
+                        <div class="col-12">
+    <hr class="my-3">
+    <h6 class="text-muted mb-3">📐 Layout & Afmetingen</h6>
+</div>
+
+<div class="col-md-4">
+    <label class="form-label">Uitlijning</label>
+    <select id="imageUitlijning" class="form-select">
+        <option value="left">Links</option>
+        <option value="center" selected>Midden</option>
+        <option value="right">Rechts</option>
+    </select>
+</div>
+
+<div class="col-md-4">
+    <label class="form-label">Breedte (px)</label>
+    <input type="number" id="imageBreedte" class="form-control" value="400" min="100" max="1200" placeholder="400">
+    <small class="text-muted">Standaard: 400px</small>
+</div>
+
+<div class="col-md-4">
+    <label class="form-label">Hoogte (px)</label>
+    <input type="number" id="imageHoogte" class="form-control" placeholder="Auto" min="100" max="1200">
+    <small class="text-muted">Leeg = automatisch</small>
+</div>
                         
                         <!-- 🔴 NIEUW: Bijbeltekst Selector -->
                         <div class="col-12">
