@@ -1412,6 +1412,11 @@ async function loadLocationList() {
 
 // ============= IMAGES DATA LOADING =============
 
+// ════════════════════════════════════════════════════════════════════════════
+// 📊 NIEUWE loadImageList() FUNCTIE - MET TABEL EN UITLIJNING
+// Vervang regel 1415-1466 in admin.js met deze versie
+// ════════════════════════════════════════════════════════════════════════════
+
 async function loadImageList() {
     console.log('🖼️ Loading images...');
     
@@ -1428,42 +1433,139 @@ async function loadImageList() {
         return;
     }
     
-    list.innerHTML = '';
+    // ✅ NIEUW: Create TABLE instead of cards
+    let html = `
+        <div class="col-12">
+            <div class="table-responsive">
+                <table class="table table-hover table-sm align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 80px;">Voorbeeld</th>
+                            <th>Bestandsnaam</th>
+                            <th style="width: 110px;">Uitlijning</th>
+                            <th style="width: 90px;">Afmetingen</th>
+                            <th>Gekoppeld aan</th>
+                            <th style="width: 120px;">Datum</th>
+                            <th style="width: 130px;" class="text-center">Acties</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+    `;
     
     images.forEach(img => {
-        const versInfo = img.Bijbelboeknaam ? 
-            `<span class="text-primary fw-semibold"><i class="bi bi-book"></i> ${img.Bijbelboeknaam} ${img.Hoofdstuknummer}:${img.Versnummer}</span>` : 
-            '<span class="text-muted"><i class="bi bi-exclamation-triangle"></i> Geen vers gekoppeld</span>';
+        // Uitlijning icon en text
+        let alignIcon = '';
+        let alignText = '';
+        let alignColor = '';
         
-        const col = document.createElement('div');
-        col.className = 'col-md-6 col-lg-4';
-        col.innerHTML = `
-            <div class="card h-100">
-                <img src="${img.Bestandspad}" class="card-img-top" style="height: 150px; object-fit: cover;">
-                <div class="card-body">
-                    <h6 class="card-title text-truncate">${img.Originele_Naam}</h6>
-                    <p class="card-text small text-muted mb-2">
-                        ${versInfo}<br>
-                        <i class="bi bi-arrows-angle-expand"></i> ${img.Breedte}px ${img.Hoogte ? '× ' + img.Hoogte + 'px' : '(auto)'}
-                        ${img.Caption ? '<br><i class="bi bi-chat-quote"></i> ' + img.Caption : ''}
-                    </p>
-                </div>
-                <div class="card-footer bg-transparent">
-                    <button class="btn btn-sm btn-outline-primary" onclick="editImage(${img.Afbeelding_ID})">
-                        <i class="bi bi-pencil"></i> Bewerk
-                    </button>
-                    <button class="btn btn-sm btn-outline-danger" onclick="deleteImage(${img.Afbeelding_ID})">
-                        <i class="bi bi-trash"></i>
-                    </button>
-                </div>
-            </div>
+        switch(img.Uitlijning) {
+            case 'left':
+                alignIcon = '⬅️';
+                alignText = 'Links';
+                alignColor = 'text-primary';
+                break;
+            case 'right':
+                alignIcon = '➡️';
+                alignText = 'Rechts';
+                alignColor = 'text-success';
+                break;
+            case 'center':
+            default:
+                alignIcon = '⬌';
+                alignText = 'Midden';
+                alignColor = 'text-secondary';
+                break;
+        }
+        
+        // Verse info
+        let verseInfo = '<span class="text-muted">-</span>';
+        if (img.Bijbelboeknaam && img.Hoofdstuknummer && img.Versnummer) {
+            verseInfo = `<span class="text-primary"><i class="bi bi-book"></i> ${img.Bijbelboeknaam} ${img.Hoofdstuknummer}:${img.Versnummer}</span>`;
+        }
+        
+        // Format date
+        const date = img.Geupload_Op ? new Date(img.Geupload_Op).toLocaleDateString('nl-NL', { 
+            day: '2-digit', 
+            month: '2-digit', 
+            year: 'numeric' 
+        }) : '-';
+        
+        // Dimensions
+        const width = img.Breedte || 400;
+        const height = img.Hoogte || 'Auto';
+        const dimensions = `${width}px${height !== 'Auto' ? ' × ' + height + 'px' : ''}`;
+        
+        // Caption tooltip
+        const captionTitle = img.Caption ? img.Caption : img.Originele_Naam;
+        
+        html += `
+            <tr>
+                <td>
+                    <img src="${img.Bestandspad}" 
+                         alt="${img.Caption || img.Originele_Naam}" 
+                         class="rounded"
+                         style="width: 60px; height: 60px; object-fit: cover; cursor: pointer; border: 1px solid #dee2e6;"
+                         onclick="window.open('${img.Bestandspad}', '_blank')"
+                         title="Klik om volledig te openen">
+                </td>
+                <td>
+                    <div style="max-width: 200px;">
+                        <div class="text-truncate fw-semibold" title="${img.Originele_Naam}">
+                            ${img.Originele_Naam}
+                        </div>
+                        ${img.Caption ? `<small class="text-muted text-truncate d-block" title="${img.Caption}"><i class="bi bi-chat-quote"></i> ${img.Caption}</small>` : ''}
+                    </div>
+                </td>
+                <td>
+                    <div class="d-flex align-items-center gap-1">
+                        <span class="${alignColor}" style="font-size: 1.3em;" title="${alignText}">
+                            ${alignIcon}
+                        </span>
+                        <small class="${alignColor} fw-semibold">${alignText}</small>
+                    </div>
+                </td>
+                <td>
+                    <small class="text-muted font-monospace">${dimensions}</small>
+                </td>
+                <td>
+                    <small>${verseInfo}</small>
+                </td>
+                <td>
+                    <small class="text-muted">${date}</small>
+                </td>
+                <td class="text-center">
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button class="btn btn-outline-primary" 
+                                onclick="editImage(${img.Afbeelding_ID})"
+                                title="Bewerken">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn btn-outline-danger" 
+                                onclick="deleteImage(${img.Afbeelding_ID})"
+                                title="Verwijderen">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
         `;
-        
-        list.appendChild(col);
     });
     
-    console.log(`✅ Loaded ${images.length} images`);
+    html += `
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    `;
+    
+    list.innerHTML = html;
+    
+    console.log(`✅ Loaded ${images.length} images in table format`);
 }
+
+// ════════════════════════════════════════════════════════════════════════════
+// KLAAR! Dit vervangt regel 1415-1466 in admin.js
+// ════════════════════════════════════════════════════════════════════════════
 
 // ============= NOTES DATA LOADING =============
 
