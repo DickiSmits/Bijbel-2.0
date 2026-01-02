@@ -696,14 +696,6 @@ window.deleteFormatting = deleteFormatting;
 
 // ============= PROFILES =============
 
-// ============================================================================
-// PROFILE MANAGEMENT FUNCTIONS - WITH EDIT SUPPORT
-// Replace the existing profile functions in admin.js with these
-// ============================================================================
-
-/**
- * Load all profiles into dropdown and list
- */
 async function loadProfiles() {
     console.log('📋 Loading profiles...');
     const profiles = await window.apiCall('profiles');
@@ -742,7 +734,7 @@ async function loadProfiles() {
                     <th>Naam</th>
                     <th>Beschrijving</th>
                     <th>Aangemaakt</th>
-                    <th style="width: 120px;">Acties</th>
+                    <th style="width: 100px;">Acties</th>
                 </tr>
             </thead>
             <tbody id="profilesTableBody"></tbody>
@@ -765,9 +757,6 @@ async function loadProfiles() {
                 <td>${profile.Beschrijving || '<span class="text-muted">-</span>'}</td>
                 <td><small class="text-muted">${createdDate}</small></td>
                 <td>
-                    <button class="btn btn-outline-primary btn-sm me-1" onclick="editProfile(${profile.Profiel_ID})" title="Bewerk">
-                        <i class="bi bi-pencil"></i>
-                    </button>
                     <button class="btn btn-outline-danger btn-sm" onclick="deleteProfile(${profile.Profiel_ID})" title="Verwijder">
                         <i class="bi bi-trash"></i>
                     </button>
@@ -781,43 +770,7 @@ async function loadProfiles() {
     }
 }
 
-/**
- * Edit profile - Load data into form
- */
-async function editProfile(id) {
-    console.log('✏️ Editing profile:', id);
-    
-    // Get profile data
-    const profiles = await window.apiCall('profiles');
-    const profile = profiles?.find(p => p.Profiel_ID === id);
-    
-    if (!profile) {
-        window.showNotification('Profiel niet gevonden', true);
-        return;
-    }
-    
-    // Fill form
-    document.getElementById('profileId').value = profile.Profiel_ID;
-    document.getElementById('newProfileName').value = profile.Profiel_Naam;
-    document.getElementById('newProfileDesc').value = profile.Beschrijving || '';
-    
-    // Update UI
-    document.getElementById('profileFormTitle').textContent = 'Profiel Bewerken';
-    document.getElementById('profileSaveButtonText').textContent = 'Bijwerken';
-    document.getElementById('profileEditActions').style.display = 'block';
-    
-    // Scroll to form
-    document.getElementById('newProfileName').scrollIntoView({ behavior: 'smooth', block: 'center' });
-    document.getElementById('newProfileName').focus();
-    
-    window.showNotification('Profiel geladen - pas aan en klik Bijwerken');
-}
-
-/**
- * Save profile (create or update)
- */
-async function saveProfile() {
-    const profileId = document.getElementById('profileId')?.value;
+async function createProfile() {
     const naam = document.getElementById('newProfileName')?.value;
     const beschrijving = document.getElementById('newProfileDesc')?.value;
     
@@ -826,62 +779,21 @@ async function saveProfile() {
         return;
     }
     
-    if (profileId) {
-        // UPDATE existing profile
-        const result = await window.apiCall('update_profile', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                profiel_id: profileId,
-                naam, 
-                beschrijving 
-            })
-        });
-        
-        if (result?.success) {
-            window.showNotification('Profiel bijgewerkt!');
-            cancelEditProfile();
-            loadProfiles();
-        } else {
-            window.showNotification(result?.error || 'Bijwerken mislukt', true);
-        }
-    } else {
-        // CREATE new profile
-        const result = await window.apiCall('create_profile', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ naam, beschrijving })
-        });
-        
-        if (result?.success) {
-            window.showNotification('Profiel aangemaakt!');
-            document.getElementById('newProfileName').value = '';
-            document.getElementById('newProfileDesc').value = '';
-            loadProfiles();
-        } else {
-            window.showNotification(result?.error || 'Aanmaken mislukt', true);
-        }
+    const result = await window.apiCall('create_profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ naam, beschrijving })
+    });
+    
+    if (result?.success) {
+        window.showNotification('Profiel aangemaakt!');
+        document.getElementById('newProfileName').value = '';
+        document.getElementById('newProfileDesc').value = '';
+        loadProfiles();
     }
 }
+window.createProfile = createProfile;
 
-/**
- * Cancel edit mode
- */
-function cancelEditProfile() {
-    document.getElementById('profileId').value = '';
-    document.getElementById('newProfileName').value = '';
-    document.getElementById('newProfileDesc').value = '';
-    
-    document.getElementById('profileFormTitle').textContent = 'Nieuw Profiel';
-    document.getElementById('profileSaveButtonText').textContent = 'Aanmaken';
-    document.getElementById('profileEditActions').style.display = 'none';
-    
-    window.showNotification('Bewerken geannuleerd');
-}
-
-/**
- * Delete profile (unchanged)
- */
 async function deleteProfile(id) {
     if (!confirm('Weet je zeker dat je dit profiel wilt verwijderen?')) return;
     
@@ -891,24 +803,7 @@ async function deleteProfile(id) {
         loadProfiles();
     }
 }
-
-/**
- * Legacy function for compatibility
- */
-async function createProfile() {
-    await saveProfile();
-}
-
-// Make functions global
-window.loadProfiles = loadProfiles;
-window.editProfile = editProfile;
-window.saveProfile = saveProfile;
-window.cancelEditProfile = cancelEditProfile;
-window.createProfile = createProfile;
 window.deleteProfile = deleteProfile;
-
-console.log('✅ Profile functions loaded (with edit support)');
-
 
 // ============================================================================
 // VOEG DEZE FUNCTIE TOE AAN ADMIN.JS (na saveAllChapterFormatting)
@@ -2719,6 +2614,11 @@ async function saveImage() {
     const caption = document.getElementById('imageCaption')?.value;
     const versId = document.getElementById('imageVers')?.value || null;
     
+    // NEW: Get layout & dimensions
+    const uitlijning = document.getElementById('imageUitlijning')?.value || 'center';
+    const breedte = document.getElementById('imageBreedte')?.value || 400;
+    const hoogte = document.getElementById('imageHoogte')?.value || '';
+    
     // For new uploads, file is required
     if (!imageId && !file) {
         window.showNotification('Selecteer een afbeelding', true);
@@ -2736,6 +2636,13 @@ async function saveImage() {
     if (caption) formData.append('caption', caption);
     if (versId) formData.append('vers_id', versId);
     if (imageId) formData.append('image_id', imageId);
+    
+    // NEW: Append layout & dimensions
+    formData.append('uitlijning', uitlijning);
+    formData.append('breedte', breedte);
+    formData.append('hoogte', hoogte);
+    
+    console.log('📤 Uploading image with layout:', { uitlijning, breedte, hoogte });
     
     try {
         const response = await fetch('?api=save_image', {
@@ -2779,6 +2686,11 @@ async function editImage(imageId) {
     // Fill form
     document.getElementById('imageId').value = result.Afbeelding_ID;
     document.getElementById('imageCaption').value = result.Caption || '';
+    
+    // NEW: Fill layout & dimensions
+    document.getElementById('imageUitlijning').value = result.Uitlijning || 'center';
+    document.getElementById('imageBreedte').value = result.Breedte || 400;
+    document.getElementById('imageHoogte').value = result.Hoogte || '';
     
     // Update button text
     const saveBtn = document.getElementById('imageSaveButtonText');
@@ -2862,6 +2774,11 @@ function clearImageForm() {
     document.getElementById('imageBoek').value = '';
     document.getElementById('imageHoofdstuk').innerHTML = '<option value="">Hoofdstuk</option>';
     document.getElementById('imageVers').innerHTML = '<option value="">Vers</option>';
+    
+    // NEW: Reset layout & dimensions to defaults
+    document.getElementById('imageUitlijning').value = 'center';
+    document.getElementById('imageBreedte').value = 400;
+    document.getElementById('imageHoogte').value = '';
     
     // Reset button text
     const saveBtn = document.getElementById('imageSaveButtonText');
