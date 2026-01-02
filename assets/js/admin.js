@@ -1564,7 +1564,7 @@ async function loadImageList() {
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-// KLAAR! Dit vervangt regel 1415-1466 in admin.js
+//  KLAAR! Dit vervangt regel 1415-1466 in admin.js
 // ════════════════════════════════════════════════════════════════════════════
 
 // ============= NOTES DATA LOADING =============
