@@ -9,6 +9,7 @@ let currentProfile = null;
 let currentOffset = 0;
 let loading = false;
 let allLoaded = false;
+let searchQuery = '';  // Search query for highlighting
 
 // Continuous scrolling support
 let continuousScrolling = false;  // Start in chapter mode
@@ -302,6 +303,12 @@ async function loadVerses(append = false) {
     if (currentBook) params.append('boek', currentBook);
     if (currentProfile) params.append('profiel_id', currentProfile);
     
+    // Add search parameter for filtering
+    if (searchQuery && searchQuery.trim().length > 0) {
+        params.append('search', searchQuery.trim());
+        console.log('🔍 Search query:', searchQuery.trim());
+    }
+    
     // CONTINUOUS SCROLLING MODE: Use after_vers_id to load next verses
     if (continuousScrolling && lastLoadedVersId) {
         params.append('after_vers_id', lastLoadedVersId);
@@ -394,7 +401,13 @@ async function loadVerses(append = false) {
         
         const text = document.createElement('span');
         text.className = 'verse-text';
-        text.innerHTML = verse.Opgemaakte_Tekst || verse.Tekst;
+        
+        // Apply search highlighting if query exists
+        let textContent = verse.Opgemaakte_Tekst || verse.Tekst;
+        if (searchQuery && searchQuery.trim().length > 0) {
+            textContent = highlightSearchTerms(textContent, searchQuery.trim());
+        }
+        text.innerHTML = textContent;
         
         verseSpan.appendChild(number);
         verseSpan.appendChild(text);
@@ -473,10 +486,53 @@ function navigateTimelineNext() {
     console.log('Navigate timeline next - requires timeline.js');
 }
 
+// ============= SEARCH HIGHLIGHTING =============
+
+/**
+ * Highlight search terms in text
+ * @param {string} text - HTML text to search in
+ * @param {string} query - Search query
+ * @returns {string} Text with highlighted search terms
+ */
+function highlightSearchTerms(text, query) {
+    if (!query || query.trim().length === 0) {
+        return text;
+    }
+    
+    // Escape special regex characters in query
+    const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    
+    // Create regex for case-insensitive matching
+    // Use word boundaries for whole word matching, or partial for flexibility
+    const regex = new RegExp(`(${escapedQuery})`, 'gi');
+    
+    // Temporarily replace HTML tags with placeholders to avoid breaking them
+    const tagPattern = /<[^>]+>/g;
+    const tags = [];
+    let tagIndex = 0;
+    
+    // Store tags and replace with placeholders
+    let processedText = text.replace(tagPattern, (match) => {
+        tags.push(match);
+        return `___TAG_${tagIndex++}___`;
+    });
+    
+    // Apply highlighting to text between tags
+    processedText = processedText.replace(regex, '<mark class="search-highlight">$1</mark>');
+    
+    // Restore original tags
+    processedText = processedText.replace(/___TAG_(\d+)___/g, (match, index) => {
+        return tags[parseInt(index)];
+    });
+    
+    return processedText;
+}
+
 // Make functions global
 window.initReader = initReader;
 window.toggleTimelineFilter = toggleTimelineFilter;
 window.navigateTimelinePrev = navigateTimelinePrev;
 window.navigateTimelineNext = navigateTimelineNext;
+window.highlightSearchTerms = highlightSearchTerms;
 
 console.log('Reader.js loaded');
