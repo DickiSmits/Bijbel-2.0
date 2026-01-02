@@ -2713,84 +2713,29 @@ function setupImageVerseSelectors() {
 /**
  * Save/Upload Image
  */
-// ════════════════════════════════════════════════════════════════════════════
-// 🔧 ADMIN.JS PATCH - SAVEIMAGE FUNCTIE MET LAYOUT SUPPORT
-// ════════════════════════════════════════════════════════════════════════════
-//
-// INSTRUCTIES:
-// 1. Open je huidige /assets/js/admin.js
-// 2. Zoek de functie: async function saveImage() {
-// 3. Selecteer de HELE functie (van async function tot de laatste })
-// 4. Vervang met onderstaande code
-// 5. Save en upload
-//
-// ════════════════════════════════════════════════════════════════════════════
-
 async function saveImage() {
     const imageId = document.getElementById('imageId')?.value;
-    const imageFile = document.getElementById('imageFile')?.files[0];
-    const caption = document.getElementById('imageCaption')?.value || '';
-    const versId = document.getElementById('imageVerse')?.value || null;
+    const file = document.getElementById('imageFile')?.files[0];
+    const caption = document.getElementById('imageCaption')?.value;
+    const versId = document.getElementById('imageVers')?.value || null;
     
-    // ✅ NIEUW: Lees layout velden
-    const uitlijning = document.getElementById('imageUitlijning')?.value || 'center';
-    const breedte = document.getElementById('imageBreedte')?.value || 400;
-    const hoogte = document.getElementById('imageHoogte')?.value || '';
-    
-    console.log('💾 Saving image...');
-    console.log('   Caption:', caption);
-    console.log('   Vers ID:', versId);
-    console.log('   ✅ Uitlijning:', uitlijning);  // DEBUG
-    console.log('   ✅ Breedte:', breedte);        // DEBUG
-    console.log('   ✅ Hoogte:', hoogte);          // DEBUG
-    
-    // Edit mode: update existing image
-    if (imageId) {
-        console.log('📝 Edit mode - Image ID:', imageId);
-        
-        const result = await window.apiCall('update_image', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                image_id: imageId,
-                caption: caption,
-                vers_id: versId,
-                // ✅ NIEUW: Layout velden toevoegen
-                uitlijning: uitlijning,
-                breedte: parseInt(breedte) || 400,
-                hoogte: hoogte ? parseInt(hoogte) : null
-            })
-        });
-        
-        if (result?.success) {
-            window.showNotification('Afbeelding bijgewerkt!');
-            clearImageForm();
-            loadImages();
-        } else {
-            window.showNotification('Fout bij bijwerken: ' + (result?.error || 'Unknown'), true);
-        }
-        return;
-    }
-    
-    // Create mode: upload new image
-    if (!imageFile) {
+    // For new uploads, file is required
+    if (!imageId && !file) {
         window.showNotification('Selecteer een afbeelding', true);
         return;
     }
     
-    console.log('📤 Upload mode - File:', imageFile.name);
+    // For edits, file is optional (only updating caption/verse)
+    if (imageId && !file && !caption && !versId) {
+        window.showNotification('Vul minimaal caption of vers in', true);
+        return;
+    }
     
     const formData = new FormData();
-    formData.append('image', imageFile);
-    formData.append('caption', caption);
+    if (file) formData.append('image', file);
+    if (caption) formData.append('caption', caption);
     if (versId) formData.append('vers_id', versId);
-    
-    // ✅ NIEUW: Layout velden toevoegen aan FormData
-    formData.append('uitlijning', uitlijning);
-    formData.append('breedte', breedte);
-    formData.append('hoogte', hoogte);
-    
-    console.log('   ✅ FormData created with layout fields');
+    if (imageId) formData.append('image_id', imageId);
     
     try {
         const response = await fetch('?api=save_image', {
@@ -2800,22 +2745,22 @@ async function saveImage() {
         
         const result = await response.json();
         
-        if (result.success) {
-            window.showNotification('Afbeelding geüpload!');
+        if (result && result.success) {
+            window.showNotification(imageId ? 'Afbeelding bijgewerkt!' : 'Afbeelding geüpload!');
             clearImageForm();
-            loadImages();
+            
+            // Reload image list
+            if (typeof loadImageList === 'function') {
+                loadImageList();
+            }
         } else {
-            window.showNotification('Upload fout: ' + (result.error || 'Unknown'), true);
+            window.showNotification(result?.error || 'Er is een fout opgetreden', true);
         }
     } catch (error) {
-        console.error('Upload error:', error);
-        window.showNotification('Upload fout: ' + error.message, true);
+        console.error('❌ Upload error:', error);
+        window.showNotification('Upload mislukt', true);
     }
 }
-
-// ════════════════════════════════════════════════════════════════════════════
-// DAT IS ALLES! Save admin.js en upload
-// ════════════════════════════════════════════════════════════════════════════
 
 /**
  * Edit Image - Load data into form
