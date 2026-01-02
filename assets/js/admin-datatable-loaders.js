@@ -256,25 +256,65 @@ async function loadImageList() {
             { 
                 label: 'Preview', 
                 field: 'Bestandspad',
-                format: (val) => `<img src="${val}" style="width: 60px; height: 40px; object-fit: cover; border-radius: 4px;">`
+                format: (val) => `<img src="${val}" style="width: 60px; height: 40px; object-fit: cover; border-radius: 4px; cursor: pointer;" onclick="window.open('${val}', '_blank')" title="Klik om te openen">`,
+                width: '80px'
             },
             { 
-                label: 'Caption', 
-                field: 'Caption',
-                format: (val) => val || '<em class="text-muted">Geen caption</em>'
+                label: 'Bestandsnaam', 
+                field: 'Originele_Naam',
+                format: (val, row) => {
+                    let html = `<div class="fw-semibold">${val || 'Onbekend'}</div>`;
+                    if (row.Caption) {
+                        html += `<small class="text-muted"><i class="bi bi-chat-quote"></i> ${row.Caption}</small>`;
+                    }
+                    return html;
+                }
+            },
+            { 
+                label: 'Uitlijning', 
+                field: 'Uitlijning',
+                format: (val) => {
+                    let icon = '⬌';
+                    let text = 'Midden';
+                    let color = 'secondary';
+                    
+                    if (val === 'left') {
+                        icon = '⬅️';
+                        text = 'Links';
+                        color = 'primary';
+                    } else if (val === 'right') {
+                        icon = '➡️';
+                        text = 'Rechts';
+                        color = 'success';
+                    }
+                    
+                    return `<span class="text-${color}" style="font-size: 1.2em;">${icon}</span> <small class="text-${color} fw-semibold">${text}</small>`;
+                },
+                width: '110px'
+            },
+            { 
+                label: 'Afmetingen', 
+                field: 'Breedte',
+                format: (val, row) => {
+                    const width = val || 400;
+                    const height = row.Hoogte || 'Auto';
+                    return `<small class="text-muted font-monospace">${width}px${height !== 'Auto' ? ' × ' + height + 'px' : ''}</small>`;
+                },
+                width: '100px'
             },
             { 
                 label: 'Bijbelvers', 
                 field: 'Bijbelboeknaam',
                 format: (val, row) => {
-                    if (!val) return '-';
-                    return `${val} ${row.Hoofdstuknummer}:${row.Versnummer}`;
+                    if (!val) return '<span class="text-muted">-</span>';
+                    return `<small class="text-primary"><i class="bi bi-book"></i> ${val} ${row.Hoofdstuknummer}:${row.Versnummer}</small>`;
                 }
             },
             { 
                 label: 'Geüpload', 
                 field: 'Geupload_Op',
-                format: (val) => val ? new Date(val).toLocaleDateString('nl-NL') : '-'
+                format: (val) => val ? `<small class="text-muted">${new Date(val).toLocaleDateString('nl-NL')}</small>` : '-',
+                width: '100px'
             }
         ],
         onEdit: 'editImage',
