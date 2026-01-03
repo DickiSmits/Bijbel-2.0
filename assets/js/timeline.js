@@ -1,5 +1,5 @@
 /**
- * TIMELINE.JS - super clean Enhanced with Filter & Search
+ * TIMELINE.JS - Enhanced with Filter & Search
  */
 
 window.timeline = null;
@@ -7,8 +7,8 @@ window.timelineItems = null;
 window.timelineGroups = null;
 window.allTimelineEvents = []; // Store all events
 window.allTimelineGroupsData = []; // Store all groups data
-let activeGroupFilters = new Set(); // Active group filters
-let searchQuery = '';
+window.activeGroupFilters = new Set(); // Active group filters
+window.timelineSearchQuery = '';
 
 // Initialize timeline
 function initTimeline() {
@@ -262,14 +262,14 @@ function createFilterUI(groups) {
     const searchInput = document.getElementById('timelineSearchInput');
     if (searchInput) {
         searchInput.addEventListener('input', (e) => {
-            searchQuery = e.target.value.toLowerCase();
+            timelineSearchQuery = e.target.value.toLowerCase();
             saveFilterState();  // Save search query
             filterTimeline();
             
             // Show/hide clear button
             const clearBtn = document.getElementById('clearSearchBtn');
             if (clearBtn) {
-                clearBtn.style.display = searchQuery ? 'block' : 'none';
+                clearBtn.style.display = timelineSearchQuery ? 'block' : 'none';
             }
         });
     }
@@ -303,30 +303,30 @@ function restoreFilterState() {
         }
     }
     
-    // Restore checkboxes and activeGroupFilters
-    activeGroupFilters.clear();
+    // Restore checkboxes and window.activeGroupFilters
+    window.activeGroupFilters.clear();
     
     if (savedFilters) {
         try {
             const filters = JSON.parse(savedFilters);
-            filters.forEach(id => activeGroupFilters.add(id));
+            filters.forEach(id => window.activeGroupFilters.add(id));
             console.log('Restored filters:', filters);
         } catch (e) {
             console.warn('Could not parse saved filters:', e);
         }
     }
     
-    // Update checkboxes based on activeGroupFilters
+    // Update checkboxes based on window.activeGroupFilters
     const checkboxes = document.querySelectorAll('.group-filter-checkbox');
     checkboxes.forEach(cb => {
         const groupId = parseInt(cb.value);
-        // Checked if NOT in activeGroupFilters (filters = hidden groups)
-        cb.checked = !activeGroupFilters.has(groupId);
+        // Checked if NOT in window.activeGroupFilters (filters = hidden groups)
+        cb.checked = !window.activeGroupFilters.has(groupId);
     });
     
     // Restore search query
     if (savedSearch) {
-        searchQuery = savedSearch;
+        timelineSearchQuery = savedSearch;
         const searchInput = document.getElementById('timelineSearchInput');
         if (searchInput) {
             searchInput.value = savedSearch;
@@ -348,9 +348,9 @@ function toggleGroupFilter(groupId) {
     const checkbox = document.querySelector(`.group-filter-checkbox[value="${groupId}"]`);
     
     if (checkbox && checkbox.checked) {
-        activeGroupFilters.delete(groupId);
+        window.activeGroupFilters.delete(groupId);
     } else {
-        activeGroupFilters.add(groupId);
+        window.activeGroupFilters.add(groupId);
     }
     
     // Save to localStorage
@@ -364,11 +364,11 @@ function toggleAllGroups(show) {
     const checkboxes = document.querySelectorAll('.group-filter-checkbox');
     
     if (show) {
-        activeGroupFilters.clear();
+        window.activeGroupFilters.clear();
         checkboxes.forEach(cb => cb.checked = true);
     } else {
         checkboxes.forEach(cb => {
-            activeGroupFilters.add(parseInt(cb.value));
+            window.activeGroupFilters.add(parseInt(cb.value));
             cb.checked = false;
         });
     }
@@ -381,9 +381,9 @@ function toggleAllGroups(show) {
 
 // Save filter state to localStorage
 function saveFilterState() {
-    const filtersArray = Array.from(activeGroupFilters);
+    const filtersArray = Array.from(window.activeGroupFilters);
     localStorage.setItem('timelineActiveFilters', JSON.stringify(filtersArray));
-    localStorage.setItem('timelineSearch', searchQuery || '');
+    localStorage.setItem('timelineSearch', timelineSearchQuery || '');
 }
 
 // Clear search
@@ -391,7 +391,7 @@ function clearTimelineSearch() {
     const searchInput = document.getElementById('timelineSearchInput');
     if (searchInput) {
         searchInput.value = '';
-        searchQuery = '';
+        timelineSearchQuery = '';
         saveFilterState();  // Save cleared search
         filterTimeline();
         
@@ -407,13 +407,13 @@ function filterTimeline() {
     // Filter events
     let filteredEvents = window.allTimelineEvents.filter(event => {
         // Group filter
-        if (activeGroupFilters.size > 0 && activeGroupFilters.has(event.Group_ID)) {
+        if (window.activeGroupFilters.size > 0 && window.activeGroupFilters.has(event.Group_ID)) {
             return false;
         }
         
         // Search filter
-        if (searchQuery && !event.Titel.toLowerCase().includes(searchQuery)) {
-            if (!event.Beschrijving || !event.Beschrijving.toLowerCase().includes(searchQuery)) {
+        if (timelineSearchQuery && !event.Titel.toLowerCase().includes(timelineSearchQuery)) {
+            if (!event.Beschrijving || !event.Beschrijving.toLowerCase().includes(timelineSearchQuery)) {
                 return false;
             }
         }
@@ -428,8 +428,8 @@ function filterTimeline() {
     
     // Update visible groups - hide groups that are filtered out
     const visibleGroups = window.allTimelineGroupsData.filter(group => {
-        // Hide if group is in activeGroupFilters (disabled)
-        return !activeGroupFilters.has(group.id);
+        // Hide if group is in window.activeGroupFilters (disabled)
+        return !window.activeGroupFilters.has(group.id);
     });
     
     // Clear and re-add only visible groups
@@ -440,7 +440,7 @@ function filterTimeline() {
     const countEl = document.getElementById('groupFilterCount');
     if (countEl) {
         const totalGroups = window.allTimelineGroupsData.length;
-        const activeGroups = totalGroups - activeGroupFilters.size;
+        const activeGroups = totalGroups - window.activeGroupFilters.size;
         countEl.textContent = activeGroups;
     }
     
