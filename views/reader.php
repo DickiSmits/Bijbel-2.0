@@ -150,21 +150,11 @@
     min-height: 0;
 }
 
-/* Timeline Filter Panel */
+/* Timeline Filter Panel - Simple version, inline styles handle open/close */
 .timeline-filter-panel {
     background: #f8f9fa;
     border-bottom: 1px solid #dee2e6;
-    padding: 0;
     flex-shrink: 0;
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.3s ease-in-out, padding 0.3s ease-in-out;
-    display: block !important;
-}
-
-.timeline-filter-panel.open {
-    max-height: 800px !important;
-    padding: 0.75rem 1rem !important;
 }
 
 .timeline-controls {
@@ -365,9 +355,8 @@
 </style>
 
 <script>
-// Timeline filter toggle - NO INFINITE LOOP VERSION
+// Timeline filter toggle - SIMPLE INLINE STYLE VERSION
 let isPanelOpen = false;
-let filterPanelObserver = null;
 
 window.toggleTimelineFilter = function() {
     console.log('🎯 Toggle filter panel');
@@ -377,39 +366,23 @@ window.toggleTimelineFilter = function() {
         return;
     }
     
-    // Disconnect observer temporarily to prevent infinite loop
-    if (filterPanelObserver) {
-        filterPanelObserver.disconnect();
-    }
-    
-    // Aggressively remove Bootstrap collapse classes
-    filterPanel.classList.remove('collapse');
-    filterPanel.classList.remove('show');
-    filterPanel.classList.remove('collapsing');
-    
-    // Remove inline styles that Bootstrap might add
-    filterPanel.style.display = '';
-    filterPanel.style.height = '';
-    filterPanel.style.visibility = '';
-    
     if (isPanelOpen) {
-        filterPanel.classList.remove('open');
+        // Close: set inline styles
+        filterPanel.style.maxHeight = '0px';
+        filterPanel.style.padding = '0px';
+        filterPanel.style.overflow = 'hidden';
         isPanelOpen = false;
         localStorage.setItem('timelineFilterOpen', 'false');
         console.log('✅ Panel closed');
     } else {
-        filterPanel.classList.add('open');
+        // Open: set inline styles
+        filterPanel.style.maxHeight = '800px';
+        filterPanel.style.padding = '12px 16px';
+        filterPanel.style.overflow = 'hidden';
+        filterPanel.style.transition = 'max-height 0.3s ease-in-out, padding 0.3s ease-in-out';
         isPanelOpen = true;
         localStorage.setItem('timelineFilterOpen', 'true');
         console.log('✅ Panel opened');
-    }
-    
-    // Reconnect observer after changes
-    if (filterPanelObserver) {
-        filterPanelObserver.observe(filterPanel, {
-            attributes: true,
-            attributeFilter: ['class', 'style']
-        });
     }
 };
 
@@ -417,7 +390,7 @@ window.toggleTimelineFilter = function() {
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Reader view loaded');
     
-    // Get filter panel and DESTROY Bootstrap collapse instance
+    // Get filter panel
     const filterPanel = document.getElementById('timelineFilterPanel');
     if (filterPanel) {
         // Destroy any Bootstrap collapse instance
@@ -429,74 +402,22 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        let panelObserver = null;
+        // Set initial state with inline styles
+        filterPanel.style.maxHeight = '0px';
+        filterPanel.style.padding = '0px';
+        filterPanel.style.overflow = 'hidden';
+        filterPanel.style.background = '#f8f9fa';
+        filterPanel.style.borderBottom = '1px solid #dee2e6';
         
-        // Function to aggressively remove Bootstrap classes and inline styles
-        const removeBootstrapClasses = () => {
-            // Disconnect observer to prevent infinite loop
-            if (panelObserver) {
-                panelObserver.disconnect();
-            }
-            
-            filterPanel.classList.remove('collapse');
-            filterPanel.classList.remove('show');
-            filterPanel.classList.remove('collapsing');
-            // Remove inline styles
-            filterPanel.style.display = '';
-            filterPanel.style.height = '';
-            filterPanel.style.visibility = '';
-            
-            // Reconnect observer
-            if (panelObserver) {
-                panelObserver.observe(filterPanel, {
-                    attributes: true,
-                    attributeFilter: ['class', 'style']
-                });
-            }
-        };
-        
-        // Remove immediately
-        removeBootstrapClasses();
-        
-        // Watch for changes (in case Bootstrap tries to re-initialize)
-        panelObserver = new MutationObserver((mutations) => {
-            let needsCleanup = false;
-            
-            mutations.forEach((mutation) => {
-                if (mutation.type === 'attributes' && 
-                    (mutation.attributeName === 'class' || mutation.attributeName === 'style')) {
-                    if (filterPanel.classList.contains('collapse') || 
-                        filterPanel.classList.contains('show') || 
-                        filterPanel.classList.contains('collapsing') ||
-                        filterPanel.style.display ||
-                        filterPanel.style.height) {
-                        needsCleanup = true;
-                    }
-                }
-            });
-            
-            if (needsCleanup) {
-                console.log('⚠️ Bootstrap classes/styles detected, removing...');
-                removeBootstrapClasses();
-            }
-        });
-        
-        panelObserver.observe(filterPanel, {
-            attributes: true,
-            attributeFilter: ['class', 'style']
-        });
-        
-        // Make observer globally accessible for toggle function
-        window.filterPanelObserver = panelObserver;
-        
-        console.log('✅ MutationObserver watching for Bootstrap classes');
-        
-        // Restore filter panel state from localStorage
+        // Restore state from localStorage
         const savedPanelOpen = localStorage.getItem('timelineFilterOpen');
         if (savedPanelOpen === 'true') {
+            filterPanel.style.maxHeight = '800px';
+            filterPanel.style.padding = '12px 16px';
             isPanelOpen = true;
-            filterPanel.classList.add('open');
         }
+        
+        console.log('✅ Filter panel initialized with inline styles');
     }
     
     // Initialize components

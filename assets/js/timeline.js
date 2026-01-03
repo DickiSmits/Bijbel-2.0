@@ -286,38 +286,11 @@ function restoreFilterState() {
     const savedSearch = localStorage.getItem('timelineSearch');
     const panelOpen = localStorage.getItem('timelineFilterOpen');
     
-    // Restore panel open/closed state
+    // Restore panel open/closed state - using inline styles now
     const panel = document.getElementById('timelineFilterPanel');
-    if (panel) {
-        // Disconnect observer to prevent infinite loop
-        if (window.filterPanelObserver) {
-            window.filterPanelObserver.disconnect();
-        }
-        
-        // Remove Bootstrap's collapse classes - they interfere with custom CSS
-        panel.classList.remove('collapse');
-        panel.classList.remove('show');
-        panel.classList.remove('collapsing');
-        
-        // Remove inline styles that Bootstrap might add
-        panel.style.display = '';
-        panel.style.height = '';
-        panel.style.visibility = '';
-        
-        // Use 'open' class instead of inline styles for CSS transition
-        if (panelOpen === 'true') {
-            panel.classList.add('open');
-        } else {
-            panel.classList.remove('open');
-        }
-        
-        // Reconnect observer
-        if (window.filterPanelObserver) {
-            window.filterPanelObserver.observe(panel, {
-                attributes: true,
-                attributeFilter: ['class', 'style']
-            });
-        }
+    if (panel && panelOpen === 'true') {
+        // Panel will be restored by reader.php DOMContentLoaded
+        // Nothing to do here
     }
     
     // Restore checkboxes and window.activeGroupFilters
