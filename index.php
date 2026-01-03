@@ -22,16 +22,24 @@ if (isset($_GET['api'])) {
     // Notes endpoints router - alle notes-gerelateerde endpoints gebruiken notes.php
     $notesEndpoints = ['notes', 'get_note', 'save_note', 'delete_note'];
     
-    // ✅ NIEUWE REGEL: Profile endpoints router
+    // Profile endpoints router - alle profile-gerelateerde endpoints gebruiken profiles.php
     $profileEndpoints = ['profiles', 'create_profile', 'update_profile', 'delete_profile'];
+    
+    // ✅ NIEUW: Timeline endpoints router - alle timeline-gerelateerde endpoints gebruiken timeline.php
+    $timelineEndpoints = [
+        'timeline', 'create_timeline', 'update_timeline', 'delete_timeline',
+        'timeline_groups', 'create_timeline_group', 'update_timeline_group', 'delete_timeline_group'
+    ];
     
     if (in_array($endpoint, $imageEndpoints)) {
         $apiFile = __DIR__ . '/api/images.php';
     } elseif (in_array($endpoint, $notesEndpoints)) {
         $apiFile = __DIR__ . '/api/notes.php';
     } elseif (in_array($endpoint, $profileEndpoints)) {
-        // ✅ NIEUWE REGEL: Route naar profiles.php
         $apiFile = __DIR__ . '/api/profiles.php';
+    } elseif (in_array($endpoint, $timelineEndpoints)) {
+        // ✅ NIEUW: Route timeline endpoints naar timeline.php
+        $apiFile = __DIR__ . '/api/timeline.php';
     } else {
         $apiFile = __DIR__ . '/api/' . $endpoint . '.php';
     }
@@ -195,7 +203,7 @@ if (!is_dir('images')) {
         require_once $viewFile;
     } else {
         echo '<div class="container mt-5">';
-        echo '<div class="alert alert-danger">View niet gevonden: ' . htmlspecialchars($mode) . '.php</div>';
+        echo '<div class="alert alert-danger">View bestand niet gevonden: ' . htmlspecialchars($mode) . '.php</div>';
         echo '</div>';
     }
     ?>
@@ -207,11 +215,6 @@ if (!is_dir('images')) {
     <?php if ($mode === 'admin'): ?>
     <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
     <?php endif; ?>
- 
-    <script>
-        const mode = '<?php echo $mode; ?>';
-        const isAdmin = <?php echo $is_admin ? 'true' : 'false'; ?>;
-    </script>
     
     <?php if (file_exists(__DIR__ . '/assets/js/app.js')): ?>
     <script src="assets/js/app.js"></script>
@@ -232,8 +235,10 @@ if (!is_dir('images')) {
         
         <script>
         (function() {
-            const processedChapters = new Set();
+            'use strict';
+            
             const profileCache = new Map();
+            const processedChapters = new Set();
             
             async function loadProfilesForChapter(boek, hoofdstuk) {
                 const cacheKey = `${boek}_${hoofdstuk}`;
