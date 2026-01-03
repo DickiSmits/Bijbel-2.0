@@ -5,8 +5,8 @@
 window.timeline = null;
 window.timelineItems = null;
 window.timelineGroups = null;
-window.window.allTimelineEvents = []; // Store all events
-window.window.allTimelineGroupsData = []; // Store all groups data
+window.allTimelineEvents = []; // Store all events
+window.allTimelineGroupsData = []; // Store all groups data
 let activeGroupFilters = new Set(); // Active group filters
 let searchQuery = '';
 
