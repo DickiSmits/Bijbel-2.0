@@ -417,9 +417,18 @@ window.toggleTimelineFilter = function() {
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Reader view loaded');
     
-    // Get filter panel and remove Bootstrap classes
+    // Get filter panel and DESTROY Bootstrap collapse instance
     const filterPanel = document.getElementById('timelineFilterPanel');
     if (filterPanel) {
+        // Destroy any Bootstrap collapse instance
+        if (typeof bootstrap !== 'undefined' && bootstrap.Collapse) {
+            const bsCollapse = bootstrap.Collapse.getInstance(filterPanel);
+            if (bsCollapse) {
+                bsCollapse.dispose();
+                console.log('✅ Destroyed Bootstrap collapse instance');
+            }
+        }
+        
         let panelObserver = null;
         
         // Function to aggressively remove Bootstrap classes and inline styles
@@ -449,7 +458,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Remove immediately
         removeBootstrapClasses();
         
-        // Watch for changes and keep removing Bootstrap classes
+        // Watch for changes (in case Bootstrap tries to re-initialize)
         panelObserver = new MutationObserver((mutations) => {
             let needsCleanup = false;
             
