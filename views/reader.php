@@ -154,9 +154,16 @@
 .timeline-filter-panel {
     background: #f8f9fa;
     border-bottom: 1px solid #dee2e6;
-    padding: 0.75rem 1rem;
+    padding: 0;
     flex-shrink: 0;
+    max-height: 0;
     overflow: hidden;
+    transition: max-height 0.3s ease-in-out, padding 0.3s ease-in-out;
+}
+
+.timeline-filter-panel.open {
+    max-height: 500px;
+    padding: 0.75rem 1rem;
 }
 
 .timeline-controls {
@@ -355,13 +362,6 @@
 // BULLETPROOF VERSION
 // Keeps reinstalling toggle to prevent overwrites!
 
-console.log('Reader view - Bulletproof version loading...');
-
-// Simple toggle state
-let isPanelOpen = false;
-
-// The correct toggle function
-function installToggle() {
     window.toggleTimelineFilter = function() {
         const filterPanel = document.getElementById('timelineFilterPanel');
         if (!filterPanel) {
@@ -369,13 +369,19 @@ function installToggle() {
             return;
         }
         
-        // Clean Bootstrap classes
-        filterPanel.classList.remove('collapse', 'show', 'collapsing');
-        
-        // Toggle
+        // Toggle open class
         if (isPanelOpen) {
+            filterPanel.classList.remove('open');
             filterPanel.style.display = 'none';
             isPanelOpen = false;
+            console.log('✅ Panel CLOSED');
+        } else {
+            filterPanel.classList.add('open');
+            filterPanel.style.display = 'block';
+            isPanelOpen = true;
+            console.log('✅ Panel OPENED');
+        }
+    };
             console.log('✅ Panel CLOSED');
         } else {
             filterPanel.style.display = 'block';
