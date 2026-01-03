@@ -53,7 +53,7 @@ switch ($endpoint) {
                            v2.Hoofdstuknummer as End_Hoofdstuk, 
                            v2.Versnummer as End_Vers
                     FROM Timeline_Events e 
-                    LEFT JOIN Timeline_Groepen g ON e.Group_ID = g.Group_ID
+                    LEFT JOIN Timeline_Groups g ON e.Group_ID = g.Group_ID
                     LEFT JOIN De_Bijbel v1 ON e.Vers_ID_Start = v1.Vers_ID
                     LEFT JOIN De_Bijbel v2 ON e.Vers_ID_End = v2.Vers_ID
                     WHERE (e.Vers_ID_Start <= ? AND e.Vers_ID_End >= ?) 
@@ -72,7 +72,7 @@ switch ($endpoint) {
                            v2.Hoofdstuknummer as End_Hoofdstuk, 
                            v2.Versnummer as End_Vers
                     FROM Timeline_Events e 
-                    LEFT JOIN Timeline_Groepen g ON e.Group_ID = g.Group_ID
+                    LEFT JOIN Timeline_Groups g ON e.Group_ID = g.Group_ID
                     LEFT JOIN De_Bijbel v1 ON e.Vers_ID_Start = v1.Vers_ID
                     LEFT JOIN De_Bijbel v2 ON e.Vers_ID_End = v2.Vers_ID
                     ORDER BY e.Start_Datum
@@ -310,7 +310,7 @@ switch ($endpoint) {
                     Kleur,
                     Volgorde,
                     Zichtbaar
-                FROM Timeline_Groepen
+                FROM Timeline_Groups
                 ORDER BY Volgorde ASC, Groep_Naam ASC
             ");
             
@@ -349,7 +349,7 @@ switch ($endpoint) {
         
         try {
             // Check if name already exists
-            $checkStmt = $db->prepare("SELECT COUNT(*) FROM Timeline_Groepen WHERE Groep_Naam = ?");
+            $checkStmt = $db->prepare("SELECT COUNT(*) FROM Timeline_Groups WHERE Groep_Naam = ?");
             $checkStmt->execute([$naam]);
             
             if ($checkStmt->fetchColumn() > 0) {
@@ -363,7 +363,7 @@ switch ($endpoint) {
             
             // Insert new group
             $stmt = $db->prepare("
-                INSERT INTO Timeline_Groepen (Groep_Naam, Kleur, Volgorde, Zichtbaar) 
+                INSERT INTO Timeline_Groups (Groep_Naam, Kleur, Volgorde, Zichtbaar) 
                 VALUES (?, ?, ?, 1)
             ");
             
@@ -438,7 +438,7 @@ switch ($endpoint) {
         
         try {
             // Check if group exists
-            $checkStmt = $db->prepare("SELECT Groep_Naam FROM Timeline_Groepen WHERE Group_ID = ?");
+            $checkStmt = $db->prepare("SELECT Groep_Naam FROM Timeline_Groups WHERE Group_ID = ?");
             $checkStmt->execute([$groupId]);
             
             if (!$checkStmt->fetch()) {
@@ -453,7 +453,7 @@ switch ($endpoint) {
             // Check if another group with same name exists
             $checkStmt = $db->prepare("
                 SELECT COUNT(*) 
-                FROM Timeline_Groepen 
+                FROM Timeline_Groups 
                 WHERE Groep_Naam = ? AND Group_ID != ?
             ");
             $checkStmt->execute([$naam, $groupId]);
@@ -470,14 +470,14 @@ switch ($endpoint) {
             // Update group
             if ($volgorde !== null) {
                 $stmt = $db->prepare("
-                    UPDATE Timeline_Groepen 
+                    UPDATE Timeline_Groups 
                     SET Groep_Naam = ?, Kleur = ?, Volgorde = ?
                     WHERE Group_ID = ?
                 ");
                 $result = $stmt->execute([$naam, $kleur, $volgorde, $groupId]);
             } else {
                 $stmt = $db->prepare("
-                    UPDATE Timeline_Groepen 
+                    UPDATE Timeline_Groups 
                     SET Groep_Naam = ?, Kleur = ?
                     WHERE Group_ID = ?
                 ");
@@ -532,7 +532,7 @@ switch ($endpoint) {
         
         try {
             // Check if group exists
-            $stmt = $db->prepare("SELECT Groep_Naam FROM Timeline_Groepen WHERE Group_ID = ?");
+            $stmt = $db->prepare("SELECT Groep_Naam FROM Timeline_Groups WHERE Group_ID = ?");
             $stmt->execute([$groupId]);
             
             if (!$stmt->fetch()) {
@@ -545,7 +545,7 @@ switch ($endpoint) {
             }
             
             // Delete group
-            $stmt = $db->prepare("DELETE FROM Timeline_Groepen WHERE Group_ID = ?");
+            $stmt = $db->prepare("DELETE FROM Timeline_Groups WHERE Group_ID = ?");
             $stmt->execute([$groupId]);
             
             echo json_encode([
