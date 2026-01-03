@@ -289,17 +289,11 @@ function restoreFilterState() {
     // Restore panel open/closed state
     const panel = document.getElementById('timelineFilterPanel');
     if (panel) {
-        // Remove Bootstrap's collapse classes if present
-        panel.classList.remove('collapse');
-        panel.classList.remove('show');
-        panel.classList.remove('collapsing');
-        
+        // Use 'open' class instead of inline styles for CSS transition
         if (panelOpen === 'true') {
-            panel.style.display = 'block';
-            panel.style.visibility = 'visible';
-            panel.style.opacity = '1';
+            panel.classList.add('open');
         } else {
-            panel.style.display = 'none';
+            panel.classList.remove('open');
         }
     }
     

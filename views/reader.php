@@ -260,6 +260,11 @@
     display: inline !important;
 }
 
+/* Hidden timeline items */
+.vis-item.hidden {
+    display: none !important;
+}
+
 /* Verse styling */
 .verse {
     padding: 0.5rem;
@@ -373,10 +378,12 @@ window.toggleTimelineFilter = function() {
     if (isPanelOpen) {
         filterPanel.classList.remove('open');
         isPanelOpen = false;
+        localStorage.setItem('timelineFilterOpen', 'false');
         console.log('✅ Panel closed');
     } else {
         filterPanel.classList.add('open');
         isPanelOpen = true;
+        localStorage.setItem('timelineFilterOpen', 'true');
         console.log('✅ Panel opened');
     }
 };
@@ -384,6 +391,16 @@ window.toggleTimelineFilter = function() {
 // Initialize reader when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Reader view loaded');
+    
+    // Restore filter panel state from localStorage
+    const savedPanelOpen = localStorage.getItem('timelineFilterOpen');
+    if (savedPanelOpen === 'true') {
+        isPanelOpen = true;
+        const filterPanel = document.getElementById('timelineFilterPanel');
+        if (filterPanel) {
+            filterPanel.classList.add('open');
+        }
+    }
     
     // Initialize components
     if (typeof initReader === 'function') {
