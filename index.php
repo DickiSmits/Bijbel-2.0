@@ -4,6 +4,11 @@
  * Met V3 Multi-Profiel Indicator: Auto-detect + Onbeperkt scrollen
  */
 
+// Disable caching - force browser to always load fresh version
+header("Cache-Control: no-cache, no-store, must-revalidate, max-age=0");
+header("Pragma: no-cache");
+header("Expires: 0");
+
 session_start();
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
