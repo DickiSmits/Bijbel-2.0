@@ -775,6 +775,232 @@ async function loadProfiles() {
     }
 }
 
+// ════════════════════════════════════════════════════════════════════════════
+// PROFIEL EDIT & SAVE FUNCTIES
+// Voeg toe aan admin.js (na loadProfiles functie)
+// ════════════════════════════════════════════════════════════════════════════
+
+// ─────────────────────────────────────────────────────────────────────────────
+// EDIT PROFILE - Vul form met bestaand profiel
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function editProfile(id) {
+    console.log('✏️ Editing profile:', id);
+    
+    // Get profile data
+    const profiles = await window.apiCall('profiles');
+    if (!profiles) {
+        window.showNotification('Fout bij ophalen profiel', true);
+        return;
+    }
+    
+    const profile = profiles.find(p => p.Profiel_ID == id);
+    if (!profile) {
+        window.showNotification('Profiel niet gevonden', true);
+        return;
+    }
+    
+    // ⭐ SET EDIT MODE
+    window.editingProfileId = id;
+    console.log('🔖 Edit mode ON - ID:', id);
+    
+    // Fill form with existing data
+    document.getElementById('newProfileName').value = profile.Profiel_Naam;
+    document.getElementById('newProfileDesc').value = profile.Beschrijving || '';
+    
+    // Change button appearance for edit mode
+    const saveBtn = document.querySelector('button[onclick*="saveProfile"], button[onclick*="createProfile"]');
+    if (saveBtn) {
+        saveBtn.dataset.originalText = saveBtn.innerHTML;
+        saveBtn.innerHTML = '<i class="bi bi-save"></i> Bijwerken';
+        saveBtn.classList.remove('btn-primary');
+        saveBtn.classList.add('btn-success');
+    }
+    
+    // Scroll to form and focus
+    const nameInput = document.getElementById('newProfileName');
+    nameInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    
+    setTimeout(() => {
+        nameInput.focus();
+        nameInput.select(); // Select text for easy editing
+    }, 300);
+    
+    // Show notification
+    window.showNotification(`Bewerk "${profile.Profiel_Naam}" en klik Bijwerken`);
+}
+window.editProfile = editProfile;
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SAVE PROFILE - UPDATE bestaand of CREATE nieuw profiel
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function saveProfile() {
+    console.log('💾 Save profile called...');
+    
+    const naam = document.getElementById('newProfileName')?.value;
+    const beschrijving = document.getElementById('newProfileDesc')?.value;
+    
+    // Validate
+    if (!naam || naam.trim() === '') {
+        window.showNotification('Vul een naam in', true);
+        return;
+    }
+    
+    // Check if we're in edit mode
+    const editingId = window.editingProfileId;
+    
+    if (editingId) {
+        // ═══════════════════════════════════════════════════════════════════════
+        // UPDATE MODE - Bewerk bestaand profiel
+        // ═══════════════════════════════════════════════════════════════════════
+        console.log('📝 UPDATE mode - Profile ID:', editingId);
+        
+        try {
+            const result = await window.apiCall('update_profile', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    id: editingId,  // Backend accepteert nu 'id' OF 'profiel_id'
+                    naam: naam.trim(), 
+                    beschrijving: beschrijving?.trim() || '' 
+                })
+            });
+            
+            console.log('📥 Update result:', result);
+            
+            if (result?.success) {
+                console.log('✅ Profile updated successfully!');
+                window.showNotification('Profiel bijgewerkt!');
+                
+                // Clear form
+                document.getElementById('newProfileName').value = '';
+                document.getElementById('newProfileDesc').value = '';
+                
+                // Clear edit mode
+                window.editingProfileId = null;
+                console.log('🔖 Edit mode OFF');
+                
+                // Reset button to original state
+                const saveBtn = document.querySelector('button[onclick*="saveProfile"], button[onclick*="createProfile"]');
+                if (saveBtn && saveBtn.dataset.originalText) {
+                    saveBtn.innerHTML = saveBtn.dataset.originalText;
+                    saveBtn.classList.remove('btn-success');
+                    saveBtn.classList.add('btn-primary');
+                }
+                
+                // Reload profiles list
+                await loadProfiles();
+                
+            } else {
+                // Show error from backend
+                const errorMsg = result?.error || 'Onbekende fout bij bijwerken profiel';
+                console.error('❌ Update failed:', errorMsg);
+                window.showNotification(errorMsg, true);
+            }
+            
+        } catch (error) {
+            console.error('❌ Exception during update:', error);
+            window.showNotification('Fout bij bijwerken profiel: ' + error.message, true);
+        }
+        
+    } else {
+        // ═══════════════════════════════════════════════════════════════════════
+        // CREATE MODE - Maak nieuw profiel
+        // ═══════════════════════════════════════════════════════════════════════
+        console.log('➕ CREATE mode - New profile');
+        
+        try {
+            const result = await window.apiCall('create_profile', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    naam: naam.trim(), 
+                    beschrijving: beschrijving?.trim() || '' 
+                })
+            });
+            
+            console.log('📥 Create result:', result);
+            
+            if (result?.success) {
+                console.log('✅ Profile created successfully!');
+                window.showNotification('Profiel aangemaakt!');
+                
+                // Clear form
+                document.getElementById('newProfileName').value = '';
+                document.getElementById('newProfileDesc').value = '';
+                
+                // Reload profiles list
+                await loadProfiles();
+                
+            } else {
+                // Show error from backend
+                const errorMsg = result?.error || 'Onbekende fout bij aanmaken profiel';
+                console.error('❌ Create failed:', errorMsg);
+                window.showNotification(errorMsg, true);
+            }
+            
+        } catch (error) {
+            console.error('❌ Exception during create:', error);
+            window.showNotification('Fout bij aanmaken profiel: ' + error.message, true);
+        }
+    }
+}
+window.saveProfile = saveProfile;
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CANCEL EDIT - Annuleer bewerking (optional helper)
+// ─────────────────────────────────────────────────────────────────────────────
+
+function cancelEdit() {
+    console.log('❌ Cancel edit');
+    
+    // Clear form
+    document.getElementById('newProfileName').value = '';
+    document.getElementById('newProfileDesc').value = '';
+    
+    // Clear edit mode
+    window.editingProfileId = null;
+    console.log('🔖 Edit mode OFF');
+    
+    // Reset button
+    const saveBtn = document.querySelector('button[onclick*="saveProfile"], button[onclick*="createProfile"]');
+    if (saveBtn && saveBtn.dataset.originalText) {
+        saveBtn.innerHTML = saveBtn.dataset.originalText;
+        saveBtn.classList.remove('btn-success');
+        saveBtn.classList.add('btn-primary');
+    }
+    
+    window.showNotification('Bewerken geannuleerd');
+}
+window.cancelEdit = cancelEdit;
+
+
+// ════════════════════════════════════════════════════════════════════════════
+// USAGE IN HTML:
+// ════════════════════════════════════════════════════════════════════════════
+// 
+// Save button:
+// <button onclick="saveProfile()" class="btn btn-primary">
+//     <i class="bi bi-plus"></i> Aanmaken
+// </button>
+// 
+// Edit button in table (per profile row):
+// <button onclick="editProfile(${profile.Profiel_ID})" class="btn btn-outline-primary btn-sm">
+//     <i class="bi bi-pencil"></i>
+// </button>
+// 
+// Optional cancel button:
+// <button onclick="cancelEdit()" class="btn btn-secondary">Annuleren</button>
+// 
+// ════════════════════════════════════════════════════════════════════════════
+
+
+
+
+
 async function createProfile() {
     const naam = document.getElementById('newProfileName')?.value;
     const beschrijving = document.getElementById('newProfileDesc')?.value;
