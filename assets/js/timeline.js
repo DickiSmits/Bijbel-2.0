@@ -24,7 +24,7 @@ function initTimeline() {
     window.timelineItems = new vis.DataSet();
     window.timelineGroups = new vis.DataSet();
     
-    // Timeline options - with vertical scrolling
+    // Timeline options - with vertical scrolling in container
     const options = {
         orientation: 'top',
         zoomMin: 1000 * 60 * 60 * 24 * 365, // 1 year
@@ -38,7 +38,7 @@ function initTimeline() {
         stack: true,
         selectable: true,
         multiselect: false,
-        maxHeight: 600,        // Max height before vertical scroll kicks in
+        height: '100%',        // Fill container
         tooltip: {
             followMouse: false,
             overflowMethod: 'cap',

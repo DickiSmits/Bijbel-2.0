@@ -148,6 +148,8 @@
     flex: 1;
     width: 100%;
     min-height: 0;
+    overflow: auto;  /* Enable scrolling within timeline container */
+    position: relative;
 }
 
 /* Timeline Filter Panel - Simple version, inline styles handle open/close */
