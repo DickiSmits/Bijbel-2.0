@@ -289,6 +289,11 @@ function restoreFilterState() {
     // Restore panel open/closed state
     const panel = document.getElementById('timelineFilterPanel');
     if (panel) {
+        // Disconnect observer to prevent infinite loop
+        if (window.filterPanelObserver) {
+            window.filterPanelObserver.disconnect();
+        }
+        
         // Remove Bootstrap's collapse classes - they interfere with custom CSS
         panel.classList.remove('collapse');
         panel.classList.remove('show');
@@ -304,6 +309,14 @@ function restoreFilterState() {
             panel.classList.add('open');
         } else {
             panel.classList.remove('open');
+        }
+        
+        // Reconnect observer
+        if (window.filterPanelObserver) {
+            window.filterPanelObserver.observe(panel, {
+                attributes: true,
+                attributeFilter: ['class', 'style']
+            });
         }
     }
     

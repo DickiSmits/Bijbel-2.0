@@ -365,8 +365,9 @@
 </style>
 
 <script>
-// Timeline filter toggle - AGGRESSIVE VERSION
+// Timeline filter toggle - NO INFINITE LOOP VERSION
 let isPanelOpen = false;
+let filterPanelObserver = null;
 
 window.toggleTimelineFilter = function() {
     console.log('🎯 Toggle filter panel');
@@ -374,6 +375,11 @@ window.toggleTimelineFilter = function() {
     if (!filterPanel) {
         console.warn('Filter panel not found');
         return;
+    }
+    
+    // Disconnect observer temporarily to prevent infinite loop
+    if (filterPanelObserver) {
+        filterPanelObserver.disconnect();
     }
     
     // Aggressively remove Bootstrap collapse classes
@@ -398,14 +404,13 @@ window.toggleTimelineFilter = function() {
         console.log('✅ Panel opened');
     }
     
-    // Double-check Bootstrap classes and inline styles are gone
-    setTimeout(() => {
-        filterPanel.classList.remove('collapse');
-        filterPanel.classList.remove('show');
-        filterPanel.classList.remove('collapsing');
-        filterPanel.style.display = '';
-        filterPanel.style.height = '';
-    }, 10);
+    // Reconnect observer after changes
+    if (filterPanelObserver) {
+        filterPanelObserver.observe(filterPanel, {
+            attributes: true,
+            attributeFilter: ['class', 'style']
+        });
+    }
 };
 
 // Initialize reader when DOM is ready
@@ -415,8 +420,15 @@ document.addEventListener('DOMContentLoaded', function() {
     // Get filter panel and remove Bootstrap classes
     const filterPanel = document.getElementById('timelineFilterPanel');
     if (filterPanel) {
+        let panelObserver = null;
+        
         // Function to aggressively remove Bootstrap classes and inline styles
         const removeBootstrapClasses = () => {
+            // Disconnect observer to prevent infinite loop
+            if (panelObserver) {
+                panelObserver.disconnect();
+            }
+            
             filterPanel.classList.remove('collapse');
             filterPanel.classList.remove('show');
             filterPanel.classList.remove('collapsing');
@@ -424,13 +436,23 @@ document.addEventListener('DOMContentLoaded', function() {
             filterPanel.style.display = '';
             filterPanel.style.height = '';
             filterPanel.style.visibility = '';
+            
+            // Reconnect observer
+            if (panelObserver) {
+                panelObserver.observe(filterPanel, {
+                    attributes: true,
+                    attributeFilter: ['class', 'style']
+                });
+            }
         };
         
         // Remove immediately
         removeBootstrapClasses();
         
         // Watch for changes and keep removing Bootstrap classes
-        const observer = new MutationObserver((mutations) => {
+        panelObserver = new MutationObserver((mutations) => {
+            let needsCleanup = false;
+            
             mutations.forEach((mutation) => {
                 if (mutation.type === 'attributes' && 
                     (mutation.attributeName === 'class' || mutation.attributeName === 'style')) {
@@ -439,17 +461,24 @@ document.addEventListener('DOMContentLoaded', function() {
                         filterPanel.classList.contains('collapsing') ||
                         filterPanel.style.display ||
                         filterPanel.style.height) {
-                        console.log('⚠️ Bootstrap classes/styles detected, removing...');
-                        removeBootstrapClasses();
+                        needsCleanup = true;
                     }
                 }
             });
+            
+            if (needsCleanup) {
+                console.log('⚠️ Bootstrap classes/styles detected, removing...');
+                removeBootstrapClasses();
+            }
         });
         
-        observer.observe(filterPanel, {
+        panelObserver.observe(filterPanel, {
             attributes: true,
             attributeFilter: ['class', 'style']
         });
+        
+        // Make observer globally accessible for toggle function
+        window.filterPanelObserver = panelObserver;
         
         console.log('✅ MutationObserver watching for Bootstrap classes');
         
