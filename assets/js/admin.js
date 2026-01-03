@@ -757,9 +757,14 @@ async function loadProfiles() {
                 <td>${profile.Beschrijving || '<span class="text-muted">-</span>'}</td>
                 <td><small class="text-muted">${createdDate}</small></td>
                 <td>
-                    <button class="btn btn-outline-danger btn-sm" onclick="deleteProfile(${profile.Profiel_ID})" title="Verwijder">
-                        <i class="bi bi-trash"></i>
-                    </button>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button class="btn btn-outline-primary" onclick="editProfile(${profile.Profiel_ID})" title="Bewerken">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn btn-outline-danger" onclick="deleteProfile(${profile.Profiel_ID})" title="Verwijderen">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
                 </td>
             `;
             
@@ -789,10 +794,42 @@ async function createProfile() {
         window.showNotification('Profiel aangemaakt!');
         document.getElementById('newProfileName').value = '';
         document.getElementById('newProfileDesc').value = '';
-        loadProfiles();
+        await loadProfiles();
     }
 }
 window.createProfile = createProfile;
+
+async function editProfile(id) {
+    console.log('✏️ Editing profile:', id);
+    
+    // Get profile data
+    const profiles = await window.apiCall('profiles');
+    if (!profiles) {
+        window.showNotification('Fout bij ophalen profiel', true);
+        return;
+    }
+    
+    const profile = profiles.find(p => p.Profiel_ID == id);
+    if (!profile) {
+        window.showNotification('Profiel niet gevonden', true);
+        return;
+    }
+    
+    // Fill form with existing data
+    document.getElementById('newProfileName').value = profile.Profiel_Naam;
+    document.getElementById('newProfileDesc').value = profile.Beschrijving || '';
+    
+    // Scroll to form
+    document.getElementById('newProfileName').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    document.getElementById('newProfileName').focus();
+    
+    // Show notification
+    window.showNotification(`Bewerk "${profile.Profiel_Naam}" en klik opnieuw op Aanmaken`, false);
+    
+    // Note: This is a simple edit - user edits and clicks create again
+    // For a more advanced edit, you'd need an update_profile API endpoint
+}
+window.editProfile = editProfile;
 
 async function deleteProfile(id) {
     if (!confirm('Weet je zeker dat je dit profiel wilt verwijderen?')) return;
@@ -800,7 +837,7 @@ async function deleteProfile(id) {
     const result = await window.apiCall(`delete_profile&id=${id}`);
     if (result?.success) {
         window.showNotification('Profiel verwijderd');
-        loadProfiles();
+        await loadProfiles();
     }
 }
 window.deleteProfile = deleteProfile;
@@ -2099,7 +2136,7 @@ async function silentApiCall(endpoint) {
 }
 
 // Load image list (tries multiple endpoints)
-/* window.loadImageList = async function() {
+window.loadImageList = async function() {
     console.log('🖼️ Loading images...');
     
     const imgList = document.getElementById('imageList');
@@ -2179,7 +2216,7 @@ async function silentApiCall(endpoint) {
         
         imgList.appendChild(col);
     });
-}; */
+};
 
 // Upload image function
 window.uploadImage = async function() {
