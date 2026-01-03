@@ -1,4 +1,4 @@
-<!-- Reader View - Clean Working Version -->
+<!-- Reader View - Complete Working Version -->
 <div class="reader-layout" id="readerContainer">
     <!-- Bible Text Panel -->
     <div class="bible-panel" id="bibleText">
@@ -22,7 +22,7 @@
     <!-- Timeline Panel -->
     <div class="timeline-panel">
         <!-- Filter Panel -->
-        <div id="timelineFilterPanel" class="timeline-filter-panel" style="display: none;"></div>
+        <div id="timelineFilterPanel" class="timeline-filter-panel"></div>
         
         <!-- Timeline Navigation -->
         <button class="timeline-nav-btn timeline-nav-prev" onclick="navigateTimelinePrev()" title="Vorig event">
@@ -150,7 +150,7 @@
     min-height: 0;
 }
 
-/* Timeline Filter Panel */
+/* Timeline Filter Panel - FIXED VERSION */
 .timeline-filter-panel {
     background: #f8f9fa;
     border-bottom: 1px solid #dee2e6;
@@ -162,7 +162,7 @@
 }
 
 .timeline-filter-panel.open {
-    max-height: 500px;
+    max-height: 800px;  /* Increased from 500px */
     padding: 0.75rem 1rem;
 }
 
@@ -359,27 +359,25 @@
 </style>
 
 <script>
-// Timeline filter toggle
+// Timeline filter toggle - WORKING VERSION
 let isPanelOpen = false;
 
 window.toggleTimelineFilter = function() {
+    console.log('🎯 Toggle filter panel');
     const filterPanel = document.getElementById('timelineFilterPanel');
     if (!filterPanel) {
-        console.log('⚠️ Panel not found');
+        console.warn('Filter panel not found');
         return;
     }
     
-    // Toggle open class
     if (isPanelOpen) {
         filterPanel.classList.remove('open');
-        filterPanel.style.display = 'none';
         isPanelOpen = false;
-        console.log('✅ Panel CLOSED');
+        console.log('✅ Panel closed');
     } else {
         filterPanel.classList.add('open');
-        filterPanel.style.display = 'block';
         isPanelOpen = true;
-        console.log('✅ Panel OPENED');
+        console.log('✅ Panel opened');
     }
 };
 
