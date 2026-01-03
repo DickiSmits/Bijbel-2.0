@@ -469,11 +469,37 @@ function selectVerse(versId) {
     currentVerse = versId;
 }
 
-// Timeline filter toggle
+// Timeline filter toggle - INLINE STYLES VERSION
 function toggleTimelineFilter() {
-    const panel = document.getElementById('timelineFilterPanel');
-    if (panel) {
-        const collapse = new bootstrap.Collapse(panel, { toggle: true });
+    console.log('🎯 Toggle filter panel - NEW VERSION');
+    const filterPanel = document.getElementById('timelineFilterPanel');
+    if (!filterPanel) {
+        console.warn('Filter panel not found');
+        return;
+    }
+    
+    // Use global isPanelOpen from reader.php
+    if (typeof window.isPanelOpen === 'undefined') {
+        window.isPanelOpen = false;
+    }
+    
+    if (window.isPanelOpen) {
+        // Close: set inline styles
+        filterPanel.style.maxHeight = '0px';
+        filterPanel.style.padding = '0px';
+        filterPanel.style.overflow = 'hidden';
+        window.isPanelOpen = false;
+        localStorage.setItem('timelineFilterOpen', 'false');
+        console.log('✅ Panel closed');
+    } else {
+        // Open: set inline styles
+        filterPanel.style.maxHeight = '800px';
+        filterPanel.style.padding = '12px 16px';
+        filterPanel.style.overflow = 'hidden';
+        filterPanel.style.transition = 'max-height 0.3s ease-in-out, padding 0.3s ease-in-out';
+        window.isPanelOpen = true;
+        localStorage.setItem('timelineFilterOpen', 'true');
+        console.log('✅ Panel opened');
     }
 }
 
