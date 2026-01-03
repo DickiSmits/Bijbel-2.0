@@ -1552,6 +1552,146 @@ async function loadTimelineGroups() {
     }
 }
 
+async function createTimelineGroup() {
+    console.log('➕ Creating timeline group...');
+    
+    const naam = document.getElementById('newGroupName')?.value;
+    const kleur = document.getElementById('newGroupColor')?.value;
+    const volgorde = document.getElementById('newGroupOrder')?.value;
+    
+    // Validate
+    if (!naam || naam.trim() === '') {
+        window.showNotification('Vul een groep naam in', true);
+        return;
+    }
+    
+    try {
+        const result = await window.apiCall('create_timeline_group', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                naam: naam.trim(), 
+                kleur: kleur || '#3498db',
+                volgorde: parseInt(volgorde) || 1
+            })
+        });
+        
+        console.log('📥 Create result:', result);
+        
+        if (result?.success) {
+            console.log('✅ Timeline group created successfully!');
+            window.showNotification('Timeline groep aangemaakt!');
+            
+            // Clear form
+            document.getElementById('newGroupName').value = '';
+            document.getElementById('newGroupColor').value = '#3498db';
+            document.getElementById('newGroupOrder').value = '1';
+            
+            // Reload groups list
+            if (typeof loadTimelineGroups === 'function') {
+                await loadTimelineGroups();
+            }
+            
+        } else {
+            const errorMsg = result?.error || 'Onbekende fout bij aanmaken groep';
+            console.error('❌ Create failed:', errorMsg);
+            window.showNotification(errorMsg, true);
+        }
+        
+    } catch (error) {
+        console.error('❌ Exception during create:', error);
+        window.showNotification('Fout bij aanmaken groep: ' + error.message, true);
+    }
+}
+window.createTimelineGroup = createTimelineGroup;
+
+
+/**
+ * EDIT bestaande timeline groep
+ */
+async function editTimelineGroup(groupId, naam, kleur) {
+    console.log('✏️ Editing timeline group:', groupId);
+    
+    // Prompt for new values (simple version)
+    const newNaam = prompt('Groep naam:', naam);
+    if (!newNaam) return; // User cancelled
+    
+    const newKleur = prompt('Kleur (hex):', kleur);
+    if (!newKleur) return;
+    
+    try {
+        const result = await window.apiCall('update_timeline_group', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                id: groupId,
+                naam: newNaam.trim(), 
+                kleur: newKleur
+            })
+        });
+        
+        console.log('📥 Update result:', result);
+        
+        if (result?.success) {
+            console.log('✅ Timeline group updated!');
+            window.showNotification('Timeline groep bijgewerkt!');
+            
+            // Reload groups list
+            if (typeof loadTimelineGroups === 'function') {
+                await loadTimelineGroups();
+            }
+            
+        } else {
+            const errorMsg = result?.error || 'Fout bij bijwerken groep';
+            console.error('❌ Update failed:', errorMsg);
+            window.showNotification(errorMsg, true);
+        }
+        
+    } catch (error) {
+        console.error('❌ Exception during update:', error);
+        window.showNotification('Fout bij bijwerken groep: ' + error.message, true);
+    }
+}
+window.editTimelineGroup = editTimelineGroup;
+
+
+/**
+ * DELETE timeline groep
+ */
+async function deleteTimelineGroup(groupId) {
+    console.log('🗑️ Deleting timeline group:', groupId);
+    
+    if (!confirm('Weet je zeker dat je deze timeline groep wilt verwijderen?')) {
+        return;
+    }
+    
+    try {
+        const result = await window.apiCall(`delete_timeline_group&id=${groupId}`);
+        
+        console.log('📥 Delete result:', result);
+        
+        if (result?.success) {
+            console.log('✅ Timeline group deleted!');
+            window.showNotification('Timeline groep verwijderd!');
+            
+            // Reload groups list
+            if (typeof loadTimelineGroups === 'function') {
+                await loadTimelineGroups();
+            }
+            
+        } else {
+            const errorMsg = result?.error || 'Fout bij verwijderen groep';
+            console.error('❌ Delete failed:', errorMsg);
+            window.showNotification(errorMsg, true);
+        }
+        
+    } catch (error) {
+        console.error('❌ Exception during delete:', error);
+        window.showNotification('Fout bij verwijderen groep: ' + error.message, true);
+    }
+}
+window.deleteTimelineGroup = deleteTimelineGroup;
+
 // ============= LOCATIONS DATA LOADING =============
 
 async function loadLocationList() {
