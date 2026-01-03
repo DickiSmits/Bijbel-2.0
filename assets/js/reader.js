@@ -10,6 +10,8 @@ let currentOffset = 0;
 let loading = false;
 let allLoaded = false;
 let searchQuery = '';  // Search query for highlighting
+let currentSearchIndex = -1;  // Current search highlight index
+let totalSearchResults = 0;   // Total number of search highlights
 
 // Continuous scrolling support
 let continuousScrolling = false;  // Start in chapter mode
@@ -249,10 +251,24 @@ function setupEventListeners() {
             clearTimeout(searchTimeout);
             searchTimeout = setTimeout(() => {
                 searchQuery = e.target.value;
+                currentSearchIndex = -1;  // Reset search index
                 if (searchQuery.length > 2 || searchQuery.length === 0) {
                     loadVerses();
                 }
             }, 300);
+        });
+        
+        // Update navigation after verses are loaded
+        searchInput.addEventListener('keydown', (e) => {
+            // Enter or F3 = next result
+            if (e.key === 'Enter' || e.key === 'F3') {
+                e.preventDefault();
+                if (!e.shiftKey) {
+                    navigateSearchNext();
+                } else {
+                    navigateSearchPrev();
+                }
+            }
         });
     }
 }
@@ -439,6 +455,17 @@ async function loadVerses(append = false) {
     } else if (append && typeof window.updateVerseNumberIndicators === 'function') {
         window.updateVerseNumberIndicators();
     }
+    
+    // Update search navigation after highlights are rendered
+    if (searchQuery && searchQuery.trim().length > 0) {
+        // Use setTimeout to ensure DOM is updated
+        setTimeout(() => {
+            if (currentSearchIndex === -1 && document.querySelectorAll('.search-highlight').length > 0) {
+                currentSearchIndex = 0;  // Start at first result
+            }
+            updateSearchNavigation();
+        }, 100);
+    }
 }
 
 // Select verse
@@ -524,6 +551,73 @@ function navigateTimelineNext() {
     console.log('⚠️ Timeline.js not loaded yet');
 }
 
+// ============= SEARCH NAVIGATION =============
+
+/**
+ * Update search navigation UI
+ */
+function updateSearchNavigation() {
+    const highlights = document.querySelectorAll('.search-highlight');
+    totalSearchResults = highlights.length;
+    
+    const counter = document.getElementById('searchCounter');
+    const prevBtn = document.getElementById('searchPrevBtn');
+    const nextBtn = document.getElementById('searchNextBtn');
+    
+    if (totalSearchResults > 0) {
+        // Show counter and enable buttons
+        counter.style.display = '';
+        counter.textContent = `${currentSearchIndex + 1}/${totalSearchResults}`;
+        prevBtn.disabled = false;
+        nextBtn.disabled = false;
+        
+        // Highlight current result
+        highlights.forEach((highlight, index) => {
+            if (index === currentSearchIndex) {
+                highlight.classList.add('search-highlight-current');
+            } else {
+                highlight.classList.remove('search-highlight-current');
+            }
+        });
+        
+        // Scroll current result into view
+        if (currentSearchIndex >= 0 && currentSearchIndex < totalSearchResults) {
+            highlights[currentSearchIndex].scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'center' 
+            });
+        }
+    } else {
+        // Hide counter and disable buttons
+        counter.style.display = 'none';
+        prevBtn.disabled = true;
+        nextBtn.disabled = true;
+        currentSearchIndex = -1;
+    }
+}
+
+/**
+ * Navigate to next search result
+ */
+function navigateSearchNext() {
+    const highlights = document.querySelectorAll('.search-highlight');
+    if (highlights.length === 0) return;
+    
+    currentSearchIndex = (currentSearchIndex + 1) % highlights.length;
+    updateSearchNavigation();
+}
+
+/**
+ * Navigate to previous search result
+ */
+function navigateSearchPrev() {
+    const highlights = document.querySelectorAll('.search-highlight');
+    if (highlights.length === 0) return;
+    
+    currentSearchIndex = currentSearchIndex <= 0 ? highlights.length - 1 : currentSearchIndex - 1;
+    updateSearchNavigation();
+}
+
 // ============= SEARCH HIGHLIGHTING =============
 
 /**
@@ -572,5 +666,8 @@ window.toggleTimelineFilter = toggleTimelineFilter;
 window.navigateTimelinePrev = navigateTimelinePrev;
 window.navigateTimelineNext = navigateTimelineNext;
 window.highlightSearchTerms = highlightSearchTerms;
+window.navigateSearchNext = navigateSearchNext;
+window.navigateSearchPrev = navigateSearchPrev;
+window.updateSearchNavigation = updateSearchNavigation;
 
 console.log('Reader.js loaded');

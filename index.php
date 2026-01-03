@@ -4,11 +4,6 @@
  * Met V3 Multi-Profiel Indicator: Auto-detect + Onbeperkt scrollen
  */
 
-// Disable caching - force browser to always load fresh version
-header("Cache-Control: no-cache, no-store, must-revalidate, max-age=0");
-header("Pragma: no-cache");
-header("Expires: 0");
-
 session_start();
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
@@ -170,7 +165,17 @@ if (!is_dir('images')) {
                         <option value="">Hoofdstuk</option>
                     </select>
                     
-                    <input type="search" id="searchInput" class="form-control form-control-sm" placeholder="Zoeken..." style="width: 160px;">
+                    <!-- Search with navigation -->
+                    <div class="input-group input-group-sm" style="width: 280px;">
+                        <input type="search" id="searchInput" class="form-control form-control-sm" placeholder="Zoeken...">
+                        <button class="btn btn-outline-light" onclick="navigateSearchPrev()" title="Vorige resultaat" id="searchPrevBtn" disabled>
+                            <i class="bi bi-chevron-up"></i>
+                        </button>
+                        <button class="btn btn-outline-light" onclick="navigateSearchNext()" title="Volgend resultaat" id="searchNextBtn" disabled>
+                            <i class="bi bi-chevron-down"></i>
+                        </button>
+                        <span class="input-group-text" id="searchCounter" style="display: none;">0/0</span>
+                    </div>
                     
                     <select id="profileSelect" class="form-select form-select-sm" style="width: 160px;">
                         <option value="">Geen opmaak</option>

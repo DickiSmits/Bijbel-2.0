@@ -354,6 +354,20 @@
         grid-row: 3;
     }
 }
+
+/* Search Highlighting */
+.search-highlight {
+    background-color: yellow;
+    padding: 2px 0;
+    border-radius: 2px;
+}
+
+.search-highlight-current {
+    background-color: orange;
+    outline: 2px solid #ff8800;
+    outline-offset: 1px;
+    font-weight: bold;
+}
 </style>
 
 <script>
