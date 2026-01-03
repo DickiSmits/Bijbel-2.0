@@ -289,6 +289,11 @@ function restoreFilterState() {
     // Restore panel open/closed state
     const panel = document.getElementById('timelineFilterPanel');
     if (panel) {
+        // Remove Bootstrap's collapse classes - they interfere with custom CSS
+        panel.classList.remove('collapse');
+        panel.classList.remove('show');
+        panel.classList.remove('collapsing');
+        
         // Use 'open' class instead of inline styles for CSS transition
         if (panelOpen === 'true') {
             panel.classList.add('open');

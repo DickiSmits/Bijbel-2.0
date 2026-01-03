@@ -375,6 +375,11 @@ window.toggleTimelineFilter = function() {
         return;
     }
     
+    // Remove Bootstrap collapse classes that interfere
+    filterPanel.classList.remove('collapse');
+    filterPanel.classList.remove('show');
+    filterPanel.classList.remove('collapsing');
+    
     if (isPanelOpen) {
         filterPanel.classList.remove('open');
         isPanelOpen = false;
@@ -392,12 +397,18 @@ window.toggleTimelineFilter = function() {
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Reader view loaded');
     
-    // Restore filter panel state from localStorage
-    const savedPanelOpen = localStorage.getItem('timelineFilterOpen');
-    if (savedPanelOpen === 'true') {
-        isPanelOpen = true;
-        const filterPanel = document.getElementById('timelineFilterPanel');
-        if (filterPanel) {
+    // Get filter panel and remove Bootstrap classes
+    const filterPanel = document.getElementById('timelineFilterPanel');
+    if (filterPanel) {
+        // Remove Bootstrap collapse classes that interfere with custom CSS
+        filterPanel.classList.remove('collapse');
+        filterPanel.classList.remove('show');
+        filterPanel.classList.remove('collapsing');
+        
+        // Restore filter panel state from localStorage
+        const savedPanelOpen = localStorage.getItem('timelineFilterOpen');
+        if (savedPanelOpen === 'true') {
+            isPanelOpen = true;
             filterPanel.classList.add('open');
         }
     }
