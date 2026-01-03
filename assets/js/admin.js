@@ -978,6 +978,22 @@ function cancelEdit() {
 window.cancelEdit = cancelEdit;
 
 
+// ─────────────────────────────────────────────────────────────────────────────
+// DELETE PROFILE - Verwijder profiel
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function deleteProfile(id) {
+    if (!confirm('Weet je zeker dat je dit profiel wilt verwijderen?')) return;
+    
+    const result = await window.apiCall(`delete_profile&id=${id}`);
+    if (result?.success) {
+        window.showNotification('Profiel verwijderd');
+        await loadProfiles();
+    }
+}
+window.deleteProfile = deleteProfile;
+
+
 // ════════════════════════════════════════════════════════════════════════════
 // USAGE IN HTML:
 // ════════════════════════════════════════════════════════════════════════════
@@ -1001,72 +1017,6 @@ window.cancelEdit = cancelEdit;
 
 
 
-async function createProfile() {
-    const naam = document.getElementById('newProfileName')?.value;
-    const beschrijving = document.getElementById('newProfileDesc')?.value;
-    
-    if (!naam) {
-        window.showNotification('Vul een naam in', true);
-        return;
-    }
-    
-    const result = await window.apiCall('create_profile', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ naam, beschrijving })
-    });
-    
-    if (result?.success) {
-        window.showNotification('Profiel aangemaakt!');
-        document.getElementById('newProfileName').value = '';
-        document.getElementById('newProfileDesc').value = '';
-        await loadProfiles();
-    }
-}
-window.createProfile = createProfile;
-
-async function editProfile(id) {
-    console.log('✏️ Editing profile:', id);
-    
-    // Get profile data
-    const profiles = await window.apiCall('profiles');
-    if (!profiles) {
-        window.showNotification('Fout bij ophalen profiel', true);
-        return;
-    }
-    
-    const profile = profiles.find(p => p.Profiel_ID == id);
-    if (!profile) {
-        window.showNotification('Profiel niet gevonden', true);
-        return;
-    }
-    
-    // Fill form with existing data
-    document.getElementById('newProfileName').value = profile.Profiel_Naam;
-    document.getElementById('newProfileDesc').value = profile.Beschrijving || '';
-    
-    // Scroll to form
-    document.getElementById('newProfileName').scrollIntoView({ behavior: 'smooth', block: 'center' });
-    document.getElementById('newProfileName').focus();
-    
-    // Show notification
-    window.showNotification(`Bewerk "${profile.Profiel_Naam}" en klik opnieuw op Aanmaken`, false);
-    
-    // Note: This is a simple edit - user edits and clicks create again
-    // For a more advanced edit, you'd need an update_profile API endpoint
-}
-window.editProfile = editProfile;
-
-async function deleteProfile(id) {
-    if (!confirm('Weet je zeker dat je dit profiel wilt verwijderen?')) return;
-    
-    const result = await window.apiCall(`delete_profile&id=${id}`);
-    if (result?.success) {
-        window.showNotification('Profiel verwijderd');
-        await loadProfiles();
-    }
-}
-window.deleteProfile = deleteProfile;
 
 // ============================================================================
 // VOEG DEZE FUNCTIE TOE AAN ADMIN.JS (na saveAllChapterFormatting)
