@@ -1,5 +1,5 @@
 /**
- * TIMELINE.JS - Enhanced with Filter & Search
+ * TIMELINE.JS - super clean Enhanced with Filter & Search
  */
 
 window.timeline = null;
