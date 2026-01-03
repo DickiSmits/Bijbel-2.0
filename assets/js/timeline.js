@@ -80,9 +80,19 @@ function initTimeline() {
             const eventId = properties.items[0];
             const event = window.allTimelineEvents.find(e => e.Event_ID === eventId);
             if (event) {
-                console.log('Timeline event selected:', event.Titel);
-                // Could navigate to verse here if needed
-                // if (event.Vers_ID_Start) { ... }
+                console.log('📍 Timeline event selected:', event.Titel);
+                
+                // Navigate to corresponding verse
+                if (event.Vers_ID_Start && typeof window.selectVerse === 'function') {
+                    console.log(`  → Navigating to verse ${event.Vers_ID_Start}`);
+                    window.selectVerse(event.Vers_ID_Start);
+                    
+                    // Scroll verse into view
+                    const verseElement = document.querySelector(`[data-vers-id="${event.Vers_ID_Start}"]`);
+                    if (verseElement) {
+                        verseElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }
             }
         }
     });
@@ -473,6 +483,18 @@ function navigateTimelinePrev() {
     window.timeline.focus(prevItem.id, { animation: true });
     
     console.log(`◀ Previous event: ${prevItem.content}`);
+    
+    // Navigate to corresponding verse
+    const event = window.allTimelineEvents.find(e => e.Event_ID === prevItem.id);
+    if (event && event.Vers_ID_Start && typeof window.selectVerse === 'function') {
+        window.selectVerse(event.Vers_ID_Start);
+        
+        // Scroll verse into view
+        const verseElement = document.querySelector(`[data-vers-id="${event.Vers_ID_Start}"]`);
+        if (verseElement) {
+            verseElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }
 }
 
 function navigateTimelineNext() {
@@ -510,12 +532,68 @@ function navigateTimelineNext() {
     window.timeline.focus(nextItem.id, { animation: true });
     
     console.log(`▶ Next event: ${nextItem.content}`);
+    
+    // Navigate to corresponding verse
+    const event = window.allTimelineEvents.find(e => e.Event_ID === nextItem.id);
+    if (event && event.Vers_ID_Start && typeof window.selectVerse === 'function') {
+        window.selectVerse(event.Vers_ID_Start);
+        
+        // Scroll verse into view
+        const verseElement = document.querySelector(`[data-vers-id="${event.Vers_ID_Start}"]`);
+        if (verseElement) {
+            verseElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }
 }
 
 // Fit timeline to show all events
 function fitTimelineWindow() {
     if (timeline) {
         window.timeline.fit({ animation: true });
+    }
+}
+
+// Sync timeline to selected verse
+function syncTimelineToVerse(versId) {
+    if (!timeline || !window.allTimelineEvents) {
+        console.log('⏭️ Timeline not ready for sync');
+        return;
+    }
+    
+    console.log(`🔗 Syncing timeline to verse ${versId}`);
+    
+    // Find events that contain this verse
+    const matchingEvents = window.allTimelineEvents.filter(event => {
+        const versIdNum = parseInt(versId);
+        const startVers = parseInt(event.Vers_ID_Start);
+        const endVers = parseInt(event.Vers_ID_End) || startVers;
+        
+        // Check if verse is in range
+        return versIdNum >= startVers && versIdNum <= endVers;
+    });
+    
+    if (matchingEvents.length > 0) {
+        // Get currently visible events (filtered by groups)
+        const visibleItems = window.timelineItems.get();
+        const visibleEventIds = visibleItems.map(item => item.id);
+        
+        // Find first matching event that is visible
+        const visibleMatch = matchingEvents.find(event => 
+            visibleEventIds.includes(event.Event_ID)
+        );
+        
+        if (visibleMatch) {
+            console.log(`  ✅ Found visible event: ${visibleMatch.Titel}`);
+            
+            // Select and focus on timeline
+            window.timeline.setSelection(visibleMatch.Event_ID);
+            window.timeline.focus(visibleMatch.Event_ID, { animation: true });
+        } else {
+            console.log(`  ⚠️ Found ${matchingEvents.length} event(s) but none are visible (filtered out by groups)`);
+            console.log(`     First event: ${matchingEvents[0].Titel}`);
+        }
+    } else {
+        console.log(`  ℹ️ No timeline events found for verse ${versId}`);
     }
 }
 
@@ -528,5 +606,6 @@ window.clearTimelineSearch = clearTimelineSearch;
 window.navigateTimelinePrev = navigateTimelinePrev;
 window.navigateTimelineNext = navigateTimelineNext;
 window.fitTimelineWindow = fitTimelineWindow;
+window.syncTimelineToVerse = syncTimelineToVerse;
 
 console.log('✅ Timeline.js loaded (Enhanced)');

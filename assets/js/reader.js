@@ -503,13 +503,25 @@ function toggleTimelineFilter() {
     }
 }
 
-// Timeline navigation (placeholders)
+// Timeline navigation - delegate to timeline.js functions
 function navigateTimelinePrev() {
-    console.log('Navigate timeline prev - requires timeline.js');
+    // These functions are defined in timeline.js
+    // They will navigate timeline AND select the corresponding verse
+    if (typeof window.navigateTimelinePrev === 'function') {
+        // Call timeline.js version which handles everything
+        return; // Let window version handle it
+    }
+    console.log('⚠️ Timeline.js not loaded yet');
 }
 
 function navigateTimelineNext() {
-    console.log('Navigate timeline next - requires timeline.js');
+    // These functions are defined in timeline.js
+    // They will navigate timeline AND select the corresponding verse
+    if (typeof window.navigateTimelineNext === 'function') {
+        // Call timeline.js version which handles everything
+        return; // Let window version handle it
+    }
+    console.log('⚠️ Timeline.js not loaded yet');
 }
 
 // ============= SEARCH HIGHLIGHTING =============
