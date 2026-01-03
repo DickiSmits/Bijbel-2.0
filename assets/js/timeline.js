@@ -12,7 +12,7 @@ let searchQuery = '';
 
 // Initialize timeline
 function initTimeline() {
-    console.log('🕐 Initializing timeline...');
+    console.log('🕐 Initializing window.timeline...');
     
     const container = document.getElementById('timeline');
     if (!container) {
@@ -72,7 +72,7 @@ function initTimeline() {
     };
     
     // Create timeline - CSS handles height
-    window.timeline = new vis.Timeline(container, window.timelineItems, window.timelineGroups, options);
+    window.timeline = new vis.Timeline(container, timelineItems, timelineGroups, options);
     
     // Add click handler for events
     window.timeline.on('select', function (properties) {
@@ -111,7 +111,7 @@ async function loadTimelineData() {
             }));
         
         // Store for filtering
-        window.allTimelineGroupsData = groupData;
+        allTimelineGroupsData = groupData;
         
         window.timelineGroups.clear();
         window.timelineGroups.add(groupData);
@@ -125,48 +125,12 @@ async function loadTimelineData() {
     // Load events
     const events = await apiCall('timeline');
     if (events) {
-        window.allTimelineEvents = events; // Store for filtering
+        allTimelineEvents = events; // Store for filtering
         
         const items = processTimelineEvents(events);
         
         window.timelineItems.clear();
         window.timelineItems.add(items);
-
-        // Store all items for filtering
-        window.allTimelineItems = window.timeline.itemsData.get();
-        console.log(`✅ Stored ${window.allTimelineItems.length} items for filtering`);
-
-        // Create filter function
-        window.filterTimeline = function() {
-            const enabledGroups = new Set();
-            document.querySelectorAll(".group-filter-checkbox:checked").forEach(cb => {
-                enabledGroups.add(parseInt(cb.value));
-            });
-
-            const filteredItems = window.allTimelineItems.filter(item => {
-                if (!item.group) return true;
-                return enabledGroups.has(item.group);
-            });
-
-            console.log(`🎯 Filtering: ${filteredItems.length}/${window.allTimelineItems.length} items visible`);
-
-            window.timeline.itemsData.clear();
-            window.timeline.itemsData.add(filteredItems);
-
-            const badge = document.getElementById("groupFilterCount");
-            if (badge) badge.textContent = enabledGroups.size;
-        };
-
-        // Add event listeners to checkboxes (delayed to ensure UI exists)
-        setTimeout(() => {
-            document.querySelectorAll(".group-filter-checkbox").forEach(cb => {
-                cb.addEventListener("change", () => window.filterTimeline());
-            });
-
-            // Initial filter
-            window.filterTimeline();
-            console.log("✅ Timeline filter system ready!");
-        }, 500);
         
         console.log(`✅ Loaded ${items.length} timeline events`);
     }
@@ -480,7 +444,7 @@ function filterTimeline() {
         countEl.textContent = activeGroups;
     }
     
-    console.log(`Filtered: ${items.length} events, ${visibleGroups.length} of ${window.allTimelineGroupsData.length} groups visible`);
+    console.log(`Filtered: ${items.length} events, ${visibleGroups.length} of ${allTimelineGroupsData.length} groups visible`);
 }
 
 // Navigation functions - jump to prev/next EVENT
@@ -488,14 +452,14 @@ function navigateTimelinePrev() {
     if (!timeline) return;
     
     // Get currently visible/filtered events
-    const visibleItems = timelineItems.get();
+    const visibleItems = window.timelineItems.get();
     if (visibleItems.length === 0) return;
     
     // Sort by start date
     visibleItems.sort((a, b) => a.start - b.start);
     
     // Get current selection or window center
-    const selection = timeline.getSelection();
+    const selection = window.timeline.getSelection();
     let currentIndex = -1;
     
     if (selection.length > 0) {
@@ -503,7 +467,7 @@ function navigateTimelinePrev() {
         currentIndex = visibleItems.findIndex(item => item.id === selection[0]);
     } else {
         // Find item closest to current window center
-        const window = timeline.getWindow();
+        const window = window.timeline.getWindow();
         const centerTime = window.start.getTime() + (window.end.getTime() - window.start.getTime()) / 2;
         
         currentIndex = visibleItems.findIndex(item => item.start.getTime() > centerTime);
@@ -525,14 +489,14 @@ function navigateTimelineNext() {
     if (!timeline) return;
     
     // Get currently visible/filtered events
-    const visibleItems = timelineItems.get();
+    const visibleItems = window.timelineItems.get();
     if (visibleItems.length === 0) return;
     
     // Sort by start date
     visibleItems.sort((a, b) => a.start - b.start);
     
     // Get current selection or window center
-    const selection = timeline.getSelection();
+    const selection = window.timeline.getSelection();
     let currentIndex = -1;
     
     if (selection.length > 0) {
@@ -540,7 +504,7 @@ function navigateTimelineNext() {
         currentIndex = visibleItems.findIndex(item => item.id === selection[0]);
     } else {
         // Find item closest to current window center
-        const window = timeline.getWindow();
+        const window = window.timeline.getWindow();
         const centerTime = window.start.getTime() + (window.end.getTime() - window.start.getTime()) / 2;
         
         currentIndex = visibleItems.findIndex(item => item.start.getTime() >= centerTime);
