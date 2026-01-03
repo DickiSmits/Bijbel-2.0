@@ -294,6 +294,11 @@ function restoreFilterState() {
         panel.classList.remove('show');
         panel.classList.remove('collapsing');
         
+        // Remove inline styles that Bootstrap might add
+        panel.style.display = '';
+        panel.style.height = '';
+        panel.style.visibility = '';
+        
         // Use 'open' class instead of inline styles for CSS transition
         if (panelOpen === 'true') {
             panel.classList.add('open');

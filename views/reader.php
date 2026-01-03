@@ -150,7 +150,7 @@
     min-height: 0;
 }
 
-/* Timeline Filter Panel - FIXED VERSION */
+/* Timeline Filter Panel */
 .timeline-filter-panel {
     background: #f8f9fa;
     border-bottom: 1px solid #dee2e6;
@@ -159,11 +159,12 @@
     max-height: 0;
     overflow: hidden;
     transition: max-height 0.3s ease-in-out, padding 0.3s ease-in-out;
+    display: block !important;
 }
 
 .timeline-filter-panel.open {
-    max-height: 800px;  /* Increased from 500px */
-    padding: 0.75rem 1rem;
+    max-height: 800px !important;
+    padding: 0.75rem 1rem !important;
 }
 
 .timeline-controls {
@@ -364,7 +365,7 @@
 </style>
 
 <script>
-// Timeline filter toggle - WORKING VERSION
+// Timeline filter toggle - AGGRESSIVE VERSION
 let isPanelOpen = false;
 
 window.toggleTimelineFilter = function() {
@@ -375,10 +376,15 @@ window.toggleTimelineFilter = function() {
         return;
     }
     
-    // Remove Bootstrap collapse classes that interfere
+    // Aggressively remove Bootstrap collapse classes
     filterPanel.classList.remove('collapse');
     filterPanel.classList.remove('show');
     filterPanel.classList.remove('collapsing');
+    
+    // Remove inline styles that Bootstrap might add
+    filterPanel.style.display = '';
+    filterPanel.style.height = '';
+    filterPanel.style.visibility = '';
     
     if (isPanelOpen) {
         filterPanel.classList.remove('open');
@@ -391,6 +397,15 @@ window.toggleTimelineFilter = function() {
         localStorage.setItem('timelineFilterOpen', 'true');
         console.log('✅ Panel opened');
     }
+    
+    // Double-check Bootstrap classes and inline styles are gone
+    setTimeout(() => {
+        filterPanel.classList.remove('collapse');
+        filterPanel.classList.remove('show');
+        filterPanel.classList.remove('collapsing');
+        filterPanel.style.display = '';
+        filterPanel.style.height = '';
+    }, 10);
 };
 
 // Initialize reader when DOM is ready
@@ -400,10 +415,43 @@ document.addEventListener('DOMContentLoaded', function() {
     // Get filter panel and remove Bootstrap classes
     const filterPanel = document.getElementById('timelineFilterPanel');
     if (filterPanel) {
-        // Remove Bootstrap collapse classes that interfere with custom CSS
-        filterPanel.classList.remove('collapse');
-        filterPanel.classList.remove('show');
-        filterPanel.classList.remove('collapsing');
+        // Function to aggressively remove Bootstrap classes and inline styles
+        const removeBootstrapClasses = () => {
+            filterPanel.classList.remove('collapse');
+            filterPanel.classList.remove('show');
+            filterPanel.classList.remove('collapsing');
+            // Remove inline styles
+            filterPanel.style.display = '';
+            filterPanel.style.height = '';
+            filterPanel.style.visibility = '';
+        };
+        
+        // Remove immediately
+        removeBootstrapClasses();
+        
+        // Watch for changes and keep removing Bootstrap classes
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.type === 'attributes' && 
+                    (mutation.attributeName === 'class' || mutation.attributeName === 'style')) {
+                    if (filterPanel.classList.contains('collapse') || 
+                        filterPanel.classList.contains('show') || 
+                        filterPanel.classList.contains('collapsing') ||
+                        filterPanel.style.display ||
+                        filterPanel.style.height) {
+                        console.log('⚠️ Bootstrap classes/styles detected, removing...');
+                        removeBootstrapClasses();
+                    }
+                }
+            });
+        });
+        
+        observer.observe(filterPanel, {
+            attributes: true,
+            attributeFilter: ['class', 'style']
+        });
+        
+        console.log('✅ MutationObserver watching for Bootstrap classes');
         
         // Restore filter panel state from localStorage
         const savedPanelOpen = localStorage.getItem('timelineFilterOpen');
