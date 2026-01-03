@@ -1,4 +1,4 @@
-<!-- Reader View - Final Bulletproof Version -->
+<!-- Reader View - Clean Working Version -->
 <div class="reader-layout" id="readerContainer">
     <!-- Bible Text Panel -->
     <div class="bible-panel" id="bibleText">
@@ -99,7 +99,7 @@
     grid-column: 1;
     grid-row: 1;
     overflow-y: auto;
-    padding: 0 1rem 1rem 1rem;  /* 0 top padding */
+    padding: 0 1rem 1rem 1rem;
     background: #fff;
 }
 
@@ -359,37 +359,29 @@
 </style>
 
 <script>
-// BULLETPROOF VERSION
-// Keeps reinstalling toggle to prevent overwrites!
+// Timeline filter toggle
+let isPanelOpen = false;
 
-    window.toggleTimelineFilter = function() {
-        const filterPanel = document.getElementById('timelineFilterPanel');
-        if (!filterPanel) {
-            console.log('⚠️ Panel not found');
-            return;
-        }
-        
-        // Toggle open class
-        if (isPanelOpen) {
-            filterPanel.classList.remove('open');
-            filterPanel.style.display = 'none';
-            isPanelOpen = false;
-            console.log('✅ Panel CLOSED');
-        } else {
-            filterPanel.classList.add('open');
-            filterPanel.style.display = 'block';
-            isPanelOpen = true;
-            console.log('✅ Panel OPENED');
-        }
-    };
-            console.log('✅ Panel CLOSED');
-        } else {
-            filterPanel.style.display = 'block';
-            isPanelOpen = true;
-            console.log('✅ Panel OPENED');
-        }
-    };
-}
+window.toggleTimelineFilter = function() {
+    const filterPanel = document.getElementById('timelineFilterPanel');
+    if (!filterPanel) {
+        console.log('⚠️ Panel not found');
+        return;
+    }
+    
+    // Toggle open class
+    if (isPanelOpen) {
+        filterPanel.classList.remove('open');
+        filterPanel.style.display = 'none';
+        isPanelOpen = false;
+        console.log('✅ Panel CLOSED');
+    } else {
+        filterPanel.classList.add('open');
+        filterPanel.style.display = 'block';
+        isPanelOpen = true;
+        console.log('✅ Panel OPENED');
+    }
+};
 
 // Initialize reader when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
@@ -416,90 +408,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize resize handles
     initResizeHandles();
-    
-    // BULLETPROOF APPROACH:
-    // Install toggle immediately
-    installToggle();
-    console.log('✅ Toggle installed (immediate)');
-    
-    // Reinstall after 1 second (after timeline.js)
-    setTimeout(() => {
-        cleanPanel();
-        installToggle();
-        console.log('✅ Toggle reinstalled (1s)');
-    }, 1000);
-    
-    // Reinstall after 2 seconds (safety)
-    setTimeout(() => {
-        installToggle();
-        console.log('✅ Toggle reinstalled (2s)');
-    }, 2000);
-    
-    // Reinstall after 3 seconds (paranoia mode)
-    setTimeout(() => {
-        installToggle();
-        console.log('✅ Toggle locked in (3s)');
-    }, 3000);
-    
-    // Add direct button handler as backup
-    setTimeout(() => {
-        addDirectButtonHandler();
-    }, 3500);
 });
-
-// Clean panel from Bootstrap
-function cleanPanel() {
-    const filterPanel = document.getElementById('timelineFilterPanel');
-    if (!filterPanel) return;
-    
-    console.log('🧹 Cleaning panel...');
-    
-    // Destroy Bootstrap instance
-    try {
-        if (typeof bootstrap !== 'undefined' && bootstrap.Collapse) {
-            const bsInstance = bootstrap.Collapse.getInstance(filterPanel);
-            if (bsInstance) {
-                bsInstance.dispose();
-                console.log('  ✅ Bootstrap destroyed');
-            }
-        }
-    } catch (e) {
-        // No Bootstrap - OK
-    }
-    
-    // Clean classes and attributes
-    filterPanel.className = 'timeline-filter-panel';
-    filterPanel.removeAttribute('data-bs-toggle');
-    filterPanel.removeAttribute('data-bs-target');
-    filterPanel.removeAttribute('data-toggle');
-    filterPanel.removeAttribute('data-target');
-    filterPanel.removeAttribute('aria-expanded');
-    
-    // Force closed
-    filterPanel.style.display = 'none';
-    isPanelOpen = false;
-    
-    console.log('  ✅ Panel cleaned');
-}
-
-// Direct button handler as backup
-function addDirectButtonHandler() {
-    const buttons = document.querySelectorAll('button[onclick*="toggleTimelineFilter"]');
-    
-    if (buttons.length > 0) {
-        buttons.forEach((btn, i) => {
-            // Add capturing listener (fires FIRST)
-            btn.addEventListener('click', function(e) {
-                // Let default handler run, but ensure our function is there
-                if (typeof window.toggleTimelineFilter !== 'function') {
-                    console.log('⚠️ Function missing, reinstalling...');
-                    installToggle();
-                }
-            }, true);
-        });
-        console.log('✅ Direct handler installed on', buttons.length, 'button(s)');
-    }
-}
 
 // Resize functionality
 function initResizeHandles() {
@@ -580,5 +489,6 @@ function initResizeHandles() {
     console.log('✅ Resize handles initialized');
 }
 </script>
+
 <!-- Include reader images module -->
 <script src="assets/js/reader-images.js"></script>
