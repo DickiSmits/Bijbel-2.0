@@ -25,9 +25,12 @@ if (isset($_GET['api'])) {
     // Profile endpoints router - alle profile-gerelateerde endpoints gebruiken profiles.php
     $profileEndpoints = ['profiles', 'create_profile', 'update_profile', 'delete_profile'];
     
+    // Formatting endpoints router
+    $formattingEndpoints = ['save_formatting', 'delete_formatting'];
+    
     // ✅ NIEUW: Timeline endpoints router - alle timeline-gerelateerde endpoints gebruiken timeline.php
     $timelineEndpoints = [
-        'timeline', 'create_timeline', 'update_timeline', 'delete_timeline',
+        'timeline', 'save_timeline', 'create_timeline', 'update_timeline', 'delete_timeline',
         'timeline_groups', 'create_timeline_group', 'update_timeline_group', 'delete_timeline_group'
     ];
     
@@ -37,6 +40,8 @@ if (isset($_GET['api'])) {
         $apiFile = __DIR__ . '/api/notes.php';
     } elseif (in_array($endpoint, $profileEndpoints)) {
         $apiFile = __DIR__ . '/api/profiles.php';
+    } elseif (in_array($endpoint, $formattingEndpoints)) {
+        $apiFile = __DIR__ . '/api/save_formatting.php';
     } elseif (in_array($endpoint, $timelineEndpoints)) {
         // ✅ NIEUW: Route timeline endpoints naar timeline.php
         $apiFile = __DIR__ . '/api/timeline.php';
