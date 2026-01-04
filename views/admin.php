@@ -279,8 +279,11 @@
 
 
             <div class="card mt-3">
-    <div class="card-header">Nieuwe Timeline Groep</div>
+    <div class="card-header">
+        <span id="groupFormTitle">Nieuwe Timeline Groep</span>
+    </div>
     <div class="card-body">
+        <input type="hidden" id="groupId">
         <div class="row g-3">
             <div class="col-md-4">
                 <label class="form-label">Groep Naam</label>
@@ -295,10 +298,15 @@
                 <input type="number" id="newGroupOrder" class="form-control" value="1" min="1">
             </div>
             <div class="col-md-2 d-flex align-items-end">
-                <button class="btn btn-primary w-100" onclick="createTimelineGroup()">
-                    <i class="bi bi-plus"></i> Aanmaken
+                <button class="btn btn-primary w-100" onclick="saveTimelineGroup()" id="groupSaveBtn">
+                    <i class="bi bi-plus"></i> <span id="groupSaveBtnText">Aanmaken</span>
                 </button>
             </div>
+        </div>
+        <div class="mt-2" id="groupEditActions" style="display: none;">
+            <button class="btn btn-outline-secondary btn-sm" onclick="cancelEditGroup()">
+                <i class="bi bi-x"></i> Annuleren
+            </button>
         </div>
     </div>
 </div>

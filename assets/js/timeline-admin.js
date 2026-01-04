@@ -500,9 +500,13 @@ async function loadTimelineGroups() {
                     <div>
                         <span class="badge me-2" style="background-color: ${group.Kleur}">&nbsp;&nbsp;&nbsp;</span>
                         <strong>${group.Groep_Naam}</strong>
+                        <small class="text-muted ms-2">Volgorde: ${group.Volgorde || 1}</small>
                     </div>
                     <div class="btn-group btn-group-sm">
-                        <button class="btn btn-outline-danger" onclick="deleteTimelineGroup(${group.Group_ID})">
+                        <button class="btn btn-outline-primary" onclick="editTimelineGroup(${group.Group_ID})" title="Bewerken">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn btn-outline-danger" onclick="deleteTimelineGroup(${group.Group_ID})" title="Verwijderen">
                             <i class="bi bi-trash"></i>
                         </button>
                     </div>
@@ -519,9 +523,10 @@ async function loadTimelineGroups() {
 }
 
 /**
- * Create timeline group
+ * Save timeline group (create or update)
  */
-async function createTimelineGroup() {
+async function saveTimelineGroup() {
+    const groupId = document.getElementById('groupId').value;
     const naam = document.getElementById('newGroupName').value.trim();
     const kleur = document.getElementById('newGroupColor').value;
     const volgorde = document.getElementById('newGroupOrder').value;
@@ -532,34 +537,102 @@ async function createTimelineGroup() {
     }
     
     try {
-        const response = await fetch('?api=create_timeline_group', {
+        const isUpdate = groupId && groupId !== '';
+        const endpoint = isUpdate ? '?api=update_timeline_group' : '?api=create_timeline_group';
+        
+        const data = {
+            naam: naam,
+            kleur: kleur,
+            volgorde: volgorde ? parseInt(volgorde) : 1
+        };
+        
+        if (isUpdate) {
+            data.id = parseInt(groupId);
+        }
+        
+        const response = await fetch(endpoint, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                naam: naam,
-                kleur: kleur,
-                volgorde: volgorde ? parseInt(volgorde) : 1
-            })
+            body: JSON.stringify(data)
         });
         
         const result = await response.json();
         
         if (result.success) {
-            showNotification('success', 'Timeline groep aangemaakt');
-            document.getElementById('newGroupName').value = '';
-            document.getElementById('newGroupColor').value = '#3498db';
-            document.getElementById('newGroupOrder').value = '1';
+            showNotification('success', isUpdate ? 'Timeline groep bijgewerkt' : 'Timeline groep aangemaakt');
+            clearGroupForm();
             loadTimelineGroups();
         } else {
-            showNotification('error', result.error || 'Fout bij aanmaken groep');
+            showNotification('error', result.error || 'Fout bij opslaan groep');
         }
         
     } catch (error) {
-        console.error('❌ Create timeline group error:', error);
-        showNotification('error', 'Netwerk fout bij aanmaken groep');
+        console.error('❌ Save timeline group error:', error);
+        showNotification('error', 'Netwerk fout bij opslaan groep');
     }
+}
+
+/**
+ * Edit timeline group
+ */
+async function editTimelineGroup(groupId) {
+    try {
+        const response = await fetch('?api=timeline_groups');
+        const groups = await response.json();
+        const group = groups.find(g => g.Group_ID == groupId);
+        
+        if (!group) {
+            showNotification('error', 'Groep niet gevonden');
+            return;
+        }
+        
+        // Fill form
+        document.getElementById('groupId').value = group.Group_ID;
+        document.getElementById('newGroupName').value = group.Groep_Naam || '';
+        document.getElementById('newGroupColor').value = group.Kleur || '#3498db';
+        document.getElementById('newGroupOrder').value = group.Volgorde || 1;
+        
+        // Update UI to edit mode
+        document.getElementById('groupFormTitle').textContent = 'Timeline Groep Bewerken';
+        document.getElementById('groupSaveBtnText').textContent = 'Bijwerken';
+        document.querySelector('#groupSaveBtn i').className = 'bi bi-save';
+        document.getElementById('groupEditActions').style.display = 'block';
+        
+        // Scroll to form
+        const formCard = document.querySelector('#section-timeline .card.mt-3');
+        if (formCard) {
+            formCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        
+    } catch (error) {
+        console.error('❌ Edit timeline group error:', error);
+        showNotification('error', 'Fout bij laden groep');
+    }
+}
+
+/**
+ * Clear group form
+ */
+function clearGroupForm() {
+    document.getElementById('groupId').value = '';
+    document.getElementById('newGroupName').value = '';
+    document.getElementById('newGroupColor').value = '#3498db';
+    document.getElementById('newGroupOrder').value = '1';
+    
+    // Reset UI to create mode
+    document.getElementById('groupFormTitle').textContent = 'Nieuwe Timeline Groep';
+    document.getElementById('groupSaveBtnText').textContent = 'Aanmaken';
+    document.querySelector('#groupSaveBtn i').className = 'bi bi-plus';
+    document.getElementById('groupEditActions').style.display = 'none';
+}
+
+/**
+ * Cancel edit group
+ */
+function cancelEditGroup() {
+    clearGroupForm();
 }
 
 /**
@@ -630,7 +703,10 @@ window.editTimelineEvent = editTimelineEvent;
 window.deleteTimelineEvent = deleteTimelineEvent;
 window.clearTimelineForm = clearTimelineForm;
 window.loadTimelineGroups = loadTimelineGroups;
-window.createTimelineGroup = createTimelineGroup;
+window.saveTimelineGroup = saveTimelineGroup;
+window.editTimelineGroup = editTimelineGroup;
+window.clearGroupForm = clearGroupForm;
+window.cancelEditGroup = cancelEditGroup;
 window.deleteTimelineGroup = deleteTimelineGroup;
 
 console.log('✅ Timeline admin functions loaded');
