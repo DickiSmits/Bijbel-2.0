@@ -24,7 +24,7 @@ function initTimeline() {
     window.timelineItems = new vis.DataSet();
     window.timelineGroups = new vis.DataSet();
     
-    // Timeline options - compact with better tooltips
+    // Timeline options - compact with better tooltips and vertical scroll
     const options = {
         orientation: 'top',
         zoomMin: 1000 * 60 * 60 * 24 * 365, // 1 year
@@ -39,7 +39,6 @@ function initTimeline() {
         stackSubgroups: true,
         selectable: true,
         multiselect: false,
-        height: '100%',        // Fill container
         margin: {
             item: {
                 horizontal: 5,

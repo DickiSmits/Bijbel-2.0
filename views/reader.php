@@ -370,6 +370,10 @@
 }
 
 /* Compact Timeline Events */
+.vis-timeline {
+    overflow-y: auto !important;  /* Allow vertical scrolling */
+}
+
 .vis-item {
     font-size: 11px !important;
     padding: 2px 4px !important;
