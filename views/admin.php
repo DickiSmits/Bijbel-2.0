@@ -199,7 +199,7 @@
                         </div>
                         
 
-<
+
 
 
                         <!-- 🔴 COMPACT: Start Datum, Eind Datum, Kleuren op 1 rij -->
