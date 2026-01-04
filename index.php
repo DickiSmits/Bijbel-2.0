@@ -222,6 +222,7 @@ if (!is_dir('images')) {
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/vis-timeline@7.7.3/standalone/umd/vis-timeline-graph2d.min.js"></script>
     
+    
     <?php if ($mode === 'admin'): ?>
     <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
     <?php endif; ?>
@@ -239,9 +240,7 @@ if (!is_dir('images')) {
         <script src="assets/js/map.js"></script>
         <?php endif; ?>
         
-        <?php if (file_exists(__DIR__ . '/assets/js/timeline.js')): ?>
         <script src="assets/js/timeline.js"></script>
-        <?php endif; ?>
         
         <script>
         (function() {
@@ -447,7 +446,7 @@ if (!is_dir('images')) {
     <script src="assets/js/admin-datatable-loaders.js"></script>
     <script src="assets/js/admin-timeline-groups.js"></script>
     <script src="assets/js/timeline-admin.js"></script>
-    <script src="assets/js/timeline.js"></script>
+    
    
 <?php endif; ?>
 </body>
