@@ -199,37 +199,7 @@
                         </div>
                         
 
-<div class="card mt-3">
-    <div class="card-header">Nieuwe Timeline Groep</div>
-    <div class="card-body">
-        <div class="row g-3">
-            <div class="col-md-4">
-                <label class="form-label">Groep Naam</label>
-                <input type="text" id="newGroupName" class="form-control" placeholder="Bijv. Koningen, Profeten...">
-            </div>
-            <div class="col-md-4">
-                <label class="form-label">Kleur</label>
-                <input type="color" id="newGroupColor" class="form-control form-control-color w-100" value="#3498db">
-            </div>
-            <div class="col-md-2">
-                <label class="form-label">Volgorde</label>
-                <input type="number" id="newGroupOrder" class="form-control" value="1" min="1">
-            </div>
-            <div class="col-md-2 d-flex align-items-end">
-                <button class="btn btn-primary w-100" onclick="createTimelineGroup()">
-                    <i class="bi bi-plus"></i> Aanmaken
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="card mt-3">
-    <div class="card-header">Timeline Groepen</div>
-    <div class="card-body">
-        <div id="groupsList"></div>
-    </div>
-</div>
+<
 
 
                         <!-- 🔴 COMPACT: Start Datum, Eind Datum, Kleuren op 1 rij -->
