@@ -148,7 +148,8 @@
     flex: 1;
     width: 100%;
     min-height: 0;
-    overflow: auto;  /* Enable scrolling within timeline container */
+    max-height: 500px;  /* Limit height to enable vertical scrolling */
+    overflow: hidden;   /* Let vis.js handle scrolling */
     position: relative;
 }
 

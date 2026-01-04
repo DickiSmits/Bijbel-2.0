@@ -39,6 +39,7 @@ function initTimeline() {
         stackSubgroups: true,
         selectable: true,
         multiselect: false,
+        height: '500px',       // Fixed height enables vertical scroll
         margin: {
             item: {
                 horizontal: 5,
