@@ -173,56 +173,7 @@
         <div id="section-timeline" class="admin-section d-none">
             <h4 class="mb-4"><i class="bi bi-calendar-event"></i> Timeline Beheren</h4>
             
-            <!-- Timeline Event Editor -->
-            <div class="card mb-4">
-                <div class="card-header">Nieuw Event</div>
-<div class="card-body">
-                    <input type="hidden" id="timelineEventId">
-                    
-                    <div class="row g-3">
-                        <!-- Titel en Groep -->
-                        <div class="col-md-6">
-                            <label class="form-label">Titel</label>
-                            <input type="text" id="timelineTitel" class="form-control" placeholder="Event titel">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Groep</label>
-                            <select id="timelineGroup" class="form-select">
-                                <option value="">Geen groep</option>
-                            </select>
-                        </div>
-                        
-                        <!-- Beschrijving met Quill Editor -->
-                        <div class="col-12">
-                            <label class="form-label">Beschrijving</label>
-                            <div id="timelineBeschrijvingEditor" style="height: 150px;"></div>
-                        </div>
-                        
-
-<div class="card mt-3">
-    <div class="card-header">Nieuwe Timeline Groep</div>
-    <div class="card-body">
-        <div class="row g-3">
-            <div class="col-md-4">
-                <label class="form-label">Groep Naam</label>
-                <input type="text" id="newGroupName" class="form-control" placeholder="Bijv. Koningen, Profeten...">
-            </div>
-            <div class="col-md-4">
-                <label class="form-label">Kleur</label>
-                <input type="color" id="newGroupColor" class="form-control form-control-color w-100" value="#3498db">
-            </div>
-            <div class="col-md-2">
-                <label class="form-label">Volgorde</label>
-                <input type="number" id="newGroupOrder" class="form-control" value="1" min="1">
-            </div>
-            <div class="col-md-2 d-flex align-items-end">
-                <button class="btn btn-primary w-100" onclick="createTimelineGroup()">
-                    <i class="bi bi-plus"></i> Aanmaken
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
+            
 
 <div class="card mt-3">
     <div class="card-header">Timeline Groepen</div>
