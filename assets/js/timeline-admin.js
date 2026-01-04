@@ -667,8 +667,28 @@ async function deleteTimelineGroup(groupId) {
 /**
  * Show notification toast
  */
-function showNotification(type, message) {
+/**
+ * Show notification toast
+ * Supports both calling conventions:
+ * - showNotification('success', 'message') - new style
+ * - showNotification('message', false) - legacy admin.js style
+ */
+function showNotification(typeOrMessage, messageOrIsError) {
     const toast = document.getElementById('notificationToast');
+    
+    // Detect calling convention
+    let type, message;
+    
+    if (typeOrMessage === 'success' || typeOrMessage === 'error' || typeOrMessage === 'warning') {
+        // New style: showNotification('success', 'message')
+        type = typeOrMessage;
+        message = messageOrIsError;
+    } else {
+        // Legacy style: showNotification('message', isError)
+        message = typeOrMessage;
+        type = messageOrIsError ? 'error' : 'success';
+    }
+    
     if (!toast) {
         console.log(type.toUpperCase() + ':', message);
         return;
@@ -683,6 +703,8 @@ function showNotification(type, message) {
         toast.classList.add('bg-success', 'text-white');
     } else if (type === 'error') {
         toast.classList.add('bg-danger', 'text-white');
+    } else if (type === 'warning') {
+        toast.classList.add('bg-warning', 'text-dark');
     }
     
     const bsToast = new bootstrap.Toast(toast);
