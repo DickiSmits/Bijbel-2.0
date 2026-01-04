@@ -311,10 +311,38 @@
 </div>
             
             <!-- Timeline Events List -->
-            <div class="card">
-                <div class="card-header">Timeline Events</div>
-                <div class="card-body">
-                    <div id="timelineEventsList"></div>
+            <div class="card mt-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>Timeline Events (<span id="eventsCount">0</span>)</span>
+                    <div class="input-group" style="width: 300px;">
+                        <input type="text" id="eventSearch" class="form-control form-control-sm" placeholder="Zoek events...">
+                        <button class="btn btn-outline-secondary btn-sm" onclick="clearEventSearch()">
+                            <i class="bi bi-x"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive" style="max-height: 600px; overflow-y: auto;">
+                        <table class="table table-hover table-sm mb-0">
+                            <thead class="table-light sticky-top">
+                                <tr>
+                                    <th style="width: 30%;">Titel</th>
+                                    <th style="width: 15%;">Groep</th>
+                                    <th style="width: 20%;">Datum</th>
+                                    <th style="width: 20%;">Verse Range</th>
+                                    <th style="width: 15%;" class="text-end">Acties</th>
+                                </tr>
+                            </thead>
+                            <tbody id="timelineEventsList">
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-3">
+                                        <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                                        Events laden...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>

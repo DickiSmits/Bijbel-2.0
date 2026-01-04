@@ -10,6 +10,12 @@ function initTimelineAdmin() {
     loadTimelineEvents();
     initTimelineVerseSelectors();
     
+    // Setup search
+    const searchInput = document.getElementById('eventSearch');
+    if (searchInput) {
+        searchInput.addEventListener('input', searchTimelineEvents);
+    }
+    
     // Initialize Quill editor for beschrijving if not already initialized
     if (typeof timelineBeschrijvingQuill === 'undefined' && document.getElementById('timelineBeschrijvingEditor')) {
         window.timelineBeschrijvingQuill = new Quill('#timelineBeschrijvingEditor', {
@@ -200,6 +206,8 @@ async function saveTimeline() {
 /**
  * Load all timeline events
  */
+let allTimelineEventsAdmin = []; // Store for filtering
+
 async function loadTimelineEvents() {
     try {
         const response = await fetch('?api=timeline');
@@ -207,52 +215,130 @@ async function loadTimelineEvents() {
         
         console.log('📅 Loaded timeline events:', events.length);
         
-        // Display events
-        const container = document.getElementById('timelineEventsList');
-        if (!container) return;
+        // Store globally for filtering
+        allTimelineEventsAdmin = events;
         
-        if (events.length === 0) {
-            container.innerHTML = '<p class="text-muted">Nog geen timeline events</p>';
-            return;
-        }
+        // Update count
+        const countEl = document.getElementById('eventsCount');
+        if (countEl) countEl.textContent = events.length;
         
-        let html = '<div class="list-group">';
-        
-        events.forEach(event => {
-            const groupBadge = event.Groep_Naam 
-                ? `<span class="badge" style="background-color: ${event.Groep_Kleur || '#6c757d'}">${event.Groep_Naam}</span>`
-                : '';
-            
-            const dateRange = event.End_Datum && event.End_Datum !== event.Start_Datum
-                ? `${event.Start_Datum} - ${event.End_Datum}`
-                : event.Start_Datum;
-            
-            html += `
-                <div class="list-group-item">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div class="flex-grow-1">
-                            <h6 class="mb-1">${event.Titel} ${groupBadge}</h6>
-                            <small class="text-muted">${dateRange}</small>
-                            ${event.Beschrijving ? `<p class="mb-1 small">${event.Beschrijving}</p>` : ''}
-                        </div>
-                        <div class="btn-group btn-group-sm">
-                            <button class="btn btn-outline-primary" onclick="editTimelineEvent(${event.Event_ID})">
-                                <i class="bi bi-pencil"></i>
-                            </button>
-                            <button class="btn btn-outline-danger" onclick="deleteTimelineEvent(${event.Event_ID})">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `;
-        });
-        
-        html += '</div>';
-        container.innerHTML = html;
+        // Render table
+        renderTimelineEventsTable(events);
         
     } catch (error) {
         console.error('❌ Load timeline events error:', error);
+        const tbody = document.getElementById('timelineEventsList');
+        if (tbody) {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger py-3">Error loading events</td></tr>';
+        }
+    }
+}
+
+/**
+ * Render timeline events table
+ */
+function renderTimelineEventsTable(events) {
+    const tbody = document.getElementById('timelineEventsList');
+    if (!tbody) return;
+    
+    if (events.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-3">Geen events gevonden</td></tr>';
+        return;
+    }
+    
+    let html = '';
+    
+    events.forEach(event => {
+        // Group badge
+        const groupBadge = event.Groep_Naam 
+            ? `<span class="badge" style="background-color: ${event.Groep_Kleur || '#6c757d'}; color: white;">${event.Groep_Naam}</span>`
+            : '<span class="text-muted small">Geen groep</span>';
+        
+        // Date range
+        const dateRange = event.End_Datum && event.End_Datum !== event.Start_Datum
+            ? `${event.Start_Datum}<br><small class="text-muted">tot ${event.End_Datum}</small>`
+            : event.Start_Datum;
+        
+        // Verse range
+        let verseRange = '<span class="text-muted small">Geen vers</span>';
+        if (event.Start_Boek) {
+            const startRef = `${event.Start_Boek} ${event.Start_Hoofdstuk}:${event.Start_Vers}`;
+            if (event.End_Boek && (event.End_Boek !== event.Start_Boek || event.End_Hoofdstuk !== event.Start_Hoofdstuk || event.End_Vers !== event.Start_Vers)) {
+                const endRef = `${event.End_Boek} ${event.End_Hoofdstuk}:${event.End_Vers}`;
+                verseRange = `<small>${startRef}<br>tot ${endRef}</small>`;
+            } else {
+                verseRange = `<small>${startRef}</small>`;
+            }
+        }
+        
+        // Title with color preview
+        const colorBox = `<span style="display: inline-block; width: 12px; height: 12px; background-color: ${event.Kleur || '#3498db'}; border-radius: 2px; margin-right: 6px;"></span>`;
+        
+        html += `
+            <tr data-event-id="${event.Event_ID}">
+                <td>
+                    ${colorBox}
+                    <strong>${event.Titel}</strong>
+                    ${event.Beschrijving ? `<br><small class="text-muted">${event.Beschrijving.substring(0, 100)}${event.Beschrijving.length > 100 ? '...' : ''}</small>` : ''}
+                </td>
+                <td>${groupBadge}</td>
+                <td>${dateRange}</td>
+                <td>${verseRange}</td>
+                <td class="text-end">
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-primary" onclick="editTimelineEvent(${event.Event_ID})" title="Bewerken">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn btn-outline-danger" onclick="deleteTimelineEvent(${event.Event_ID})" title="Verwijderen">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    });
+    
+    tbody.innerHTML = html;
+}
+
+/**
+ * Search/filter timeline events
+ */
+function searchTimelineEvents() {
+    const searchInput = document.getElementById('eventSearch');
+    if (!searchInput) return;
+    
+    const query = searchInput.value.toLowerCase().trim();
+    
+    if (!query) {
+        // No search - show all
+        renderTimelineEventsTable(allTimelineEventsAdmin);
+        return;
+    }
+    
+    // Filter events
+    const filtered = allTimelineEventsAdmin.filter(event => {
+        return (
+            event.Titel.toLowerCase().includes(query) ||
+            (event.Beschrijving && event.Beschrijving.toLowerCase().includes(query)) ||
+            (event.Groep_Naam && event.Groep_Naam.toLowerCase().includes(query)) ||
+            (event.Start_Datum && event.Start_Datum.includes(query)) ||
+            (event.End_Datum && event.End_Datum.includes(query)) ||
+            (event.Start_Boek && event.Start_Boek.toLowerCase().includes(query))
+        );
+    });
+    
+    renderTimelineEventsTable(filtered);
+}
+
+/**
+ * Clear event search
+ */
+function clearEventSearch() {
+    const searchInput = document.getElementById('eventSearch');
+    if (searchInput) {
+        searchInput.value = '';
+        searchTimelineEvents();
     }
 }
 
@@ -312,7 +398,10 @@ async function editTimelineEvent(eventId) {
         }
         
         // Scroll to form
-        document.querySelector('.card').scrollIntoView({ behavior: 'smooth' });
+        const formCard = document.querySelector('#section-timeline .card');
+        if (formCard) {
+            formCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
         
     } catch (error) {
         console.error('❌ Edit timeline event error:', error);
@@ -534,6 +623,9 @@ window.loadTimelineChapters = loadTimelineChapters;
 window.loadTimelineVerses = loadTimelineVerses;
 window.saveTimeline = saveTimeline;
 window.loadTimelineEvents = loadTimelineEvents;
+window.renderTimelineEventsTable = renderTimelineEventsTable;
+window.searchTimelineEvents = searchTimelineEvents;
+window.clearEventSearch = clearEventSearch;
 window.editTimelineEvent = editTimelineEvent;
 window.deleteTimelineEvent = deleteTimelineEvent;
 window.clearTimelineForm = clearTimelineForm;
