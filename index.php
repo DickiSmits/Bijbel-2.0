@@ -446,6 +446,7 @@ if (!is_dir('images')) {
     <script src="assets/js/admin-extensions.js"></script>
     <script src="assets/js/admin-datatable-loaders.js"></script>
     <script src="assets/js/admin-timeline-groups.js"></script>
+    <script src="assets/js/timeline-admin.js"></script>
    
 <?php endif; ?>
 </body>
