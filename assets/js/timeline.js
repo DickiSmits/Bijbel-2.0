@@ -24,7 +24,7 @@ function initTimeline() {
     window.timelineItems = new vis.DataSet();
     window.timelineGroups = new vis.DataSet();
     
-    // Timeline options - with vertical scrolling in container
+    // Timeline options - compact with better tooltips
     const options = {
         orientation: 'top',
         zoomMin: 1000 * 60 * 60 * 24 * 365, // 1 year
@@ -36,12 +36,19 @@ function initTimeline() {
         zoomKey: 'ctrlKey',    // Only zoom when Ctrl is pressed, otherwise scroll
         groupOrder: 'order',
         stack: true,
+        stackSubgroups: true,
         selectable: true,
         multiselect: false,
         height: '100%',        // Fill container
+        margin: {
+            item: {
+                horizontal: 5,
+                vertical: 2    // Smaller vertical margin = closer together
+            }
+        },
         tooltip: {
-            followMouse: false,
-            overflowMethod: 'cap',
+            followMouse: true,  // Follow mouse for better positioning
+            overflowMethod: 'flip', // Flip tooltip if it doesn't fit
             delay: 100
         },
         // Custom tooltip template
@@ -52,19 +59,22 @@ function initTimeline() {
             const event = window.allTimelineEvents.find(e => e.Event_ID === item.id);
             if (!event) return item.content;
             
-            let html = `<div style="padding: 8px; max-width: 300px;">`;
-            html += `<strong style="font-size: 1.1em;">${event.Titel}</strong>`;
+            let html = `<div style="padding: 6px 8px; max-width: 280px; font-size: 13px;">`;
+            html += `<strong style="font-size: 14px; display: block; margin-bottom: 4px;">${event.Titel}</strong>`;
             
             if (event.Beschrijving) {
-                html += `<br><span style="margin-top: 4px; display: block;">${event.Beschrijving}</span>`;
+                const shortDesc = event.Beschrijving.length > 150 
+                    ? event.Beschrijving.substring(0, 150) + '...' 
+                    : event.Beschrijving;
+                html += `<div style="margin-bottom: 4px;">${shortDesc}</div>`;
             }
             
             // Show date range
             if (event.Start_Datum) {
-                html += `<br><small style="color: #666; margin-top: 4px; display: block;">`;
+                html += `<small style="color: #666; display: block;">`;
                 html += event.Start_Datum;
                 if (event.End_Datum && event.End_Datum !== event.Start_Datum) {
-                    html += ` - ${event.End_Datum}`;
+                    html += ` → ${event.End_Datum}`;
                 }
                 html += `</small>`;
             }

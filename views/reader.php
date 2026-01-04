@@ -368,6 +368,45 @@
     outline-offset: 1px;
     font-weight: bold;
 }
+
+/* Compact Timeline Events */
+.vis-item {
+    font-size: 11px !important;
+    padding: 2px 4px !important;
+    border-radius: 3px !important;
+}
+
+.vis-item .vis-item-content {
+    padding: 2px 4px !important;
+    line-height: 1.2 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+.vis-item.vis-range {
+    border-width: 1px !important;
+}
+
+.vis-item.vis-box {
+    border-width: 1px !important;
+}
+
+/* Smaller group labels */
+.vis-label {
+    font-size: 12px !important;
+    padding: 2px 5px !important;
+}
+
+/* Compact tooltip */
+.vis-tooltip {
+    max-width: 300px !important;
+    font-size: 13px !important;
+    padding: 8px !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
+    border-radius: 4px !important;
+    z-index: 10000 !important;
+}
 </style>
 
 <script>
