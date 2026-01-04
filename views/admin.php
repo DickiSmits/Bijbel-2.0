@@ -178,6 +178,8 @@
                 <div class="card-header">Nieuw Event</div>
 <div class="card-body">
                     <input type="hidden" id="timelineEventId">
+                    <input type="hidden" id="timelineVersStart">
+                    <input type="hidden" id="timelineVersEnd">
                     
                     <div class="row g-3">
                         <!-- Titel en Groep -->
@@ -304,7 +306,7 @@
 <div class="card mt-3">
     <div class="card-header">Timeline Groepen</div>
     <div class="card-body">
-        <div id="groupsList"></div>
+        <div id="timelineGroupsList"></div>
     </div>
 </div>
             
@@ -312,7 +314,7 @@
             <div class="card">
                 <div class="card-header">Timeline Events</div>
                 <div class="card-body">
-                    <div id="timelineList"></div>
+                    <div id="timelineEventsList"></div>
                 </div>
             </div>
         </div>
@@ -650,6 +652,11 @@ function switchAdminTab(section) {
     // Call existing showAdminSection if it exists (for data loading)
     if (typeof showAdminSection === 'function') {
         showAdminSection(section);
+    }
+    
+    // Initialize timeline admin when timeline tab is opened
+    if (section === 'timeline' && typeof initTimelineAdmin === 'function') {
+        initTimelineAdmin();
     }
     
     // Save preference

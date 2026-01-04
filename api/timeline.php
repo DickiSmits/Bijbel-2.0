@@ -296,6 +296,108 @@ switch ($endpoint) {
         }
         break;
     
+    // ============= SAVE TIMELINE EVENT (CREATE OR UPDATE) =============
+    // This is a convenience endpoint that handles both create and update
+    // Useful for admin forms that don't want to distinguish between create/update
+    case 'save_timeline':
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['error' => 'POST required']);
+            exit;
+        }
+        
+        $data = json_decode(file_get_contents('php://input'), true);
+        
+        if (!$data) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Invalid JSON']);
+            exit;
+        }
+        
+        // Validate required fields
+        if (empty($data['titel']) || empty($data['start_datum'])) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Titel en start_datum zijn verplicht']);
+            exit;
+        }
+        
+        try {
+            // Check if we're updating or creating
+            $eventId = isset($data['event_id']) && $data['event_id'] ? (int)$data['event_id'] : null;
+            $eventId = $eventId ?: (isset($data['id']) && $data['id'] ? (int)$data['id'] : null);
+            
+            if ($eventId) {
+                // UPDATE existing event
+                $stmt = $db->prepare("UPDATE Timeline_Events SET 
+                    Titel = ?, 
+                    Beschrijving = ?, 
+                    Start_Datum = ?, 
+                    End_Datum = ?, 
+                    Vers_ID_Start = ?, 
+                    Vers_ID_End = ?, 
+                    Type = ?, 
+                    Kleur = ?, 
+                    Tekst_Kleur = ?, 
+                    Group_ID = ? 
+                    WHERE Event_ID = ?");
+                
+                $stmt->execute([
+                    trim($data['titel']),
+                    isset($data['beschrijving']) ? trim($data['beschrijving']) : null,
+                    trim($data['start_datum']),
+                    isset($data['end_datum']) ? trim($data['end_datum']) : null,
+                    isset($data['vers_id_start']) ? (int)$data['vers_id_start'] : null,
+                    isset($data['vers_id_end']) ? (int)$data['vers_id_end'] : null,
+                    isset($data['type']) ? trim($data['type']) : 'event',
+                    isset($data['kleur']) ? trim($data['kleur']) : '#3498db',
+                    isset($data['tekst_kleur']) ? trim($data['tekst_kleur']) : '#ffffff',
+                    isset($data['group_id']) ? (int)$data['group_id'] : null,
+                    $eventId
+                ]);
+                
+                echo json_encode([
+                    'success' => true, 
+                    'event_id' => $eventId,
+                    'id' => $eventId,
+                    'message' => 'Timeline event bijgewerkt'
+                ]);
+                
+            } else {
+                // INSERT new event
+                $stmt = $db->prepare("INSERT INTO Timeline_Events 
+                    (Titel, Beschrijving, Start_Datum, End_Datum, Vers_ID_Start, Vers_ID_End, Type, Kleur, Tekst_Kleur, Group_ID) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                
+                $stmt->execute([
+                    trim($data['titel']),
+                    isset($data['beschrijving']) ? trim($data['beschrijving']) : null,
+                    trim($data['start_datum']),
+                    isset($data['end_datum']) ? trim($data['end_datum']) : null,
+                    isset($data['vers_id_start']) ? (int)$data['vers_id_start'] : null,
+                    isset($data['vers_id_end']) ? (int)$data['vers_id_end'] : null,
+                    isset($data['type']) ? trim($data['type']) : 'event',
+                    isset($data['kleur']) ? trim($data['kleur']) : '#3498db',
+                    isset($data['tekst_kleur']) ? trim($data['tekst_kleur']) : '#ffffff',
+                    isset($data['group_id']) ? (int)$data['group_id'] : null
+                ]);
+                
+                $newId = $db->lastInsertId();
+                
+                echo json_encode([
+                    'success' => true, 
+                    'event_id' => $newId,
+                    'id' => $newId,
+                    'message' => 'Timeline event aangemaakt'
+                ]);
+            }
+            
+        } catch (Exception $e) {
+            error_log("Save timeline event error: " . $e->getMessage());
+            http_response_code(500);
+            echo json_encode(['error' => $e->getMessage()]);
+        }
+        break;
+    
     // ═════════════════════════════════════════════════════════════════════════
     // TIMELINE GROUPS
     // ═════════════════════════════════════════════════════════════════════════
