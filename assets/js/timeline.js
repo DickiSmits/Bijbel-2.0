@@ -470,8 +470,8 @@ function navigateTimelinePrev() {
         currentIndex = visibleItems.findIndex(item => item.id === selection[0]);
     } else {
         // Find item closest to current window center
-        const window = window.timeline.getWindow();
-        const centerTime = window.start.getTime() + (window.end.getTime() - window.start.getTime()) / 2;
+        const timeWindow = window.timeline.getWindow();
+        const centerTime = timeWindow.start.getTime() + (timeWindow.end.getTime() - timeWindow.start.getTime()) / 2;
         
         currentIndex = visibleItems.findIndex(item => item.start.getTime() > centerTime);
         if (currentIndex === -1) currentIndex = visibleItems.length;
@@ -519,8 +519,8 @@ function navigateTimelineNext() {
         currentIndex = visibleItems.findIndex(item => item.id === selection[0]);
     } else {
         // Find item closest to current window center
-        const window = window.timeline.getWindow();
-        const centerTime = window.start.getTime() + (window.end.getTime() - window.start.getTime()) / 2;
+        const timeWindow = window.timeline.getWindow();
+        const centerTime = timeWindow.start.getTime() + (timeWindow.end.getTime() - timeWindow.start.getTime()) / 2;
         
         currentIndex = visibleItems.findIndex(item => item.start.getTime() >= centerTime);
         if (currentIndex === -1) currentIndex = -1;
