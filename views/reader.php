@@ -137,6 +137,8 @@
     background: #fff;
     display: flex;
     flex-direction: column;
+    min-height: 250px;  /* Minimum height for timeline */
+    height: 100%;       /* Use full grid row height */
 }
 
 #map {
@@ -147,9 +149,9 @@
 #timeline {
     flex: 1;
     width: 100%;
-    min-height: 0;
-    max-height: 500px;  /* Limit height to enable vertical scrolling */
-    overflow: hidden;   /* Let vis.js handle scrolling */
+    min-height: 250px;  /* Minimum height for scrolling */
+    height: 100%;       /* Use full available height */
+    overflow: hidden;   /* vis.js handles scrolling internally when verticalScroll: true */
     position: relative;
 }
 

@@ -39,7 +39,7 @@ function initTimeline() {
         stackSubgroups: true,
         selectable: true,
         multiselect: false,
-        height: '500px',       // Fixed height enables vertical scroll
+        height: '100%',        // Use full container height - enables vertical scroll
         margin: {
             item: {
                 horizontal: 5,
@@ -84,8 +84,24 @@ function initTimeline() {
         }
     };
     
+    // Set height dynamically based on container
+    const containerHeight = container.offsetHeight || 500;
+    options.height = containerHeight + 'px';
+    
     // Create timeline - CSS handles height
     window.timeline = new vis.Timeline(container, timelineItems, timelineGroups, options);
+    
+    // Resize observer to update timeline when container size changes
+    const resizeObserver = new ResizeObserver(entries => {
+        for (let entry of entries) {
+            const newHeight = entry.contentRect.height;
+            if (newHeight > 0 && window.timeline) {
+                window.timeline.setOptions({ height: newHeight + 'px' });
+                window.timeline.redraw();
+            }
+        }
+    });
+    resizeObserver.observe(container);
     
     // Add click handler for events
     window.timeline.on('select', function (properties) {
