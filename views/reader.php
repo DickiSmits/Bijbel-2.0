@@ -499,89 +499,13 @@ document.addEventListener('DOMContentLoaded', function() {
         console.warn('timeline.js not loaded');
     }
     
-    // Initialize resize handles
-    initResizeHandles();
+    // Initialize resize handles (loaded from separate module)
+    if (typeof window.initResizeHandles === 'function') {
+        window.initResizeHandles();
+    }
 });
-
-// Resize functionality
-function initResizeHandles() {
-    const readerLayout = document.querySelector('.reader-layout');
-    const verticalHandle = document.getElementById('verticalHandle');
-    const horizontalHandle = document.getElementById('horizontalHandle');
-    
-    if (!readerLayout) return;
-    
-    // Vertical resize
-    if (verticalHandle) {
-        let isResizingVertical = false;
-        
-        verticalHandle.addEventListener('mousedown', (e) => {
-            isResizingVertical = true;
-            document.body.style.cursor = 'col-resize';
-            document.body.style.userSelect = 'none';
-            e.preventDefault();
-        });
-        
-        document.addEventListener('mousemove', (e) => {
-            if (!isResizingVertical) return;
-            
-            const containerWidth = readerLayout.offsetWidth;
-            const leftPercent = ((e.clientX - readerLayout.offsetLeft) / containerWidth) * 100;
-            
-            if (leftPercent > 20 && leftPercent < 80) {
-                const rightPercent = 100 - leftPercent;
-                readerLayout.style.gridTemplateColumns = `${leftPercent}fr 4px ${rightPercent}fr`;
-            }
-        });
-        
-        document.addEventListener('mouseup', () => {
-            if (isResizingVertical) {
-                isResizingVertical = false;
-                document.body.style.cursor = '';
-                document.body.style.userSelect = '';
-            }
-        });
-    }
-    
-    // Horizontal resize
-    if (horizontalHandle) {
-        let isResizingHorizontal = false;
-        
-        horizontalHandle.addEventListener('mousedown', (e) => {
-            isResizingHorizontal = true;
-            document.body.style.cursor = 'row-resize';
-            document.body.style.userSelect = 'none';
-            e.preventDefault();
-        });
-        
-        document.addEventListener('mousemove', (e) => {
-            if (!isResizingHorizontal) return;
-            
-            const containerHeight = readerLayout.offsetHeight;
-            const topHeight = e.clientY - readerLayout.offsetTop;
-            const timelineHeight = containerHeight - topHeight - 4;
-            
-            if (timelineHeight >= 150 && timelineHeight <= 500) {
-                readerLayout.style.gridTemplateRows = `1fr 4px ${timelineHeight}px`;
-                
-                if (window.timeline && window.timeline.redraw) {
-                    setTimeout(() => window.timeline.redraw(), 50);
-                }
-            }
-        });
-        
-        document.addEventListener('mouseup', () => {
-            if (isResizingHorizontal) {
-                isResizingHorizontal = false;
-                document.body.style.cursor = '';
-                document.body.style.userSelect = '';
-            }
-        });
-    }
-    
-    console.log('✅ Resize handles initialized');
-}
 </script>
 
 <!-- Include reader images module -->
 <script src="assets/js/reader-images.js"></script>
+<script src="assets/js/reader-resize.js"></script>

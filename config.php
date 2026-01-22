@@ -40,6 +40,11 @@ define('ALLOWED_IMAGE_TYPES', [
     'image/webp'
 ]);
 
+// Application constants
+define('VERSES_PER_PAGE', 50); // Aantal verzen per pagina/lazy load
+define('SEARCH_MIN_LENGTH', 2); // Minimale zoekterm lengte
+define('SEARCH_DEBOUNCE_MS', 300); // Debounce tijd voor zoeken
+
 
 
 // Autoloader voor classes

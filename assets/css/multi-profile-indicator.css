@@ -1,0 +1,110 @@
+/**
+ * MULTI-PROFILE INDICATOR STYLES
+ * Styles voor verse number indicators en tooltips
+ */
+
+/* Verse number met andere profielen */
+.verse-number.has-other-profiles {
+    position: relative;
+    cursor: help;
+    color: #0066cc; /* Blauwer cijfer */
+    text-decoration: underline;
+    text-decoration-style: dotted;
+    text-decoration-color: #0066cc;
+    font-weight: bold;
+}
+
+/* Hover effect voor extra feedback */
+.verse-number.has-other-profiles:hover {
+    color: #003d99;
+    text-decoration-color: #003d99;
+}
+
+/* Custom tooltip */
+.verse-profile-tooltip {
+    position: fixed;
+    z-index: 10000;
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    padding: 0;
+    min-width: 180px;
+    max-width: 300px;
+    font-size: 13px;
+    animation: tooltipFadeIn 0.2s ease-out;
+}
+
+@keyframes tooltipFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.tooltip-header {
+    padding: 8px 12px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    font-weight: 600;
+    color: #495057;
+    border-radius: 6px 6px 0 0;
+    font-size: 12px;
+}
+
+.tooltip-profile-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.tooltip-profile-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: background-color 0.15s;
+    color: #2c5282;
+    font-weight: 500;
+    border-bottom: 1px solid #f1f3f5;
+}
+
+.tooltip-profile-item:last-child {
+    border-bottom: none;
+    border-radius: 0 0 6px 6px;
+}
+
+.tooltip-profile-item:hover {
+    background: #e3f2fd;
+    color: #1a365d;
+}
+
+.tooltip-profile-item:active {
+    background: #bbdefb;
+}
+
+/* Tooltip arrow */
+.verse-profile-tooltip::before {
+    content: '';
+    position: absolute;
+    top: -6px;
+    left: 20px;
+    width: 0;
+    height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-bottom: 6px solid #dee2e6;
+}
+
+.verse-profile-tooltip::after {
+    content: '';
+    position: absolute;
+    top: -5px;
+    left: 21px;
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-bottom: 5px solid white;
+}
